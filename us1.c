@@ -348,17 +348,14 @@ US_PrintSigned(long n)
 //
 ///////////////////////////////////////////////////////////////////////////
 void
-USL_PrintInCenter(char far *s,Rect r)
+USL_PrintInCenter(char far *s,Rectangle r)
 {
-	word	w,h,
-			rw,rh;
+	word	w,h;
 
 	USL_MeasureString(s,&w,&h);
-	rw = r.lr.x - r.ul.x;
-	rh = r.lr.y - r.ul.y;
 
-	px = r.ul.x + ((rw - w) / 2);
-	py = r.ul.y + ((rh - h) / 2);
+	px = r.min.x + ((Dx(r) - w) / 2);
+	py = r.min.y + ((Dy(r) - h) / 2);
 	USL_DrawString(s);
 }
 
@@ -370,14 +367,7 @@ USL_PrintInCenter(char far *s,Rect r)
 void
 US_PrintCentered(char far *s)
 {
-	Rect	r;
-
-	r.ul.x = WindowX;
-	r.ul.y = WindowY;
-	r.lr.x = r.ul.x + WindowW;
-	r.lr.y = r.ul.y + WindowH;
-
-	USL_PrintInCenter(s,r);
+	USL_PrintInCenter(s,Rect(WindowX,WindowY,WindowW+WindowX,WindowH+WindowY);
 }
 
 ///////////////////////////////////////////////////////////////////////////

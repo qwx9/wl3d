@@ -1,21 +1,3 @@
-// ID_GLOB.H
-
-
-#include <ALLOC.H>
-#include <CTYPE.H>
-#include <DOS.H>
-#include <ERRNO.H>
-#include <FCNTL.H>
-#include <IO.H>
-#include <MEM.H>
-#include <PROCESS.H>
-#include <STDIO.H>
-#include <STDLIB.H>
-#include <STRING.H>
-#include <SYS\STAT.H>
-#include <VALUES.H>
-#include <DIR.H>
-#define __ID_GLOB__
 #include "VERSION.H"
 
 //--------------------------------------------------------------------------
@@ -71,15 +53,6 @@ typedef	unsigned	int			word;
 typedef	unsigned	long		longword;
 typedef	byte *					Ptr;
 
-typedef	struct
-		{
-			int	x,y;
-		} Point;
-typedef	struct
-		{
-			Point	ul,lr;
-		} Rect;
-
 #define	nil	((void *)0)
 
 
@@ -121,3 +94,4 @@ extern	byte		fontcolor,backcolor;
 
 #define SETFONTCOLOR(f,b) fontcolor=f;backcolor=b;
 
+#define	EXTENSION	"WLF"

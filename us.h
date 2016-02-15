@@ -118,6 +118,6 @@ extern	boolean	US_UpdateCursor(void),
 extern	int		US_CheckParm(char *parm,char **strings),
 				US_RndT(void);
 
-		void	USL_PrintInCenter(char far *s,Rect r);
+		void	USL_PrintInCenter(char far *s,Rct r);
 		char 	*USL_GiveSaveName(word game);
 #endif

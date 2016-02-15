@@ -4,7 +4,7 @@
 #include <alloc.h>
 #include <mem.h>
 #include <string.h>
-#include "ID_HEAD.H"
+#include "ID_HEADS.H"
 #include "ID_VL.H"
 #pragma hdrstop
 
