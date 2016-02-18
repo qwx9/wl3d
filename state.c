@@ -39,18 +39,18 @@ dirtype diagonal[9][9] =
 
 
 
-void	SpawnNewObj (unsigned tilex, unsigned tiley, statetype *state);
+void	SpawnNewObj (u16int tilex, u16int tiley, statetype *state);
 void	NewState (objtype *ob, statetype *state);
 
-boolean TryWalk (objtype *ob);
-void	MoveObj (objtype *ob, long move);
+int TryWalk (objtype *ob);
+void	MoveObj (objtype *ob, s32int move);
 
 void	KillActor (objtype *ob);
-void	DamageActor (objtype *ob, unsigned damage);
+void	DamageActor (objtype *ob, u16int damage);
 
-boolean CheckLine (objtype *ob);
+int CheckLine (objtype *ob);
 void FirstSighting (objtype *ob);
-boolean	CheckSight (objtype *ob);
+int	CheckSight (objtype *ob);
 
 /*
 =============================================================================
@@ -78,7 +78,7 @@ boolean	CheckSight (objtype *ob);
 ===================
 */
 
-void SpawnNewObj (unsigned tilex, unsigned tiley, statetype *state)
+void SpawnNewObj (u16int tilex, u16int tiley, statetype *state)
 {
 	GetNewActor ();
 	new->state = state;
@@ -89,8 +89,8 @@ void SpawnNewObj (unsigned tilex, unsigned tiley, statetype *state)
 
 	new->tilex = tilex;
 	new->tiley = tiley;
-	new->x = ((long)tilex<<TILESHIFT)+TILEGLOBAL/2;
-	new->y = ((long)tiley<<TILESHIFT)+TILEGLOBAL/2;
+	new->x = ((s32int)tilex<<TILESHIFT)+TILEGLOBAL/2;
+	new->y = ((s32int)tiley<<TILESHIFT)+TILEGLOBAL/2;
 	new->dir = nodir;
 
 	actorat[tilex][tiley] = new;
@@ -153,7 +153,7 @@ void NewState (objtype *ob, statetype *state)
 
 #define CHECKDIAG(x,y)								\
 {                                                   \
-	temp=(unsigned)actorat[x][y];                   \
+	temp=(u16int)actorat[x][y];                   \
 	if (temp)                                       \
 	{                                               \
 		if (temp<256)                               \
@@ -165,7 +165,7 @@ void NewState (objtype *ob, statetype *state)
 
 #define CHECKSIDE(x,y)								\
 {                                                   \
-	temp=(unsigned)actorat[x][y];                   \
+	temp=(u16int)actorat[x][y];                   \
 	if (temp)                                       \
 	{                                               \
 		if (temp<128)                               \
@@ -178,10 +178,10 @@ void NewState (objtype *ob, statetype *state)
 }
 
 
-boolean TryWalk (objtype *ob)
+int TryWalk (objtype *ob)
 {
-	int			doornum;
-	unsigned	temp;
+	s16int			doornum;
+	u16int	temp;
 
 	doornum = -1;
 
@@ -358,8 +358,8 @@ boolean TryWalk (objtype *ob)
 
 void SelectDodgeDir (objtype *ob)
 {
-	int 		deltax,deltay,i;
-	unsigned	absdx,absdy;
+	s16int 		deltax,deltay,i;
+	u16int	absdx,absdy;
 	dirtype 	dirtry[5];
 	dirtype 	turnaround,tdir;
 
@@ -474,7 +474,7 @@ void SelectDodgeDir (objtype *ob)
 
 void SelectChaseDir (objtype *ob)
 {
-	int deltax,deltay,i;
+	s16int deltax,deltay,i;
 	dirtype d[3];
 	dirtype tdir, olddir, turnaround;
 
@@ -584,7 +584,7 @@ void SelectChaseDir (objtype *ob)
 
 void SelectRunDir (objtype *ob)
 {
-	int deltax,deltay,i;
+	s16int deltax,deltay,i;
 	dirtype d[3];
 	dirtype tdir, olddir, turnaround;
 
@@ -656,9 +656,9 @@ void SelectRunDir (objtype *ob)
 =================
 */
 
-void MoveObj (objtype *ob, long move)
+void MoveObj (objtype *ob, s32int move)
 {
-	long	deltax,deltay;
+	s32int	deltax,deltay;
 
 	switch (ob->dir)
 	{
@@ -775,9 +775,9 @@ moveok:
 ===============
 */
 
-void DropItem (stat_t itemtype, int tilex, int tiley)
+void DropItem (stat_t itemtype, s16int tilex, s16int tiley)
 {
-	int	x,y,xl,xh,yl,yh;
+	s16int	x,y,xl,xh,yl,yh;
 
 //
 // find a free spot to put it in
@@ -814,7 +814,7 @@ void DropItem (stat_t itemtype, int tilex, int tiley)
 
 void KillActor (objtype *ob)
 {
-	int	tilex,tiley;
+	s16int	tilex,tiley;
 
 	tilex = ob->tilex = ob->x >> TILESHIFT;		// drop item on center
 	tiley = ob->tiley = ob->y >> TILESHIFT;
@@ -961,7 +961,7 @@ void KillActor (objtype *ob)
 ===================
 */
 
-void DamageActor (objtype *ob, unsigned damage)
+void DamageActor (objtype *ob, u16int damage)
 {
 	madenoise = true;
 
@@ -1034,16 +1034,16 @@ void DamageActor (objtype *ob, unsigned damage)
 =====================
 */
 
-boolean CheckLine (objtype *ob)
+int CheckLine (objtype *ob)
 {
-	int	x1,y1,xt1,yt1,x2,y2,xt2,yt2;
-	int	x,y;
-	int	xdist,ydist,xstep,ystep;
-	int	temp;
-	int	partial,delta;
-	long	ltemp;
-	int	xfrac,yfrac,deltafrac;
-	unsigned	value,intercept;
+	s16int	x1,y1,xt1,yt1,x2,y2,xt2,yt2;
+	s16int	x,y;
+	s16int	xdist,ydist,xstep,ystep;
+	s16int	temp;
+	s16int	partial,delta;
+	s32int	ltemp;
+	s16int	xfrac,yfrac,deltafrac;
+	u16int	value,intercept;
 
 	x1 = ob->x >> UNSIGNEDSHIFT;		// 1/256 tile precision
 	y1 = ob->y >> UNSIGNEDSHIFT;
@@ -1073,14 +1073,14 @@ boolean CheckLine (objtype *ob)
 
 		deltafrac = abs(x2-x1);
 		delta = y2-y1;
-		ltemp = ((long)delta<<8)/deltafrac;
+		ltemp = ((s32int)delta<<8)/deltafrac;
 		if (ltemp > 0x7fffl)
 			ystep = 0x7fff;
 		else if (ltemp < -0x7fffl)
 			ystep = -0x7fff;
 		else
 			ystep = ltemp;
-		yfrac = y1 + (((long)ystep*partial) >>8);
+		yfrac = y1 + (((s32int)ystep*partial) >>8);
 
 		x = xt1+xstep;
 		xt2 += xstep;
@@ -1089,7 +1089,7 @@ boolean CheckLine (objtype *ob)
 			y = yfrac>>8;
 			yfrac += ystep;
 
-			value = (unsigned)tilemap[x][y];
+			value = (u16int)tilemap[x][y];
 			x += xstep;
 
 			if (!value)
@@ -1127,14 +1127,14 @@ boolean CheckLine (objtype *ob)
 
 		deltafrac = abs(y2-y1);
 		delta = x2-x1;
-		ltemp = ((long)delta<<8)/deltafrac;
+		ltemp = ((s32int)delta<<8)/deltafrac;
 		if (ltemp > 0x7fffl)
 			xstep = 0x7fff;
 		else if (ltemp < -0x7fffl)
 			xstep = -0x7fff;
 		else
 			xstep = ltemp;
-		xfrac = x1 + (((long)xstep*partial) >>8);
+		xfrac = x1 + (((s32int)xstep*partial) >>8);
 
 		y = yt1 + ystep;
 		yt2 += ystep;
@@ -1143,7 +1143,7 @@ boolean CheckLine (objtype *ob)
 			x = xfrac>>8;
 			xfrac += xstep;
 
-			value = (unsigned)tilemap[x][y];
+			value = (u16int)tilemap[x][y];
 			y += ystep;
 
 			if (!value)
@@ -1184,9 +1184,9 @@ boolean CheckLine (objtype *ob)
 
 #define MINSIGHT	0x18000l
 
-boolean CheckSight (objtype *ob)
+int CheckSight (objtype *ob)
 {
-	long		deltax,deltay;
+	s32int		deltax,deltay;
 
 //
 // don't bother tracing a line if the area isn't connected to the player's
@@ -1401,7 +1401,7 @@ void FirstSighting (objtype *ob)
 ===============
 */
 
-boolean SightPlayer (objtype *ob)
+int SightPlayer (objtype *ob)
 {
 	if (ob->flags & FL_ATTACKMODE)
 		Quit ("An actor in ATTACKMODE called SightPlayer!");

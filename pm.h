@@ -34,28 +34,28 @@ typedef	enum
 
 typedef	struct
 		{
-			longword	offset;		// Offset of chunk into file
-			word		length;		// Length of the chunk
+			u32int	offset;		// Offset of chunk into file
+			u16int		length;		// Length of the chunk
 
-			int			xmsPage;	// If in XMS, (xmsPage * PMPageSize) gives offset into XMS handle
+			s16int			xmsPage;	// If in XMS, (xmsPage * PMPageSize) gives offset into XMS handle
 
 			PMLockType	locked;		// If set, this page can't be purged
-			int			emsPage;	// If in EMS, logical page/offset into page
-			int			mainPage;	// If in Main, index into handle array
+			s16int			emsPage;	// If in EMS, logical page/offset into page
+			s16int			mainPage;	// If in Main, index into handle array
 
-			longword	lastHit;	// Last frame number of hit
+			u32int	lastHit;	// Last frame number of hit
 		} PageListStruct;
 
 typedef	struct
 		{
-			int			baseEMSPage;	// Base EMS page for this phys frame
-			longword	lastHit;		// Last frame number of hit
+			s16int			baseEMSPage;	// Base EMS page for this phys frame
+			u32int	lastHit;		// Last frame number of hit
 		} EMSListStruct;
 
-extern	boolean			XMSPresent,EMSPresent;
-extern	word			XMSPagesAvail,EMSPagesAvail;
+extern	int			XMSPresent,EMSPresent;
+extern	u16int			XMSPagesAvail,EMSPagesAvail;
 
-extern	word			ChunksInFile,
+extern	u16int			ChunksInFile,
 						PMSpriteStart,PMSoundStart;
 extern	PageListStruct	far *PMPages;
 
@@ -72,12 +72,12 @@ extern	char	PageFileName[13];
 extern	void	PM_Startup(void),
 				PM_Shutdown(void),
 				PM_Reset(void),
-				PM_Preload(boolean (*update)(word current,word total)),
+				PM_Preload(int (*update)(u16int current,u16int total)),
 				PM_NextFrame(void),
-				PM_SetPageLock(int pagenum,PMLockType lock),
-				PM_SetMainPurge(int level),
+				PM_SetPageLock(s16int pagenum,PMLockType lock),
+				PM_SetMainPurge(s16int level),
 				PM_CheckMainMem(void);
-extern	memptr	PM_GetPageAddress(int pagenum),
-				PM_GetPage(int pagenum);		// Use this one to cache page
+extern	uchar *PM_GetPageAddress(s16int pagenum),
+				PM_GetPage(s16int pagenum);		// Use this one to cache page
 
-void PM_SetMainMemPurge(int level);
+void PM_SetMainMemPurge(s16int level);

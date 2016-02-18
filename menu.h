@@ -91,17 +91,17 @@
 // TYPEDEFS
 //
 typedef struct {
-		int x,y,amount,curpos,indent;
+		s16int x,y,amount,curpos,indent;
 		} CP_iteminfo;
 
 typedef struct {
-		int active;
+		s16int active;
 		char string[36];
-		void (* routine)(int temp1);
+		void (* routine)(s16int temp1);
 		} CP_itemtype;
 
 typedef struct {
-		int allowed[4];
+		s16int allowed[4];
 		} CustomCtrls;
 
 extern CP_itemtype far MainMenu[],far NewEMenu[];
@@ -114,73 +114,73 @@ void SetupControlPanel(void);
 void CleanupControlPanel(void);
 
 void DrawMenu(CP_iteminfo *item_i,CP_itemtype far *items);
-int  HandleMenu(CP_iteminfo *item_i,
+s16int  HandleMenu(CP_iteminfo *item_i,
 		CP_itemtype far *items,
-		void (*routine)(int w));
+		void (*routine)(s16int w));
 void ClearMScreen(void);
-void DrawWindow(int x,int y,int w,int h,int wcolor);
-void DrawOutline(int x,int y,int w,int h,int color1,int color2);
+void DrawWindow(s16int x,s16int y,s16int w,s16int h,s16int wcolor);
+void DrawOutline(s16int x,s16int y,s16int w,s16int h,s16int color1,s16int color2);
 void WaitKeyUp(void);
 void ReadAnyControl(ControlInfo *ci);
-void TicDelay(int count);
-void CacheLump(int lumpstart,int lumpend);
-void UnCacheLump(int lumpstart,int lumpend);
-void StartCPMusic(int song);
-int  Confirm(char far *string);
+void TicDelay(s16int count);
+void CacheLump(s16int lumpstart,s16int lumpend);
+void UnCacheLump(s16int lumpstart,s16int lumpend);
+void StartCPMusic(s16int song);
+s16int  Confirm(char far *string);
 void Message(char far *string);
 void CheckPause(void);
 void ShootSnd(void);
 void CheckSecretMissions(void);
 void BossKey(void);
 
-void DrawGun(CP_iteminfo *item_i,CP_itemtype far *items,int x,int *y,int which,int basey,void (*routine)(int w));
-void DrawHalfStep(int x,int y);
-void EraseGun(CP_iteminfo *item_i,CP_itemtype far *items,int x,int y,int which);
-void SetTextColor(CP_itemtype far *items,int hlight);
+void DrawGun(CP_iteminfo *item_i,CP_itemtype far *items,s16int x,s16int *y,s16int which,s16int basey,void (*routine)(s16int w));
+void DrawHalfStep(s16int x,s16int y);
+void EraseGun(CP_iteminfo *item_i,CP_itemtype far *items,s16int x,s16int y,s16int which);
+void SetTextColor(CP_itemtype far *items,s16int hlight);
 void DrawMenuGun(CP_iteminfo *iteminfo);
-void DrawStripes(int y);
+void DrawStripes(s16int y);
 
 void DefineMouseBtns(void);
 void DefineJoyBtns(void);
 void DefineKeyBtns(void);
 void DefineKeyMove(void);
-void EnterCtrlData(int index,CustomCtrls *cust,void (*DrawRtn)(int),void (*PrintRtn)(int),int type);
+void EnterCtrlData(s16int index,CustomCtrls *cust,void (*DrawRtn)(s16int),void (*PrintRtn)(s16int),s16int type);
 
 void DrawMainMenu(void);
 void DrawSoundMenu(void);
-void DrawLoadSaveScreen(int loadsave);
+void DrawLoadSaveScreen(s16int loadsave);
 void DrawNewEpisode(void);
 void DrawNewGame(void);
-void DrawChangeView(int view);
+void DrawChangeView(s16int view);
 void DrawMouseSens(void);
 void DrawCtlScreen(void);
 void DrawCustomScreen(void);
-void DrawLSAction(int which);
-void DrawCustMouse(int hilight);
-void DrawCustJoy(int hilight);
-void DrawCustKeybd(int hilight);
-void DrawCustKeys(int hilight);
-void PrintCustMouse(int i);
-void PrintCustJoy(int i);
-void PrintCustKeybd(int i);
-void PrintCustKeys(int i);
+void DrawLSAction(s16int which);
+void DrawCustMouse(s16int hilight);
+void DrawCustJoy(s16int hilight);
+void DrawCustKeybd(s16int hilight);
+void DrawCustKeys(s16int hilight);
+void PrintCustMouse(s16int i);
+void PrintCustJoy(s16int i);
+void PrintCustKeybd(s16int i);
+void PrintCustKeys(s16int i);
 
-void PrintLSEntry(int w,int color);
-void TrackWhichGame(int w);
-void DrawNewGameDiff(int w);
-void FixupCustom(int w);
+void PrintLSEntry(s16int w,s16int color);
+void TrackWhichGame(s16int w);
+void DrawNewGameDiff(s16int w);
+void FixupCustom(s16int w);
 
 void CP_NewGame(void);
 void CP_Sound(void);
-int  CP_LoadGame(int quick);
-int  CP_SaveGame(int quick);
+s16int  CP_LoadGame(s16int quick);
+s16int  CP_SaveGame(s16int quick);
 void CP_Control(void);
 void CP_ChangeView(void);
 void CP_ExitOptions(void);
 void CP_Quit(void);
 void CP_ViewScores(void);
-int  CP_EndGame(void);
-int  CP_CheckQuick(unsigned scancode);
+s16int  CP_EndGame(void);
+s16int  CP_CheckQuick(u16int scancode);
 void CustomControls(void);
 void MouseSensitivity(void);
 
@@ -189,7 +189,7 @@ void CheckForEpisodes(void);
 //
 // VARIABLES
 //
-extern int SaveGamesAvail[10],StartGame,SoundStatus;
+extern s16int SaveGamesAvail[10],StartGame,SoundStatus;
 extern char SaveGameNames[10][32],SaveName[13];
 
 enum {MOUSE,JOYSTICK,KEYBOARDBTNS,KEYBOARDMOVE};	// FOR INPUT TYPES
@@ -218,14 +218,14 @@ enum
 // WL_INTER
 //
 typedef struct {
-		int kill,secret,treasure;
-		long time;
+		s16int kill,secret,treasure;
+		s32int time;
 		} LRstruct;
 
 extern LRstruct LevelRatios[];
 
-void Write (int x,int y,char *string);
+void Write (s16int x,s16int y,char *string);
 void NonShareware(void);
-int GetYorN(int x,int y,int pic);
+s16int GetYorN(s16int x,s16int y,s16int pic);
 
 

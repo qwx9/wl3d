@@ -41,31 +41,31 @@
 */
 
 char            str[80],str2[20];
-int				tedlevelnum;
-boolean         tedlevel;
-boolean         nospr;
-boolean         IsA386;
-int                     dirangle[9] = {0,ANGLES/8,2*ANGLES/8,3*ANGLES/8,4*ANGLES/8,
+s16int				tedlevelnum;
+int         tedlevel;
+int         nospr;
+int         IsA386;
+s16int                     dirangle[9] = {0,ANGLES/8,2*ANGLES/8,3*ANGLES/8,4*ANGLES/8,
 	5*ANGLES/8,6*ANGLES/8,7*ANGLES/8,ANGLES};
 
 //
 // proejection variables
 //
-fixed           focallength;
-unsigned        screenofs;
-int             viewwidth;
-int             viewheight;
-int             centerx;
-int             shootdelta;                     // pixels away from centerx a target can be
-fixed           scale,maxslope;
-long            heightnumerator;
-int                     minheightdiv;
+s32int           focallength;
+u16int        screenofs;
+s16int             viewwidth;
+s16int             viewheight;
+s16int             centerx;
+s16int             shootdelta;                     // pixels away from centerx a target can be
+s32int           scale,maxslope;
+s32int            heightnumerator;
+s16int                     minheightdiv;
 
 
 void            Quit (char *error);
 
-boolean         startgame,loadedgame,virtualreality;
-int             mouseadjustment;
+int         startgame,loadedgame,virtualreality;
+s16int             mouseadjustment;
 
 char	configname[13]="CONFIG.";
 
@@ -89,7 +89,7 @@ char	configname[13]="CONFIG.";
 
 void ReadConfig(void)
 {
-	int                     file;
+	s16int                     file;
 	SDMode          sd;
 	SMMode          sm;
 	SDSMode         sds;
@@ -192,7 +192,7 @@ void ReadConfig(void)
 
 void WriteConfig(void)
 {
-	int                     file;
+	s16int                     file;
 
 	file = open(configname,O_CREAT | O_BINARY | O_WRONLY,
 				S_IREAD | S_IWRITE | S_IFREG);
@@ -241,9 +241,9 @@ char    *JHParmStrings[] = {"no386",nil};
 void Patch386 (void)
 {
 extern void far jabhack2(void);
-extern int far  CheckIs386(void);
+extern s16int far  CheckIs386(void);
 
-	int     i;
+	s16int     i;
 
 	for (i = 1;i < _argc;i++)
 		if (US_CheckParm(_argv[i],JHParmStrings) == 0)
@@ -273,7 +273,7 @@ extern int far  CheckIs386(void);
 =====================
 */
 
-void NewGame (int difficulty,int episode)
+void NewGame (s16int difficulty,s16int episode)
 {
 	memset (&gamestate,0,sizeof(gamestate));
 	gamestate.difficulty = difficulty;
@@ -290,7 +290,7 @@ void NewGame (int difficulty,int episode)
 
 //===========================================================================
 
-void DiskFlopAnim(int x,int y)
+void DiskFlopAnim(s16int x,s16int y)
 {
  static char which=0;
  if (!x && !y)
@@ -301,9 +301,9 @@ void DiskFlopAnim(int x,int y)
 }
 
 
-long DoChecksum(byte far *source,unsigned size,long checksum)
+s32int DoChecksum(u8int far *source,u16int size,s32int checksum)
 {
- unsigned i;
+ u16int i;
 
  for (i=0;i<size-1;i++)
    checksum += source[i]^source[i+1];
@@ -320,17 +320,17 @@ long DoChecksum(byte far *source,unsigned size,long checksum)
 ==================
 */
 
-boolean SaveTheGame(int file,int x,int y)
+int SaveTheGame(s16int file,s16int x,s16int y)
 {
 	struct diskfree_t dfree;
-	long avail,size,checksum;
+	s32int avail,size,checksum;
 	objtype *ob,nullobj;
 
 
 	if (_dos_getdiskfree(0,&dfree))
 	  Quit("Error in _dos_getdiskfree call");
 
-	avail = (long)dfree.avail_clusters *
+	avail = (s32int)dfree.avail_clusters *
 			dfree.bytes_per_sector *
 			dfree.sectors_per_cluster;
 
@@ -364,23 +364,23 @@ boolean SaveTheGame(int file,int x,int y)
 
 	DiskFlopAnim(x,y);
 	CA_FarWrite (file,(void far *)&gamestate,sizeof(gamestate));
-	checksum = DoChecksum((byte far *)&gamestate,sizeof(gamestate),checksum);
+	checksum = DoChecksum((u8int far *)&gamestate,sizeof(gamestate),checksum);
 
 	DiskFlopAnim(x,y);
 #ifdef SPEAR
 	CA_FarWrite (file,(void far *)&LevelRatios[0],sizeof(LRstruct)*20);
-	checksum = DoChecksum((byte far *)&LevelRatios[0],sizeof(LRstruct)*20,checksum);
+	checksum = DoChecksum((u8int far *)&LevelRatios[0],sizeof(LRstruct)*20,checksum);
 #else
 	CA_FarWrite (file,(void far *)&LevelRatios[0],sizeof(LRstruct)*8);
-	checksum = DoChecksum((byte far *)&LevelRatios[0],sizeof(LRstruct)*8,checksum);
+	checksum = DoChecksum((u8int far *)&LevelRatios[0],sizeof(LRstruct)*8,checksum);
 #endif
 
 	DiskFlopAnim(x,y);
 	CA_FarWrite (file,(void far *)tilemap,sizeof(tilemap));
-	checksum = DoChecksum((byte far *)tilemap,sizeof(tilemap),checksum);
+	checksum = DoChecksum((u8int far *)tilemap,sizeof(tilemap),checksum);
 	DiskFlopAnim(x,y);
 	CA_FarWrite (file,(void far *)actorat,sizeof(actorat));
-	checksum = DoChecksum((byte far *)actorat,sizeof(actorat),checksum);
+	checksum = DoChecksum((u8int far *)actorat,sizeof(actorat),checksum);
 
 	CA_FarWrite (file,(void far *)areaconnect,sizeof(areaconnect));
 	CA_FarWrite (file,(void far *)areabyplayer,sizeof(areabyplayer));
@@ -398,29 +398,29 @@ boolean SaveTheGame(int file,int x,int y)
 
 	DiskFlopAnim(x,y);
 	CA_FarWrite (file,(void far *)&laststatobj,sizeof(laststatobj));
-	checksum = DoChecksum((byte far *)&laststatobj,sizeof(laststatobj),checksum);
+	checksum = DoChecksum((u8int far *)&laststatobj,sizeof(laststatobj),checksum);
 	DiskFlopAnim(x,y);
 	CA_FarWrite (file,(void far *)statobjlist,sizeof(statobjlist));
-	checksum = DoChecksum((byte far *)statobjlist,sizeof(statobjlist),checksum);
+	checksum = DoChecksum((u8int far *)statobjlist,sizeof(statobjlist),checksum);
 
 	DiskFlopAnim(x,y);
 	CA_FarWrite (file,(void far *)doorposition,sizeof(doorposition));
-	checksum = DoChecksum((byte far *)doorposition,sizeof(doorposition),checksum);
+	checksum = DoChecksum((u8int far *)doorposition,sizeof(doorposition),checksum);
 	DiskFlopAnim(x,y);
 	CA_FarWrite (file,(void far *)doorobjlist,sizeof(doorobjlist));
-	checksum = DoChecksum((byte far *)doorobjlist,sizeof(doorobjlist),checksum);
+	checksum = DoChecksum((u8int far *)doorobjlist,sizeof(doorobjlist),checksum);
 
 	DiskFlopAnim(x,y);
 	CA_FarWrite (file,(void far *)&pwallstate,sizeof(pwallstate));
-	checksum = DoChecksum((byte far *)&pwallstate,sizeof(pwallstate),checksum);
+	checksum = DoChecksum((u8int far *)&pwallstate,sizeof(pwallstate),checksum);
 	CA_FarWrite (file,(void far *)&pwallx,sizeof(pwallx));
-	checksum = DoChecksum((byte far *)&pwallx,sizeof(pwallx),checksum);
+	checksum = DoChecksum((u8int far *)&pwallx,sizeof(pwallx),checksum);
 	CA_FarWrite (file,(void far *)&pwally,sizeof(pwally));
-	checksum = DoChecksum((byte far *)&pwally,sizeof(pwally),checksum);
+	checksum = DoChecksum((u8int far *)&pwally,sizeof(pwally),checksum);
 	CA_FarWrite (file,(void far *)&pwalldir,sizeof(pwalldir));
-	checksum = DoChecksum((byte far *)&pwalldir,sizeof(pwalldir),checksum);
+	checksum = DoChecksum((u8int far *)&pwalldir,sizeof(pwalldir),checksum);
 	CA_FarWrite (file,(void far *)&pwallpos,sizeof(pwallpos));
-	checksum = DoChecksum((byte far *)&pwallpos,sizeof(pwallpos),checksum);
+	checksum = DoChecksum((u8int far *)&pwallpos,sizeof(pwallpos),checksum);
 
 	//
 	// WRITE OUT CHECKSUM
@@ -440,9 +440,9 @@ boolean SaveTheGame(int file,int x,int y)
 ==================
 */
 
-boolean LoadTheGame(int file,int x,int y)
+int LoadTheGame(s16int file,s16int x,s16int y)
 {
-	long checksum,oldchecksum;
+	s32int checksum,oldchecksum;
 	objtype *ob,nullobj;
 
 
@@ -450,15 +450,15 @@ boolean LoadTheGame(int file,int x,int y)
 
 	DiskFlopAnim(x,y);
 	CA_FarRead (file,(void far *)&gamestate,sizeof(gamestate));
-	checksum = DoChecksum((byte far *)&gamestate,sizeof(gamestate),checksum);
+	checksum = DoChecksum((u8int far *)&gamestate,sizeof(gamestate),checksum);
 
 	DiskFlopAnim(x,y);
 #ifdef SPEAR
 	CA_FarRead (file,(void far *)&LevelRatios[0],sizeof(LRstruct)*20);
-	checksum = DoChecksum((byte far *)&LevelRatios[0],sizeof(LRstruct)*20,checksum);
+	checksum = DoChecksum((u8int far *)&LevelRatios[0],sizeof(LRstruct)*20,checksum);
 #else
 	CA_FarRead (file,(void far *)&LevelRatios[0],sizeof(LRstruct)*8);
-	checksum = DoChecksum((byte far *)&LevelRatios[0],sizeof(LRstruct)*8,checksum);
+	checksum = DoChecksum((u8int far *)&LevelRatios[0],sizeof(LRstruct)*8,checksum);
 #endif
 
 	DiskFlopAnim(x,y);
@@ -466,10 +466,10 @@ boolean LoadTheGame(int file,int x,int y)
 
 	DiskFlopAnim(x,y);
 	CA_FarRead (file,(void far *)tilemap,sizeof(tilemap));
-	checksum = DoChecksum((byte far *)tilemap,sizeof(tilemap),checksum);
+	checksum = DoChecksum((u8int far *)tilemap,sizeof(tilemap),checksum);
 	DiskFlopAnim(x,y);
 	CA_FarRead (file,(void far *)actorat,sizeof(actorat));
-	checksum = DoChecksum((byte far *)actorat,sizeof(actorat),checksum);
+	checksum = DoChecksum((u8int far *)actorat,sizeof(actorat),checksum);
 
 	CA_FarRead (file,(void far *)areaconnect,sizeof(areaconnect));
 	CA_FarRead (file,(void far *)areabyplayer,sizeof(areabyplayer));
@@ -495,29 +495,29 @@ boolean LoadTheGame(int file,int x,int y)
 
 	DiskFlopAnim(x,y);
 	CA_FarRead (file,(void far *)&laststatobj,sizeof(laststatobj));
-	checksum = DoChecksum((byte far *)&laststatobj,sizeof(laststatobj),checksum);
+	checksum = DoChecksum((u8int far *)&laststatobj,sizeof(laststatobj),checksum);
 	DiskFlopAnim(x,y);
 	CA_FarRead (file,(void far *)statobjlist,sizeof(statobjlist));
-	checksum = DoChecksum((byte far *)statobjlist,sizeof(statobjlist),checksum);
+	checksum = DoChecksum((u8int far *)statobjlist,sizeof(statobjlist),checksum);
 
 	DiskFlopAnim(x,y);
 	CA_FarRead (file,(void far *)doorposition,sizeof(doorposition));
-	checksum = DoChecksum((byte far *)doorposition,sizeof(doorposition),checksum);
+	checksum = DoChecksum((u8int far *)doorposition,sizeof(doorposition),checksum);
 	DiskFlopAnim(x,y);
 	CA_FarRead (file,(void far *)doorobjlist,sizeof(doorobjlist));
-	checksum = DoChecksum((byte far *)doorobjlist,sizeof(doorobjlist),checksum);
+	checksum = DoChecksum((u8int far *)doorobjlist,sizeof(doorobjlist),checksum);
 
 	DiskFlopAnim(x,y);
 	CA_FarRead (file,(void far *)&pwallstate,sizeof(pwallstate));
-	checksum = DoChecksum((byte far *)&pwallstate,sizeof(pwallstate),checksum);
+	checksum = DoChecksum((u8int far *)&pwallstate,sizeof(pwallstate),checksum);
 	CA_FarRead (file,(void far *)&pwallx,sizeof(pwallx));
-	checksum = DoChecksum((byte far *)&pwallx,sizeof(pwallx),checksum);
+	checksum = DoChecksum((u8int far *)&pwallx,sizeof(pwallx),checksum);
 	CA_FarRead (file,(void far *)&pwally,sizeof(pwally));
-	checksum = DoChecksum((byte far *)&pwally,sizeof(pwally),checksum);
+	checksum = DoChecksum((u8int far *)&pwally,sizeof(pwally),checksum);
 	CA_FarRead (file,(void far *)&pwalldir,sizeof(pwalldir));
-	checksum = DoChecksum((byte far *)&pwalldir,sizeof(pwalldir),checksum);
+	checksum = DoChecksum((u8int far *)&pwalldir,sizeof(pwalldir),checksum);
 	CA_FarRead (file,(void far *)&pwallpos,sizeof(pwallpos));
-	checksum = DoChecksum((byte far *)&pwallpos,sizeof(pwallpos),checksum);
+	checksum = DoChecksum((u8int far *)&pwallpos,sizeof(pwallpos),checksum);
 
 	CA_FarRead (file,(void far *)&oldchecksum,sizeof(oldchecksum));
 
@@ -585,10 +585,10 @@ const   float   radtoint = (float)FINEANGLES/2/PI;
 
 void BuildTables (void)
 {
-  int           i;
+  s16int           i;
   float         angle,anglestep;
   double        tang;
-  fixed         value;
+  s32int         value;
 
 
 //
@@ -638,15 +638,15 @@ void BuildTables (void)
 ====================
 */
 
-void CalcProjection (long focal)
+void CalcProjection (s32int focal)
 {
-	int             i;
-	long            intang;
+	s16int             i;
+	s32int            intang;
 	float   angle;
 	double  tang;
 	double  planedist;
 	double  globinhalf;
-	int             halfview;
+	s16int             halfview;
 	double  halfangle,facedist;
 
 
@@ -674,7 +674,7 @@ void CalcProjection (long focal)
 	for (i=0;i<halfview;i++)
 	{
 	// start 1/2 pixel over, so viewangle bisects two middle pixels
-		tang = (long)i*VIEWGLOBAL/viewwidth/facedist;
+		tang = (s32int)i*VIEWGLOBAL/viewwidth/facedist;
 		angle = atan(tang);
 		intang = angle*radtoint;
 		pixelangle[halfview-1-i] = intang;
@@ -705,7 +705,7 @@ void CalcProjection (long focal)
 
 void SetupWalls (void)
 {
-	int     i;
+	s16int     i;
 
 	for (i=1;i<MAXWALLTILES;i++)
 	{
@@ -726,7 +726,7 @@ void SetupWalls (void)
 
 void SignonScreen (void)                        // VGA version
 {
-	unsigned        segstart,seglength;
+	u16int        segstart,seglength;
 
 	VL_SetVGAPlaneMode ();
 	VL_TestPaletteSet ();
@@ -816,9 +816,9 @@ void FinishSignon (void)
 =================
 */
 
-boolean MS_CheckParm (char far *check)
+int MS_CheckParm (char far *check)
 {
-	int             i;
+	s16int             i;
 	char    *parm;
 
 	for (i = 1;i<_argc;i++)
@@ -846,7 +846,7 @@ boolean MS_CheckParm (char far *check)
 =====================
 */
 
-static  int     wolfdigimap[] =
+static  s16int     wolfdigimap[] =
 		{
 			// These first sounds are in the upload version
 #ifndef SPEAR
@@ -961,7 +961,7 @@ static  int     wolfdigimap[] =
 
 void InitDigiMap (void)
 {
-	int                     *map;
+	s16int                     *map;
 
 	for (map = wolfdigimap;*map != LASTSOUND;map += 2)
 		DigiMap[map[0]] = map[1];
@@ -1014,8 +1014,8 @@ CP_itemtype far MusicMenu[]=
 #ifndef SPEARDEMO
 void DoJukebox(void)
 {
-	int which,lastsong=-1;
-	unsigned start,songs[]=
+	s16int which,lastsong=-1;
+	u16int start,songs[]=
 		{
 #ifndef SPEAR
 			GETTHEM_MUS,
@@ -1144,8 +1144,8 @@ void DoJukebox(void)
 
 void InitGame (void)
 {
-	int                     i,x,y;
-	unsigned        *blockstart;
+	s16int                     i,x,y;
+	u16int        *blockstart;
 
 	if (MS_CheckParm ("virtual"))
 		virtualreality = true;
@@ -1171,12 +1171,12 @@ void InitGame (void)
 	if (mminfo.mainmem < 257000L && !MS_CheckParm("debugmode"))
 #endif
 	{
-		memptr screen;
+		uchar *screen;
 
 		CA_CacheGrChunk (ERRORSCREEN);
 		screen = grsegs[ERRORSCREEN];
 		ShutdownId();
-		movedata ((unsigned)screen,7+7*160,0xb800,0,17*160);
+		movedata ((u16int)screen,7+7*160,0xb800,0,17*160);
 		gotoxy (1,23);
 		exit(1);
 	}
@@ -1235,7 +1235,7 @@ void InitGame (void)
 
 #if 0
 {
-int temp,i;
+s16int temp,i;
 temp = viewsize;
 	profilehandle = open("SCALERS.TXT", O_CREAT | O_WRONLY | O_TEXT);
 for (i=1;i<20;i++)
@@ -1275,7 +1275,7 @@ close(profilehandle);
 ==========================
 */
 
-boolean SetViewSize (unsigned width, unsigned height)
+int SetViewSize (u16int width, u16int height)
 {
 	viewwidth = width&~15;                  // must be divisable by 16
 	viewheight = height&~1;                 // must be even
@@ -1306,9 +1306,9 @@ boolean SetViewSize (unsigned width, unsigned height)
 }
 
 
-void ShowViewSize (int width)
+void ShowViewSize (s16int width)
 {
-	int     oldwidth,oldheight;
+	s16int     oldwidth,oldheight;
 
 	oldwidth = viewwidth;
 	oldheight = viewheight;
@@ -1322,7 +1322,7 @@ void ShowViewSize (int width)
 }
 
 
-void NewViewSize (int width)
+void NewViewSize (s16int width)
 {
 	CA_UpLevel ();
 	MM_SortMem ();
@@ -1345,8 +1345,8 @@ void NewViewSize (int width)
 
 void Quit (char *error)
 {
-	unsigned        finscreen;
-	memptr	screen;
+	u16int        finscreen;
+	uchar *screen;
 
 	if (virtualreality)
 		geninterrupt(0x61);
@@ -1370,7 +1370,7 @@ void Quit (char *error)
 
 	if (error && *error)
 	{
-	  movedata ((unsigned)screen,7,0xb800,0,7*160);
+	  movedata ((u16int)screen,7,0xb800,0,7*160);
 	  gotoxy (10,4);
 	  puts(error);
 	  gotoxy (1,8);
@@ -1381,7 +1381,7 @@ void Quit (char *error)
 	{
 		clrscr();
 		#ifndef JAPAN
-		movedata ((unsigned)screen,7,0xb800,0,4000);
+		movedata ((u16int)screen,7,0xb800,0,4000);
 		gotoxy(1,24);
 		#endif
 //asm	mov	bh,0
@@ -1410,10 +1410,10 @@ static  char *ParmStrings[] = {"baby","easy","normal","hard",""};
 
 void    DemoLoop (void)
 {
-	static int LastDemo;
-	int     i,level;
-	long nsize;
-	memptr	nullblock;
+	static s16int LastDemo;
+	s16int     i,level;
+	s32int nsize;
+	uchar *nullblock;
 
 //
 // check for launch from ted
@@ -1449,7 +1449,7 @@ void    DemoLoop (void)
 //
 
 
-//	nsize = (long)40*1024;
+//	nsize = (s32int)40*1024;
 //	MM_GetPtr(&nullblock,nsize);
 
 #ifndef DEMOTEST
@@ -1585,7 +1585,7 @@ char    *nosprtxt[] = {"nospr",nil};
 
 void main (void)
 {
-	int     i;
+	s16int     i;
 
 
 #ifdef BETA

@@ -17,7 +17,6 @@
 #define	MaxJoys		2
 #define	NumCodes	128
 
-typedef	byte		ScanCode;
 #define	sc_None			0
 #define	sc_Bad			0xff
 #define	sc_Return		0x1c
@@ -132,20 +131,20 @@ typedef	enum		{
 						dir_None
 					} Direction;
 typedef	struct		{
-						boolean		button0,button1,button2,button3;
-						int			x,y;
+						int		button0,button1,button2,button3;
+						s16int			x,y;
 						Motion		xaxis,yaxis;
 						Direction	dir;
 					} CursorInfo;
 typedef	CursorInfo	ControlInfo;
 typedef	struct		{
-						ScanCode	button0,button1,
+						u8int	button0,button1,
 									upleft,		up,		upright,
 									left,				right,
 									downleft,	down,	downright;
 					} KeyboardDef;
 typedef	struct		{
-						word		joyMinX,joyMinY,
+						u16int		joyMinX,joyMinY,
 									threshMinX,threshMinY,
 									threshMaxX,threshMaxY,
 									joyMaxX,joyMaxY,
@@ -153,19 +152,19 @@ typedef	struct		{
 									joyMultXH,joyMultYH;
 					} JoystickDef;
 // Global variables
-extern	boolean		Keyboard[],
+extern	int		Keyboard[],
 					MousePresent,
 					JoysPresent[];
-extern	boolean		Paused;
+extern	int		Paused;
 extern	char		LastASCII;
-extern	ScanCode	LastScan;
+extern	u8int	LastScan;
 extern	KeyboardDef	KbdDefs;
 extern	JoystickDef	JoyDefs[];
 extern	ControlType	Controls[MaxPlayers];
 
 extern	Demo		DemoMode;
-extern	byte _seg	*DemoBuffer;
-extern	word		DemoOffset,DemoSize;
+extern	u8int _seg	*DemoBuffer;
+extern	u16int		DemoOffset,DemoSize;
 
 // Function prototypes
 #define	IN_KeyDown(code)	(Keyboard[(code)])
@@ -174,29 +173,29 @@ extern	word		DemoOffset,DemoSize;
 
 // DEBUG - put names in prototypes
 extern	void		IN_Startup(void),IN_Shutdown(void),
-					IN_Default(boolean gotit,ControlType in),
+					IN_Default(int gotit,ControlType in),
 					IN_SetKeyHook(void (*)()),
 					IN_ClearKeysDown(void),
 					IN_ReadCursor(CursorInfo *),
-					IN_ReadControl(int,ControlInfo *),
-					IN_SetControlType(int,ControlType),
-					IN_GetJoyAbs(word joy,word *xp,word *yp),
-					IN_SetupJoy(word joy,word minx,word maxx,
-								word miny,word maxy),
+					IN_ReadControl(s16int,ControlInfo *),
+					IN_SetControlType(s16int,ControlType),
+					IN_GetJoyAbs(u16int joy,u16int *xp,u16int *yp),
+					IN_SetupJoy(u16int joy,u16int minx,u16int maxx,
+								u16int miny,u16int maxy),
 					IN_StopDemo(void),IN_FreeDemoBuffer(void),
 					IN_Ack(void),IN_AckBack(void);
-extern	boolean		IN_UserInput(longword delay);
+extern	int		IN_UserInput(u32int delay);
 extern	char		IN_WaitForASCII(void);
-extern	ScanCode	IN_WaitForKey(void);
-extern	word		IN_GetJoyButtonsDB(word joy);
-extern	byte		*IN_GetScanName(ScanCode);
+extern	u8int	IN_WaitForKey(void);
+extern	u16int		IN_GetJoyButtonsDB(u16int joy);
+extern	u8int		*IN_GetScanName(u8int);
 
 
-byte	IN_MouseButtons (void);
-byte	IN_JoyButtons (void);
+u8int	IN_MouseButtons (void);
+u8int	IN_JoyButtons (void);
 
-void INL_GetJoyDelta(word joy,int *dx,int *dy);
+void INL_GetJoyDelta(u16int joy,s16int *dx,s16int *dy);
 void IN_StartAck(void);
-boolean IN_CheckAck (void);
+int IN_CheckAck (void);
 
 #endif

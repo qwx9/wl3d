@@ -24,8 +24,8 @@
 typedef	struct
 		{
 			char	name[MaxHighName + 1];
-			long	score;
-			word	completed,episode;
+			s32int	score;
+			u16int	completed,episode;
 		} HighScore;
 
 #define	MaxGameName		32
@@ -33,8 +33,8 @@ typedef	struct
 typedef	struct
 		{
 			char	signature[4];
-			word	*oldtest;
-			boolean	present;
+			u16int	*oldtest;
+			int	present;
 			char	name[MaxGameName + 1];
 		} SaveGame;
 
@@ -42,7 +42,7 @@ typedef	struct
 
 typedef	struct
 		{
-			int	x,y,
+			s16int	x,y,
 				w,h,
 				px,py;
 		} WindowRec;	// Record used to save & restore screen windows
@@ -56,29 +56,29 @@ typedef	enum
 		} GameDiff;
 
 //	Hack import for TED launch support
-extern	boolean		tedlevel;
-extern	int			tedlevelnum;
+extern	int		tedlevel;
+extern	s16int			tedlevelnum;
 extern	void		TEDDeath(void);
 
-extern	boolean		ingame,		// Set by game code if a game is in progress
+extern	int		ingame,		// Set by game code if a game is in progress
 					abortgame,	// Set if a game load failed
 					loadedgame,	// Set if the current game was loaded
 					NoWait,
 					HighScoresDirty;
 extern	char		*abortprogram;	// Set to error msg if program is dying
 extern	GameDiff	restartgame;	// Normally gd_Continue, else starts game
-extern	word		PrintX,PrintY;	// Current printing location in the window
-extern	word		WindowX,WindowY,// Current location of window
+extern	u16int		PrintX,PrintY;	// Current printing location in the window
+extern	u16int		WindowX,WindowY,// Current location of window
 					WindowW,WindowH;// Current size of window
 
-extern	boolean		Button0,Button1,
+extern	int		Button0,Button1,
 					CursorBad;
-extern	int			CursorX,CursorY;
+extern	s16int			CursorX,CursorY;
 
-extern	void		(*USL_MeasureString)(char far *,word *,word *),
+extern	void		(*USL_MeasureString)(char far *,u16int *,u16int *),
 					(*USL_DrawString)(char far *);
 
-extern	boolean		(*USL_SaveGame)(int),(*USL_LoadGame)(int);
+extern	int		(*USL_SaveGame)(s16int),(*USL_LoadGame)(s16int);
 extern	void		(*USL_ResetGame)(void);
 extern	SaveGame	Games[MaxSaveGames];
 extern	HighScore	Scores[];
@@ -88,36 +88,36 @@ extern	HighScore	Scores[];
 extern	void	US_Startup(void),
 				US_Setup(void),
 				US_Shutdown(void),
-				US_InitRndT(boolean randomize),
-				US_SetLoadSaveHooks(boolean (*load)(int),
-									boolean (*save)(int),
+				US_InitRndT(int randomize),
+				US_SetLoadSaveHooks(int (*load)(s16int),
+									int (*save)(s16int),
 									void (*reset)(void)),
 				US_TextScreen(void),
 				US_UpdateTextScreen(void),
 				US_FinishTextScreen(void),
-				US_DrawWindow(word x,word y,word w,word h),
-				US_CenterWindow(word,word),
+				US_DrawWindow(u16int x,u16int y,u16int w,u16int h),
+				US_CenterWindow(u16int,u16int),
 				US_SaveWindow(WindowRec *win),
 				US_RestoreWindow(WindowRec *win),
 				US_ClearWindow(void),
-				US_SetPrintRoutines(void (*measure)(char far *,word *,word *),
+				US_SetPrintRoutines(void (*measure)(char far *,u16int *,u16int *),
 									void (*print)(char far *)),
 				US_PrintCentered(char far *s),
 				US_CPrint(char far *s),
 				US_CPrintLine(char far *s),
 				US_Print(char far *s),
-				US_PrintUnsigned(longword n),
-				US_PrintSigned(long n),
+				US_PrintUnsigned(u32int n),
+				US_PrintSigned(s32int n),
 				US_StartCursor(void),
 				US_ShutCursor(void),
-				US_CheckHighScore(long score,word other),
-				US_DisplayHighScores(int which);
-extern	boolean	US_UpdateCursor(void),
-				US_LineInput(int x,int y,char *buf,char *def,boolean escok,
-								int maxchars,int maxwidth);
-extern	int		US_CheckParm(char *parm,char **strings),
+				US_CheckHighScore(s32int score,u16int other),
+				US_DisplayHighScores(s16int which);
+extern	int	US_UpdateCursor(void),
+				US_LineInput(s16int x,s16int y,char *buf,char *def,int escok,
+								s16int maxchars,s16int maxwidth);
+extern	s16int		US_CheckParm(char *parm,char **strings),
 				US_RndT(void);
 
 		void	USL_PrintInCenter(char far *s,Rct r);
-		char 	*USL_GiveSaveName(word game);
+		char 	*USL_GiveSaveName(u16int game);
 #endif

@@ -24,7 +24,7 @@
 */
 
 
-int DebugKeys (void);
+s16int DebugKeys (void);
 
 /*
 =============================================================================
@@ -35,8 +35,8 @@ int DebugKeys (void);
 */
 
 
-int	maporgx;
-int	maporgy;
+s16int	maporgx;
+s16int	maporgy;
 enum {mapview,tilemapview,actoratview,visview}	viewtype;
 
 void ViewMap (void);
@@ -53,9 +53,9 @@ void ViewMap (void);
 
 void DebugMemory (void)
 {
-	int	i;
+	s16int	i;
 	char    scratch[80],str[10];
-	long	mem;
+	s32int	mem;
 	spritetype _seg	*block;
 
 	CenterWindow (16,7);
@@ -85,7 +85,7 @@ void DebugMemory (void)
 
 void CountObjects (void)
 {
-	int	i,total,count,active,inactive,doors;
+	s16int	i,total,count,active,inactive,doors;
 	objtype	*obj;
 
 	CenterWindow (16,7);
@@ -136,11 +136,11 @@ void CountObjects (void)
 
 void PicturePause (void)
 {
-	int			i;
-	byte		p;
-	unsigned	x;
-	byte		far	*dest,far *src;
-	memptr		buffer;
+	s16int			i;
+	u8int		p;
+	u16int	x;
+	u8int		far	*dest,far *src;
+	uchar *buffer;
 
 	VW_ColorBorder (15);
 	FinishPaletteShifts ();
@@ -166,7 +166,7 @@ void PicturePause (void)
 	for (p=0;p<4;p++)
 	{
 	   src = MK_FP(0xa000,displayofs);
-	   dest = (byte far *)buffer+p;
+	   dest = (u8int far *)buffer+p;
 	   VGAREADMAP(p);
 	   for (x=0;x<16000;x++,dest+=4)
 		   *dest = *src++;
@@ -177,7 +177,7 @@ void PicturePause (void)
 	for (p=0;p<4;p++)
 	{
 		src = MK_FP(0xa000,0);
-		dest = (byte far *)buffer+51200+p;
+		dest = (u8int far *)buffer+51200+p;
 		VGAREADMAP(p);
 		for (x=0;x<3200;x++,dest+=4)
 			*dest = *src++;
@@ -216,15 +216,15 @@ void PicturePause (void)
 #pragma warn -pia
 void ShapeTest (void)
 {
-extern	word	NumDigi;
-extern	word	_seg *DigiList;
+extern	u16int	NumDigi;
+extern	u16int	_seg *DigiList;
 static	char	buf[10];
 
-	boolean			done;
-	ScanCode		scan;
-	int				i,j,k,x;
-	longword		l;
-	memptr			addr;
+	int			done;
+	u8int		scan;
+	s16int				i,j,k,x;
+	u32int l;
+	uchar *addr;
 	PageListStruct	far *page;
 
 	CenterWindow(20,16);
@@ -268,7 +268,7 @@ static	char	buf[10];
 
 		US_Print("\n Address: ");
 		addr = PM_GetPageAddress(i);
-		sprintf(buf,"0x%04x",(word)addr);
+		sprintf(buf,"0x%04x",(u16int)addr);
 		US_Print(buf);
 
 		if (addr)
@@ -281,7 +281,7 @@ static	char	buf[10];
 				bufferofs += 32*SCREENWIDTH;
 				postx = 128;
 				postwidth = 1;
-				postsource = ((long)((unsigned)addr))<<16;
+				postsource = ((s32int)((u16int)addr))<<16;
 				for (x=0;x<64;x++,postx++,postsource+=64)
 				{
 					wallheight[postx] = 256;
@@ -314,7 +314,7 @@ static	char	buf[10];
 			}
 			else
 			{
-				byte far *dp = (byte far *)MK_FP(addr,0);
+				u8int far *dp = (u8int far *)MK_FP(addr,0);
 				for (j = 0;j < NumDigi;j++)
 				{
 					k = (DigiList[(j * 2) + 1] + (PMPageSize - 1)) / PMPageSize;
@@ -335,8 +335,8 @@ static	char	buf[10];
 				}
 				for (j = 0;j < page->length;j += 32)
 				{
-					byte v = dp[j];
-					int v2 = (unsigned)v;
+					u8int v = dp[j];
+					s16int v2 = (u16int)v;
 					v2 -= 128;
 					v2 /= 4;
 					if (v2 < 0)
@@ -412,10 +412,10 @@ static	char	buf[10];
 ================
 */
 
-int DebugKeys (void)
+s16int DebugKeys (void)
 {
-	boolean esc;
-	int level,i;
+	int esc;
+	s16int level,i;
 
 	if (Keyboard[sc_B])		// B = border color
 	{
@@ -610,8 +610,8 @@ int DebugKeys (void)
 
 void OverheadRefresh (void)
 {
-	unsigned	x,y,endx,endy,sx,sy;
-	unsigned	tile;
+	u16int	x,y,endx,endy,sx,sy;
+	u16int	tile;
 
 
 	endx = maporgx+VIEWTILEX;
@@ -639,7 +639,7 @@ void OverheadRefresh (void)
 				break;
 #endif
 			case actoratview:
-				tile = (unsigned)actorat[x][y];
+				tile = (u16int)actorat[x][y];
 				break;
 			}
 
@@ -668,7 +668,7 @@ void OverheadRefresh (void)
 
 void ViewMap (void)
 {
-	boolean		button0held;
+	int		button0held;
 
 	viewtype = actoratview;
 //	button0held = false;

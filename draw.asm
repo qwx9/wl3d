@@ -71,7 +71,7 @@ CODESEG
 ;
 ; xpartialbyystep
 ;
-; multiplies long [ystep] (possibly negative), by word [xpartial] (in BX)
+; multiplies s32int [ystep] (possibly negative), by word [xpartial] (in BX)
 ;
 ; returns dx:ax
 ; trashes bx,cx,di
@@ -126,7 +126,7 @@ ENDP
 ;
 ; ypartialbyxstep
 ;
-; multiplies long [xstep] (possibly negative), by word [ypartial] (in BP)
+; multiplies s32int [xstep] (possibly negative), by word [ypartial] (in BP)
 ;
 ; returns dx:ax
 ; trashes cx,di,bp

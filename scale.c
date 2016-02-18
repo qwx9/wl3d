@@ -14,11 +14,11 @@
 */
 
 t_compscale _seg *scaledirectory[MAXSCALEHEIGHT+1];
-long			fullscalefarcall[MAXSCALEHEIGHT+1];
+s32int			fullscalefarcall[MAXSCALEHEIGHT+1];
 
-int			maxscale,maxscaleshl2;
+s16int			maxscale,maxscaleshl2;
 
-boolean	insetupscaling;
+int	insetupscaling;
 
 /*
 =============================================================================
@@ -29,9 +29,9 @@ boolean	insetupscaling;
 */
 
 t_compscale 	_seg *work;
-unsigned BuildCompScale (int height, memptr *finalspot);
+u16int BuildCompScale (s16int height, uchar **finalspot);
 
-int			stepbytwo;
+s16int			stepbytwo;
 
 //===========================================================================
 
@@ -57,10 +57,10 @@ void far BadScale (void)
 ==========================
 */
 
-void SetupScaling (int maxscaleheight)
+void SetupScaling (s16int maxscaleheight)
 {
-	int		i,x,y;
-	byte	far *dest;
+	s16int		i,x,y;
+	u8int	far *dest;
 
 	insetupscaling = true;
 
@@ -75,7 +75,7 @@ void SetupScaling (int maxscaleheight)
 	for (i=1;i<MAXSCALEHEIGHT;i++)
 	{
 		if (scaledirectory[i])
-			MM_FreePtr (&(memptr)scaledirectory[i]);
+			MM_FreePtr (&(uchar *)scaledirectory[i]);
 		if (i>=stepbytwo)
 			i += 2;
 	}
@@ -87,15 +87,15 @@ void SetupScaling (int maxscaleheight)
 // build the compiled scalers
 //
 	stepbytwo = viewheight/2;	// save space by double stepping
-	MM_GetPtr (&(memptr)work,20000);
+	MM_GetPtr (&(uchar *)work,20000);
 
 	for (i=1;i<=maxscaleheight;i++)
 	{
-		BuildCompScale (i*2,&(memptr)scaledirectory[i]);
+		BuildCompScale (i*2,&(uchar *)scaledirectory[i]);
 		if (i>=stepbytwo)
 			i+= 2;
 	}
-	MM_FreePtr (&(memptr)work);
+	MM_FreePtr (&(uchar *)work);
 
 //
 // compact memory and lock down scalers
@@ -103,8 +103,8 @@ void SetupScaling (int maxscaleheight)
 	MM_SortMem ();
 	for (i=1;i<=maxscaleheight;i++)
 	{
-		MM_SetLock (&(memptr)scaledirectory[i],true);
-		fullscalefarcall[i] = (unsigned)scaledirectory[i];
+		MM_SetLock (&(uchar *)scaledirectory[i],true);
+		fullscalefarcall[i] = (u16int)scaledirectory[i];
 		fullscalefarcall[i] <<=16;
 		fullscalefarcall[i] += scaledirectory[i]->codeofs[0];
 		if (i>=stepbytwo)
@@ -123,7 +123,7 @@ void SetupScaling (int maxscaleheight)
 // check for oversize wall drawing
 //
 	for (i=maxscaleheight;i<MAXSCALEHEIGHT;i++)
-		fullscalefarcall[i] = (long)BadScale;
+		fullscalefarcall[i] = (s32int)BadScale;
 
 	insetupscaling = false;
 }
@@ -150,17 +150,17 @@ void SetupScaling (int maxscaleheight)
 ========================
 */
 
-unsigned BuildCompScale (int height, memptr *finalspot)
+u16int BuildCompScale (s16int height, uchar **finalspot)
 {
-	byte		far *code;
+	u8int		far *code;
 
-	int			i;
-	long		fix,step;
-	unsigned	src,totalscaled,totalsize;
-	int			startpix,endpix,toppix;
+	s16int			i;
+	s32int		fix,step;
+	u16int	src,totalscaled,totalsize;
+	s16int			startpix,endpix,toppix;
 
 
-	step = ((long)height<<16) / 64;
+	step = ((s32int)height<<16) / 64;
 	code = &work->code[0];
 	toppix = (viewheight-height)/2;
 	fix = 0;
@@ -210,7 +210,7 @@ unsigned BuildCompScale (int height, memptr *finalspot)
 			*code++ = 0x26;
 			*code++ = 0x88;
 			*code++ = 0x85;
-			*((unsigned far *)code)++ = startpix*SCREENBWIDE;
+			*((u16int far *)code)++ = startpix*SCREENBWIDE;
 		}
 
 	}
@@ -222,7 +222,7 @@ unsigned BuildCompScale (int height, memptr *finalspot)
 
 	totalsize = FP_OFF(code);
 	MM_GetPtr (finalspot,totalsize);
-	_fmemcpy ((byte _seg *)(*finalspot),(byte _seg *)work,totalsize);
+	_fmemcpy ((u8int _seg *)(*finalspot),(u8int _seg *)work,totalsize);
 
 	return totalsize;
 }
@@ -238,12 +238,12 @@ unsigned BuildCompScale (int height, memptr *finalspot)
 =======================
 */
 
-extern	int			slinex,slinewidth;
-extern	unsigned	far *linecmds;
-extern	long		linescale;
-extern	unsigned	maskword;
+extern	s16int			slinex,slinewidth;
+extern	u16int	far *linecmds;
+extern	s32int		linescale;
+extern	u16int	maskword;
 
-byte	mask1,mask2,mask3;
+u8int	mask1,mask2,mask3;
 
 
 void near ScaleLine (void)
@@ -416,16 +416,16 @@ asm	jmp	scaletriple					// do the next segment
 =======================
 */
 
-static	long		longtemp;
+static	s32int		longtemp;
 
-void ScaleShape (int xcenter, int shapenum, unsigned height)
+void ScaleShape (s16int xcenter, s16int shapenum, u16int height)
 {
 	t_compshape	_seg *shape;
 	t_compscale _seg *comptable;
-	unsigned	scale,srcx,stopx,tempx;
-	int			t;
-	unsigned	far *cmdptr;
-	boolean		leftvis,rightvis;
+	u16int	scale,srcx,stopx,tempx;
+	s16int			t;
+	u16int	far *cmdptr;
+	int		leftvis,rightvis;
 
 
 	shape = PM_GetSpritePage (shapenum);
@@ -435,8 +435,8 @@ void ScaleShape (int xcenter, int shapenum, unsigned height)
 		return;								// too close or far away
 	comptable = scaledirectory[scale];
 
-	*(((unsigned *)&linescale)+1)=(unsigned)comptable;	// seg of far call
-	*(((unsigned *)&linecmds)+1)=(unsigned)shape;		// seg of shape
+	*(((u16int *)&linescale)+1)=(u16int)comptable;	// seg of far call
+	*(((u16int *)&linecmds)+1)=(u16int)shape;		// seg of shape
 
 //
 // scale to the left (from pixel 31 to shape->leftpix)
@@ -448,7 +448,7 @@ void ScaleShape (int xcenter, int shapenum, unsigned height)
 
 	while ( --srcx >=stopx && slinex>0)
 	{
-		(unsigned)linecmds = *cmdptr--;
+		(u16int)linecmds = *cmdptr--;
 		if ( !(slinewidth = comptable->width[srcx]) )
 			continue;
 
@@ -531,7 +531,7 @@ void ScaleShape (int xcenter, int shapenum, unsigned height)
 
 	while ( ++srcx <= stopx && (slinex+=slinewidth)<viewwidth)
 	{
-		(unsigned)linecmds = *cmdptr++;
+		(u16int)linecmds = *cmdptr++;
 		if ( !(slinewidth = comptable->width[srcx]) )
 			continue;
 
@@ -622,14 +622,14 @@ void ScaleShape (int xcenter, int shapenum, unsigned height)
 =======================
 */
 
-void SimpleScaleShape (int xcenter, int shapenum, unsigned height)
+void SimpleScaleShape (s16int xcenter, s16int shapenum, u16int height)
 {
 	t_compshape	_seg *shape;
 	t_compscale _seg *comptable;
-	unsigned	scale,srcx,stopx,tempx;
-	int			t;
-	unsigned	far *cmdptr;
-	boolean		leftvis,rightvis;
+	u16int	scale,srcx,stopx,tempx;
+	s16int			t;
+	u16int	far *cmdptr;
+	int		leftvis,rightvis;
 
 
 	shape = PM_GetSpritePage (shapenum);
@@ -637,8 +637,8 @@ void SimpleScaleShape (int xcenter, int shapenum, unsigned height)
 	scale = height>>1;
 	comptable = scaledirectory[scale];
 
-	*(((unsigned *)&linescale)+1)=(unsigned)comptable;	// seg of far call
-	*(((unsigned *)&linecmds)+1)=(unsigned)shape;		// seg of shape
+	*(((u16int *)&linescale)+1)=(u16int)comptable;	// seg of far call
+	*(((u16int *)&linecmds)+1)=(u16int)shape;		// seg of shape
 
 //
 // scale to the left (from pixel 31 to shape->leftpix)
@@ -650,7 +650,7 @@ void SimpleScaleShape (int xcenter, int shapenum, unsigned height)
 
 	while ( --srcx >=stopx )
 	{
-		(unsigned)linecmds = *cmdptr--;
+		(u16int)linecmds = *cmdptr--;
 		if ( !(slinewidth = comptable->width[srcx]) )
 			continue;
 
@@ -678,7 +678,7 @@ void SimpleScaleShape (int xcenter, int shapenum, unsigned height)
 
 	while ( ++srcx <= stopx )
 	{
-		(unsigned)linecmds = *cmdptr++;
+		(u16int)linecmds = *cmdptr++;
 		if ( !(slinewidth = comptable->width[srcx]) )
 			continue;
 
@@ -697,26 +697,26 @@ void SimpleScaleShape (int xcenter, int shapenum, unsigned height)
 //
 
 
-byte	mapmasks1[4][8] = {
+u8int	mapmasks1[4][8] = {
 {1 ,3 ,7 ,15,15,15,15,15},
 {2 ,6 ,14,14,14,14,14,14},
 {4 ,12,12,12,12,12,12,12},
 {8 ,8 ,8 ,8 ,8 ,8 ,8 ,8} };
 
-byte	mapmasks2[4][8] = {
+u8int	mapmasks2[4][8] = {
 {0 ,0 ,0 ,0 ,1 ,3 ,7 ,15},
 {0 ,0 ,0 ,1 ,3 ,7 ,15,15},
 {0 ,0 ,1 ,3 ,7 ,15,15,15},
 {0 ,1 ,3 ,7 ,15,15,15,15} };
 
-byte	mapmasks3[4][8] = {
+u8int	mapmasks3[4][8] = {
 {0 ,0 ,0 ,0 ,0 ,0 ,0 ,0},
 {0 ,0 ,0 ,0 ,0 ,0 ,0 ,1},
 {0 ,0 ,0 ,0 ,0 ,0 ,1 ,3},
 {0 ,0 ,0 ,0 ,0 ,1 ,3 ,7} };
 
 
-unsigned	wordmasks[8][8] = {
+u16int	wordmasks[8][8] = {
 {0x0080,0x00c0,0x00e0,0x00f0,0x00f8,0x00fc,0x00fe,0x00ff},
 {0x0040,0x0060,0x0070,0x0078,0x007c,0x007e,0x007f,0x807f},
 {0x0020,0x0030,0x0038,0x003c,0x003e,0x003f,0x803f,0xc03f},
@@ -726,8 +726,8 @@ unsigned	wordmasks[8][8] = {
 {0x0002,0x0003,0x8003,0xc003,0xe003,0xf003,0xf803,0xfc03},
 {0x0001,0x8001,0xc001,0xe001,0xf001,0xf801,0xfc01,0xfe01} };
 
-int			slinex,slinewidth;
-unsigned	far *linecmds;
-long		linescale;
-unsigned	maskword;
+s16int			slinex,slinewidth;
+u16int	far *linecmds;
+s32int		linescale;
+u16int	maskword;
 

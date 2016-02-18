@@ -4,10 +4,10 @@
 //		particular I/O location
 //
 ///////////////////////////////////////////////////////////////////////////
-static boolean
-SDL_CheckSB(int port)
+static int
+SDL_CheckSB(s16int port)
 {
-	int	i;
+	s16int	i;
 
 	sbLocation = port << 4;		// Initialize stuff for later use
 
@@ -55,10 +55,10 @@ asm	loop usecloop
 //		it just passes it directly to SDL_CheckSB()
 //
 ///////////////////////////////////////////////////////////////////////////
-static boolean
-SDL_DetectSoundBlaster(int port)
+static int
+SDL_DetectSoundBlaster(s16int port)
 {
-	int	i;
+	s16int	i;
 
 	if (port == 0)					// If user specifies default, use 2
 		port = 2;

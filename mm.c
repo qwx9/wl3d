@@ -47,9 +47,9 @@ EMS / XMS unmanaged routines
 
 typedef struct mmblockstruct
 {
-	unsigned	start,length;
-	unsigned	attributes;
-	memptr		*useptr;	// pointer to the segment start
+	u16int	start,length;
+	u16int	attributes;
+	uchar **useptr;	// pointer to the segment start
 	struct mmblockstruct far *next;
 } mmblocktype;
 
@@ -70,8 +70,8 @@ typedef struct mmblockstruct
 */
 
 mminfotype	mminfo;
-memptr		bufferseg;
-boolean		mmerror;
+uchar *bufferseg;
+int		mmerror;
 
 void		(* beforesort) (void);
 void		(* aftersort) (void);
@@ -84,7 +84,7 @@ void		(* aftersort) (void);
 =============================================================================
 */
 
-boolean		mmstarted;
+int		mmstarted;
 
 void far	*farheap;
 void		*nearheap;
@@ -92,13 +92,13 @@ void		*nearheap;
 mmblocktype	far mmblocks[MAXBLOCKS]
 			,far *mmhead,far *mmfree,far *mmrover,far *mmnew;
 
-boolean		bombonerror;
+int		bombonerror;
 
-//unsigned	totalEMSpages,freeEMSpages,EMSpageframe,EMSpagesmapped,EMShandle;
+//u16int	totalEMSpages,freeEMSpages,EMSpageframe,EMSpagesmapped,EMShandle;
 
 void		(* XMSaddr) (void);		// far pointer to XMS driver
 
-unsigned	numUMBs,UMBbase[MAXUMBS];
+u16int	numUMBs,UMBbase[MAXUMBS];
 
 //==========================================================================
 
@@ -106,12 +106,12 @@ unsigned	numUMBs,UMBbase[MAXUMBS];
 // local prototypes
 //
 
-boolean		MML_CheckForEMS (void);
+int		MML_CheckForEMS (void);
 void 		MML_ShutdownEMS (void);
 void 		MM_MapEMS (void);
-boolean 	MML_CheckForXMS (void);
+int 	MML_CheckForXMS (void);
 void 		MML_ShutdownXMS (void);
-void		MML_UseSpace (unsigned segstart, unsigned seglength);
+void		MML_UseSpace (u16int segstart, u16int seglength);
 void 		MML_ClearBlock (void);
 
 //==========================================================================
@@ -126,7 +126,7 @@ void 		MML_ClearBlock (void);
 =======================
 */
 
-boolean MML_CheckForXMS (void)
+int MML_CheckForXMS (void)
 {
 	numUMBs = 0;
 
@@ -155,7 +155,7 @@ good:
 
 void MML_SetupXMS (void)
 {
-	unsigned	base,size;
+	u16int	base,size;
 
 asm	{
 	mov	ax,0x4310
@@ -207,8 +207,8 @@ done:;
 
 void MML_ShutdownXMS (void)
 {
-	int	i;
-	unsigned	base;
+	s16int	i;
+	u16int	base;
 
 	for (i=0;i<numUMBs;i++)
 	{
@@ -234,11 +234,11 @@ asm	call	[DWORD PTR XMSaddr]
 ======================
 */
 
-void MML_UseSpace (unsigned segstart, unsigned seglength)
+void MML_UseSpace (u16int segstart, u16int seglength)
 {
 	mmblocktype far *scan,far *last;
-	unsigned	oldend;
-	long		extra;
+	u16int	oldend;
+	s32int		extra;
 
 	scan = last = mmhead;
 	mmrover = mmhead;		// reset rover to start of memory
@@ -332,10 +332,10 @@ static	char *ParmStrings[] = {"noems","noxms",""};
 
 void MM_Startup (void)
 {
-	int i;
-	unsigned 	long length;
+	s16int i;
+	u32int length;
 	void far 	*start;
-	unsigned 	segstart,seglength,endfree;
+	u16int 	segstart,seglength,endfree;
 
 	if (mmstarted)
 		MM_Shutdown ();
@@ -432,12 +432,12 @@ void MM_Shutdown (void)
 ====================
 */
 
-void MM_GetPtr (memptr *baseptr,unsigned long size)
+void MM_GetPtr (uchar **baseptr,u32int size)
 {
 	mmblocktype far *scan,far *lastscan,far *endscan
 				,far *purge,far *next;
-	int			search;
-	unsigned	needed,startseg;
+	s16int			search;
+	u16int	needed,startseg;
 
 	needed = (size+15)/16;		// convert size from bytes to paragraphs
 
@@ -489,7 +489,7 @@ tryagain:
 			//
 				purge = lastscan->next;
 				lastscan->next = mmnew;
-				mmnew->start = *(unsigned *)baseptr = startseg;
+				mmnew->start = *(u16int *)baseptr = startseg;
 				mmnew->next = scan;
 				while ( purge != scan)
 				{	// free the purgable block
@@ -520,9 +520,9 @@ tryagain:
 	{
 
 extern char configname[];
-extern	boolean	insetupscaling;
-extern	int	viewsize;
-boolean SetViewSize (unsigned width, unsigned height);
+extern	int	insetupscaling;
+extern	s16int	viewsize;
+int SetViewSize (u16int width, u16int height);
 #define HEIGHTRATIO		0.50
 //
 // wolf hack -- size the view down
@@ -556,7 +556,7 @@ mmblocktype	far *savedmmnew;
 ====================
 */
 
-void MM_FreePtr (memptr *baseptr)
+void MM_FreePtr (uchar **baseptr)
 {
 	mmblocktype far *scan,far *last;
 
@@ -591,7 +591,7 @@ void MM_FreePtr (memptr *baseptr)
 =====================
 */
 
-void MM_SetPurge (memptr *baseptr, int purge)
+void MM_SetPurge (uchar **baseptr, s16int purge)
 {
 	mmblocktype far *start;
 
@@ -627,7 +627,7 @@ void MM_SetPurge (memptr *baseptr, int purge)
 =====================
 */
 
-void MM_SetLock (memptr *baseptr, boolean locked)
+void MM_SetLock (uchar **baseptr, int locked)
 {
 	mmblocktype far *start;
 
@@ -666,8 +666,8 @@ void MM_SetLock (memptr *baseptr, boolean locked)
 void MM_SortMem (void)
 {
 	mmblocktype far *scan,far *last,far *next;
-	unsigned	start,length,source,dest;
-	int			playing;
+	u16int	start,length,source,dest;
+	s16int			playing;
 
 	//
 	// lock down a currently playing sound
@@ -684,7 +684,7 @@ void MM_SortMem (void)
 			playing += STARTADLIBSOUNDS;
 			break;
 		}
-		MM_SetLock(&(memptr)audiosegs[playing],true);
+		MM_SetLock(&(uchar *)audiosegs[playing],true);
 	}
 
 
@@ -739,7 +739,7 @@ void MM_SortMem (void)
 					movedata(source,0,dest,0,length*16);
 
 					scan->start = start;
-					*(unsigned *)scan->useptr = start;
+					*(u16int *)scan->useptr = start;
 				}
 				start = scan->start + scan->length;
 			}
@@ -755,7 +755,7 @@ void MM_SortMem (void)
 		aftersort();
 
 	if (playing)
-		MM_SetLock(&(memptr)audiosegs[playing],false);
+		MM_SetLock(&(uchar *)audiosegs[playing],false);
 }
 
 
@@ -772,8 +772,8 @@ void MM_SortMem (void)
 void MM_ShowMemory (void)
 {
 	mmblocktype far *scan;
-	unsigned color,temp,x,y;
-	long	end,owner;
+	u16int color,temp,x,y;
+	s32int	end,owner;
 	char    scratch[80],str[10];
 
 	temp = bufferofs;
@@ -822,8 +822,8 @@ void MM_ShowMemory (void)
 void MM_DumpData (void)
 {
 	mmblocktype far *scan,far *best;
-	long	lowest,oldlowest;
-	unsigned	owner;
+	s32int	lowest,oldlowest;
+	u16int	owner;
 	char	lock,purge;
 	FILE	*dumpfile;
 
@@ -842,7 +842,7 @@ void MM_DumpData (void)
 		scan = mmhead;
 		while (scan)
 		{
-			owner = (unsigned)scan->useptr;
+			owner = (u16int)scan->useptr;
 
 			if (owner && owner<lowest && owner > oldlowest)
 			{
@@ -864,7 +864,7 @@ void MM_DumpData (void)
 			else
 				lock = '-';
 			fprintf (dumpfile,"0x%p (%c%c) = %u\n"
-			,(unsigned)lowest,lock,purge,best->length);
+			,(u16int)lowest,lock,purge,best->length);
 		}
 
 	} while (lowest != 0xffff);
@@ -886,9 +886,9 @@ void MM_DumpData (void)
 ======================
 */
 
-long MM_UnusedMemory (void)
+s32int MM_UnusedMemory (void)
 {
-	unsigned free;
+	u16int free;
 	mmblocktype far *scan;
 
 	free = 0;
@@ -916,9 +916,9 @@ long MM_UnusedMemory (void)
 ======================
 */
 
-long MM_TotalFree (void)
+s32int MM_TotalFree (void)
 {
-	unsigned free;
+	u16int free;
 	mmblocktype far *scan;
 
 	free = 0;
@@ -945,7 +945,7 @@ long MM_TotalFree (void)
 =====================
 */
 
-void MM_BombOnError (boolean bomb)
+void MM_BombOnError (int bomb)
 {
 	bombonerror = bomb;
 }

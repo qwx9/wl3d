@@ -8,7 +8,7 @@
 #ifndef	__ID_SD__
 #define	__ID_SD__
 
-void	alOut(byte n,byte b);
+void	alOut(u8int n,u8int b);
 
 #ifdef	__DEBUG__
 #define	__DEBUG_SoundMgr__
@@ -28,8 +28,8 @@ typedef	enum	{
 				}	SDSMode;
 typedef	struct
 		{
-			longword	length;
-			word		priority;
+			u32int	length;
+			u16int		priority;
 		} SoundCommon;
 
 //	PC Sound stuff
@@ -42,7 +42,7 @@ typedef	struct
 typedef	struct
 		{
 			SoundCommon	common;
-			byte		data[1];
+			u8int		data[1];
 		} PCSound;
 
 // 	Registers for the Sound Blaster card - needs to be offset by n0 (0x10,0x20,0x30,0x40,0x50,0x60)
@@ -84,8 +84,8 @@ typedef	struct
 typedef	struct
 		{
 			SoundCommon	common;
-			word		hertz;
-			byte		bits,
+			u16int		hertz;
+			u8int		bits,
 						reference,
 						data[1];
 		} SampledSound;
@@ -111,7 +111,7 @@ typedef	struct
 
 typedef	struct
 		{
-			byte	mChar,cChar,
+			u8int	mChar,cChar,
 					mScale,cScale,
 					mAttack,cAttack,
 					mSus,cSus,
@@ -128,7 +128,7 @@ typedef	struct
 		{
 			SoundCommon	common;
 			Instrument	inst;
-			byte		block,
+			u8int		block,
 						data[1];
 		} AdLibSound;
 
@@ -155,13 +155,13 @@ typedef	struct
 #if 1
 typedef	struct
 		{
-			word	length,
+			u16int	length,
 					values[1];
 		} MusicGroup;
 #else
 typedef	struct
 		{
-			word	flags,
+			u16int	flags,
 					count,
 					offsets[1];
 		} MusicGroup;
@@ -170,13 +170,13 @@ typedef	struct
 typedef	struct
 		{
 			/* This part needs to be set up by the user */
-			word        mood,far *moods[sqMaxMoods];
+			u16int        mood,far *moods[sqMaxMoods];
 
 			/* The rest is set up by the code */
 			Instrument	inst;
-			boolean		percussive;
-			word		far *seq;
-			longword	nextevent;
+			int		percussive;
+			u16int		far *seq;
+			u32int	nextevent;
 		} ActiveTrack;
 
 #define	sqmode_Normal		0
@@ -187,7 +187,7 @@ typedef	struct
 
 
 // Global variables
-extern	boolean		AdLibPresent,
+extern	int		AdLibPresent,
 					SoundSourcePresent,
 					SoundBlasterPresent,
 					NeedsMusic,					// For Caching Mgr
@@ -195,17 +195,17 @@ extern	boolean		AdLibPresent,
 extern	SDMode		SoundMode;
 extern	SDSMode		DigiMode;
 extern	SMMode		MusicMode;
-extern	boolean		DigiPlaying;
+extern	int		DigiPlaying;
 extern	int			DigiMap[];
-extern	longword	TimeCount;					// Global time in ticks
+extern	u32int	TimeCount;					// Global time in ticks
 
 // Function prototypes
 extern	void	SD_Startup(void),
 				SD_Shutdown(void),
-				SD_Default(boolean gotit,SDMode sd,SMMode sm),
+				SD_Default(int gotit,SDMode sd,SMMode sm),
 
 				SD_PositionSound(int leftvol,int rightvol);
-extern	boolean	SD_PlaySound(soundnames sound);
+extern	int	SD_PlaySound(soundnames sound);
 extern	void	SD_SetPosition(int leftvol,int rightvol),
 				SD_StopSound(void),
 				SD_WaitSoundDone(void),
@@ -216,13 +216,13 @@ extern	void	SD_SetPosition(int leftvol,int rightvol),
 				SD_FadeOutMusic(void),
 
 				SD_SetUserHook(void (*hook)(void));
-extern	boolean	SD_MusicPlaying(void),
+extern	int	SD_MusicPlaying(void),
 				SD_SetSoundMode(SDMode mode),
 				SD_SetMusicMode(SMMode mode);
-extern	word	SD_SoundPlaying(void);
+extern	u16int	SD_SoundPlaying(void);
 
 extern	void	SD_SetDigiDevice(SDSMode),
-				SD_PlayDigitized(word which,int leftpos,int rightpos),
+				SD_PlayDigitized(u16int which,int leftpos,int rightpos),
 				SD_StopDigitized(void),
 				SD_Poll(void);
 

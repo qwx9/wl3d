@@ -4,33 +4,33 @@
 
 #define	MAXVIEWHEIGHT	200
 
-int		spanstart[MAXVIEWHEIGHT/2];
+s16int		spanstart[MAXVIEWHEIGHT/2];
 
-fixed	stepscale[MAXVIEWHEIGHT/2];
-fixed	basedist[MAXVIEWHEIGHT/2];
+s32int	stepscale[MAXVIEWHEIGHT/2];
+s32int	basedist[MAXVIEWHEIGHT/2];
 
 extern	char	far	planepics[8192];	// 4k of ceiling, 4k of floor
 
-int		halfheight = 0;
+s16int		halfheight = 0;
 
-byte	far *planeylookup[MAXVIEWHEIGHT/2];
-unsigned	mirrorofs[MAXVIEWHEIGHT/2];
+u8int	far *planeylookup[MAXVIEWHEIGHT/2];
+u16int	mirrorofs[MAXVIEWHEIGHT/2];
 
-fixed	psin, pcos;
+s32int	psin, pcos;
 
-fixed FixedMul (fixed a, fixed b)
+s32int FixedMul (s32int a, s32int b)
 {
 	return (a>>8)*(b>>8);
 }
 
 
-int		mr_rowofs;
-int		mr_count;
-int		mr_xstep;
-int		mr_ystep;
-int		mr_xfrac;
-int		mr_yfrac;
-int		mr_dest;
+s16int		mr_rowofs;
+s16int		mr_count;
+s16int		mr_xstep;
+s16int		mr_ystep;
+s16int		mr_xfrac;
+s16int		mr_yfrac;
+s16int		mr_dest;
 
 
 /*
@@ -42,15 +42,15 @@ int		mr_dest;
 ==============
 */
 
-void DrawSpans (int x1, int x2, int height)
+void DrawSpans (s16int x1, s16int x2, s16int height)
 {
-	fixed		length;
-	int			ofs;
-	int			prestep;
-	fixed		startxfrac, startyfrac;
+	s32int		length;
+	s16int			ofs;
+	s16int			prestep;
+	s32int		startxfrac, startyfrac;
 
-	int			x, startx, count, plane, startplane;
-	byte		far	*toprow, far *dest;
+	s16int			x, startx, count, plane, startplane;
+	u8int		far	*toprow, far *dest;
 
 	toprow = planeylookup[height]+bufferofs;
 	mr_rowofs = mirrorofs[height];
@@ -73,7 +73,7 @@ void DrawSpans (int x1, int x2, int height)
 		mr_yfrac = startyfrac - (mr_ystep>>2)*prestep;
 
 		startx = x1>>2;
-		mr_dest = (unsigned)toprow + startx;
+		mr_dest = (u16int)toprow + startx;
 		mr_count = ((x2-plane)>>2) - startx + 1;
 		x1++;
 		prestep--;
@@ -97,15 +97,15 @@ void DrawSpans (int x1, int x2, int height)
 
 void SetPlaneViewSize (void)
 {
-	int		x,y;
-	byte 	far *dest, far *src;
+	s16int		x,y;
+	u8int 	far *dest, far *src;
 
 	halfheight = viewheight>>1;
 
 
 	for (y=0 ; y<halfheight ; y++)
 	{
-		planeylookup[y] = (byte far *)0xa0000000l + (halfheight-1-y)*SCREENBWIDE;;
+		planeylookup[y] = (u8int far *)0xa0000000l + (halfheight-1-y)*SCREENBWIDE;
 		mirrorofs[y] = (y*2+1)*SCREENBWIDE;
 
 		stepscale[y] = y*GLOBAL1/32;
@@ -141,8 +141,8 @@ void SetPlaneViewSize (void)
 
 void DrawPlanes (void)
 {
-	int		height, lastheight;
-	int		x;
+	s16int		height, lastheight;
+	s16int		x;
 
 	if (viewheight>>1 != halfheight)
 		SetPlaneViewSize ();		// screen size has changed

@@ -48,14 +48,14 @@ TEXT FORMATTING COMMANDS
 =============================================================================
 */
 
-int			pagenum,numpages;
+s16int			pagenum,numpages;
 
-unsigned	leftmargin[TEXTROWS],rightmargin[TEXTROWS];
+u16int	leftmargin[TEXTROWS],rightmargin[TEXTROWS];
 char		far *text;
-unsigned	rowon;
+u16int	rowon;
 
-int			picx,picy,picnum,picdelay;
-boolean		layoutdone;
+s16int			picx,picy,picnum,picdelay;
+int		layoutdone;
 
 //===========================================================================
 
@@ -83,7 +83,7 @@ void RipToEOL (void)
 =====================
 */
 
-int	ParseNumber (void)
+s16int	ParseNumber (void)
 {
 	char	ch;
 	char	num[80],*numptr;
@@ -185,8 +185,8 @@ void	TimedPicCommand (void)
 
 void HandleCommand (void)
 {
-	int	i,margin,top,bottom;
-	int	picwidth,picheight,picmid;
+	s16int	i,margin,top,bottom;
+	s16int	picwidth,picheight,picmid;
 
 	switch (toupper(*++text))
 	{
@@ -352,8 +352,8 @@ void HandleCtrls (void)
 void HandleWord (void)
 {
 	char		word[WORDLIMIT];
-	int			i,wordindex;
-	unsigned	wwidth,wheight,newpos;
+	s16int			i,wordindex;
+	u16int	wwidth,wheight,newpos;
 
 
 	//
@@ -409,9 +409,9 @@ void HandleWord (void)
 =====================
 */
 
-void PageLayout (boolean shownumber)
+void PageLayout (int shownumber)
 {
-	int		i,oldfontcolor;
+	s16int		i,oldfontcolor;
 	char	ch;
 
 	oldfontcolor = fontcolor;
@@ -596,13 +596,13 @@ void CacheLayoutGraphics (void)
 */
 
 #ifdef JAPAN
-void ShowArticle (int which)
+void ShowArticle (s16int which)
 #else
 void ShowArticle (char far *article)
 #endif
 {
 	#ifdef JAPAN
-	int		snames[10] = {	H_HELP1PIC,
+	s16int		snames[10] = {	H_HELP1PIC,
 							H_HELP2PIC,
 							H_HELP3PIC,
 							H_HELP4PIC,
@@ -612,7 +612,7 @@ void ShowArticle (char far *article)
 							H_HELP8PIC,
 							H_HELP9PIC,
 							H_HELP10PIC};
-	int		enames[14] = {
+	s16int		enames[14] = {
 							0,0,
 							#ifndef JAPDEMO
 							C_ENDGAME1APIC,
@@ -630,9 +630,9 @@ void ShowArticle (char far *article)
 							#endif
 							};
 	#endif
-	unsigned	oldfontnumber;
-	unsigned	temp;
-	boolean 	newpage,firstpage;
+	u16int	oldfontnumber;
+	u16int	temp;
+	int 	newpage,firstpage;
 
 	#ifdef JAPAN
 	pagenum = 1;
@@ -727,9 +727,9 @@ void ShowArticle (char far *article)
 
 #ifndef JAPAN
 #ifdef ARTSEXTERN
-int 	endextern = T_ENDART1;
+s16int 	endextern = T_ENDART1;
 #ifndef SPEAR
-int		helpextern = T_HELPART;
+s16int		helpextern = T_HELPART;
 #endif
 #endif
 char helpfilename[13] = "HELPART.",
@@ -746,9 +746,9 @@ char helpfilename[13] = "HELPART.",
 #ifndef SPEAR
 void HelpScreens (void)
 {
-	int			artnum;
+	s16int			artnum;
 	char far 	*text;
-	memptr		layout;
+	uchar *layout;
 
 
 	CA_UpLevel ();
@@ -799,9 +799,9 @@ void HelpScreens (void)
 //
 void EndText (void)
 {
-	int			artnum;
+	s16int			artnum;
 	char far 	*text;
-	memptr		layout;
+	uchar *layout;
 
 
 	ClearMemory ();

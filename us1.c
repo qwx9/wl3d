@@ -35,22 +35,22 @@
 
 //	Global variables
 		char		*abortprogram;
-		boolean		NoWait;
-		word		PrintX,PrintY;
-		word		WindowX,WindowY,WindowW,WindowH;
+		int		NoWait;
+		u16int		PrintX,PrintY;
+		u16int		WindowX,WindowY,WindowW,WindowH;
 
 //	Internal variables
 #define	ConfigVersion	1
 
 static	char		*ParmStrings[] = {"TEDLEVEL","NOWAIT"},
 					*ParmStrings2[] = {"COMP","NOCOMP"};
-static	boolean		US_Started;
+static	int		US_Started;
 
-		boolean		Button0,Button1,
+		int		Button0,Button1,
 					CursorBad;
-		int			CursorX,CursorY;
+		s16int			CursorX,CursorY;
 
-		void		(*USL_MeasureString)(char far *,word *,word *) = VW_MeasurePropString,
+		void		(*USL_MeasureString)(char far *,u16int *,u16int *) = VW_MeasurePropString,
 					(*USL_DrawString)(char far *) = VWB_DrawPropString;
 
 		SaveGame	Games[MaxSaveGames];
@@ -78,7 +78,7 @@ static	boolean		US_Started;
 #pragma	warn	-par
 #pragma	warn	-rch
 int
-USL_HardError(word errval,int ax,int bp,int si)
+USL_HardError(u16int errval,s16int ax,s16int bp,s16int si)
 {
 #define IGNORE  0
 #define RETRY   1
@@ -87,7 +87,7 @@ extern	void	ShutdownId(void);
 
 static	char		buf[32];
 static	WindowRec	wr;
-		int			di;
+		s16int			di;
 		char		c,*s,*t;
 
 
@@ -168,7 +168,7 @@ oh_kill_me:
 void
 US_Startup(void)
 {
-	int	i,n;
+	s16int	i,n;
 
 	if (US_Started)
 		return;
@@ -238,7 +238,7 @@ US_CheckParm(char *parm,char **strings)
 {
 	char	cp,cs,
 			*p,*s;
-	int		i;
+	s16int		i;
 
 	while (!isalpha(*parm))	// Skip non-alphas
 		parm++;
@@ -272,7 +272,7 @@ US_CheckParm(char *parm,char **strings)
 //
 ///////////////////////////////////////////////////////////////////////////
 void
-US_SetPrintRoutines(void (*measure)(char far *,word *,word *),void (*print)(char far *))
+US_SetPrintRoutines(void (*measure)(char far *,u16int *,u16int *),void (*print)(char far *))
 {
 	USL_MeasureString = measure;
 	USL_DrawString = print;
@@ -288,7 +288,7 @@ void
 US_Print(char far *s)
 {
 	char	c,far *se;
-	word	w,h;
+	u16int	w,h;
 
 	while (*s)
 	{
@@ -318,11 +318,11 @@ US_Print(char far *s)
 
 ///////////////////////////////////////////////////////////////////////////
 //
-//	US_PrintUnsigned() - Prints an unsigned long
+//	US_PrintUnsigned() - Prints an u32int
 //
 ///////////////////////////////////////////////////////////////////////////
 void
-US_PrintUnsigned(longword n)
+US_PrintUnsigned(u32int n)
 {
 	char	buffer[32];
 
@@ -331,11 +331,11 @@ US_PrintUnsigned(longword n)
 
 ///////////////////////////////////////////////////////////////////////////
 //
-//	US_PrintSigned() - Prints a signed long
+//	US_PrintSigned() - Prints a s32int
 //
 ///////////////////////////////////////////////////////////////////////////
 void
-US_PrintSigned(long n)
+US_PrintSigned(s32int n)
 {
 	char	buffer[32];
 
@@ -350,7 +350,7 @@ US_PrintSigned(long n)
 void
 USL_PrintInCenter(char far *s,Rectangle r)
 {
-	word	w,h;
+	u16int	w,h;
 
 	USL_MeasureString(s,&w,&h);
 
@@ -379,7 +379,7 @@ US_PrintCentered(char far *s)
 void
 US_CPrintLine(char far *s)
 {
-	word	w,h;
+	u16int	w,h;
 
 	USL_MeasureString(s,&w,&h);
 
@@ -440,9 +440,9 @@ US_ClearWindow(void)
 //
 ///////////////////////////////////////////////////////////////////////////
 void
-US_DrawWindow(word x,word y,word w,word h)
+US_DrawWindow(u16int x,u16int y,u16int w,u16int h)
 {
-	word	i,
+	u16int	i,
 			sx,sy,sw,sh;
 
 	WindowX = x * 8;
@@ -476,7 +476,7 @@ US_DrawWindow(word x,word y,word w,word h)
 //
 ///////////////////////////////////////////////////////////////////////////
 void
-US_CenterWindow(word w,word h)
+US_CenterWindow(u16int w,u16int h)
 {
 	US_DrawWindow(((MaxX / 8) - w) / 2,((MaxY / 8) - h) / 2,w,h);
 }
@@ -525,12 +525,12 @@ US_RestoreWindow(WindowRec *win)
 //
 ///////////////////////////////////////////////////////////////////////////
 static void
-USL_XORICursor(int x,int y,char *s,word cursor)
+USL_XORICursor(s16int x,s16int y,char *s,u16int cursor)
 {
-	static	boolean	status;		// VGA doesn't XOR...
+	static	int	status;		// VGA doesn't XOR...
 	char	buf[MaxString];
-	int		temp;
-	word	w,h;
+	s16int		temp;
+	u16int	w,h;
 
 	strcpy(buf,s);
 	buf[cursor] = '\0';
@@ -560,21 +560,21 @@ USL_XORICursor(int x,int y,char *s,word cursor)
 //		returned
 //
 ///////////////////////////////////////////////////////////////////////////
-boolean
-US_LineInput(int x,int y,char *buf,char *def,boolean escok,
-				int maxchars,int maxwidth)
+int
+US_LineInput(s16int x,s16int y,char *buf,char *def,int escok,
+				s16int maxchars,s16int maxwidth)
 {
-	boolean		redraw,
+	int		redraw,
 				cursorvis,cursormoved,
 				done,result;
-	ScanCode	sc;
+	u8int	sc;
 	char		c,
 				s[MaxString],olds[MaxString];
-	word		i,
+	u16int		i,
 				cursor,
 				w,h,
 				len,temp;
-	longword	lasttime;
+	u32int	lasttime;
 
 	if (def)
 		strcpy(s,def);

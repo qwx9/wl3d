@@ -44,7 +44,7 @@ LastRnd		dw	?
 
 ;=================================================
 ;
-; void US_InitRndT (boolean randomize)
+; void US_InitRndT (int randomize)
 ; Init table based RND generator
 ; if randomize is false, the counter is set to 0
 ;

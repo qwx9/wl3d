@@ -47,14 +47,8 @@ extern	char		far signon;
 //	v1.0d1
 //
 
-typedef	enum	{false,true}	boolean;
-typedef	unsigned	char		byte;
-typedef	unsigned	int			word;
-typedef	unsigned	long		longword;
-typedef	byte *					Ptr;
-
-#define	nil	((void *)0)
-
+typedef short s16int;
+typedef int s32int;
 
 #include "ID_MM.H"
 #include "ID_PM.H"
@@ -83,14 +77,14 @@ void	Quit (char *error);		// defined in user program
 
 #define	UPDATETERMINATE	0x0301
 
-extern	unsigned	mapwidth,mapheight,tics;
-extern	boolean		compatability;
+extern	u16int	mapwidth,mapheight,tics;
+extern	int		compatability;
 
-extern	byte		*updateptr;
-extern	unsigned	uwidthtable[UPDATEHIGH];
-extern	unsigned	blockstarts[UPDATEWIDE*UPDATEHIGH];
+extern	u8int		*updateptr;
+extern	u16int	uwidthtable[UPDATEHIGH];
+extern	u16int	blockstarts[UPDATEWIDE*UPDATEHIGH];
 
-extern	byte		fontcolor,backcolor;
+extern	u8int		fontcolor,backcolor;
 
 #define SETFONTCOLOR(f,b) fontcolor=f;backcolor=b;
 

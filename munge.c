@@ -7,10 +7,10 @@
 =================
 */
 
-void VL_MungePic (unsigned char far *source, unsigned width, unsigned height)
+void VL_MungePic (uchar far *source, u16int width, u16int height)
 {
-	unsigned	x,y,plane,size,pwidth;
-	unsigned char	far *temp, far *dest, far *srcline;
+	u16int	x,y,plane,size,pwidth;
+	uchar	far *temp, far *dest, far *srcline;
 
 	size = width*height;
 
@@ -20,7 +20,7 @@ void VL_MungePic (unsigned char far *source, unsigned width, unsigned height)
 //
 // copy the pic to a temp buffer
 //
-	temp = (unsigned char far *)farmalloc (size);
+	temp = (uchar far *)farmalloc (size);
 	if (!temp)
 		errout ("Non enough memory for munge buffer!\n");
 

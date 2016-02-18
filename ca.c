@@ -32,15 +32,15 @@ loaded into the data segment
 
 typedef struct
 {
-  unsigned bit0,bit1;	// 0-255 is a character, > is a pointer to a node
+  u16int bit0,bit1;	// 0-255 is a character, > is a pointer to a node
 } huffnode;
 
 
 typedef struct
 {
-	unsigned	RLEWtag;
-	long		headeroffsets[100];
-	byte		tileinfo[];
+	u16int	RLEWtag;
+	s32int		headeroffsets[100];
+	u8int		tileinfo[];
 } mapfiletype;
 
 
@@ -52,18 +52,18 @@ typedef struct
 =============================================================================
 */
 
-byte 		_seg	*tinf;
-int			mapon;
+u8int 		_seg	*tinf;
+s16int			mapon;
 
-unsigned	_seg	*mapsegs[MAPPLANES];
+u16int	_seg	*mapsegs[MAPPLANES];
 maptype		_seg	*mapheaderseg[NUMMAPS];
-byte		_seg	*audiosegs[NUMSNDCHUNKS];
+u8int		_seg	*audiosegs[NUMSNDCHUNKS];
 void		_seg	*grsegs[NUMCHUNKS];
 
-byte		far	grneeded[NUMCHUNKS];
-byte		ca_levelbit,ca_levelnum;
+u8int		far	grneeded[NUMCHUNKS];
+u8int		ca_levelbit,ca_levelnum;
 
-int			profilehandle,debughandle;
+s16int			profilehandle,debughandle;
 
 char		audioname[13]="AUDIO.";
 
@@ -75,14 +75,14 @@ char		audioname[13]="AUDIO.";
 =============================================================================
 */
 
-extern	long	far	CGAhead;
-extern	long	far	EGAhead;
-extern	byte	CGAdict;
-extern	byte	EGAdict;
-extern	byte	far	maphead;
-extern	byte	mapdict;
-extern	byte	far	audiohead;
-extern	byte	audiodict;
+extern	s32int	far	CGAhead;
+extern	s32int	far	EGAhead;
+extern	u8int	CGAdict;
+extern	u8int	EGAdict;
+extern	u8int	far	maphead;
+extern	u8int	mapdict;
+extern	u8int	far	audiohead;
+extern	u8int	audiodict;
 
 
 char extension[5],	// Need a string, not constant to change cache files
@@ -96,8 +96,8 @@ char extension[5],	// Need a string, not constant to change cache files
 
 void CA_CannotOpen(char *string);
 
-long		_seg *grstarts;	// array of offsets in egagraph, -1 for sparse
-long		_seg *audiostarts;	// array of offsets in audio / audiot
+s32int		_seg *grstarts;	// array of offsets in egagraph, -1 for sparse
+s32int		_seg *audiostarts;	// array of offsets in audio / audiot
 
 #ifdef GRHEADERLINKED
 huffnode	*grhuffman;
@@ -112,31 +112,31 @@ huffnode	audiohuffman[255];
 #endif
 
 
-int			grhandle;		// handle to EGAGRAPH
-int			maphandle;		// handle to MAPTEMP / GAMEMAPS
-int			audiohandle;	// handle to AUDIOT / AUDIO
+s16int			grhandle;		// handle to EGAGRAPH
+s16int			maphandle;		// handle to MAPTEMP / GAMEMAPS
+s16int			audiohandle;	// handle to AUDIOT / AUDIO
 
-long		chunkcomplen,chunkexplen;
+s32int		chunkcomplen,chunkexplen;
 
 SDMode		oldsoundmode;
 
 
 
-void	CAL_CarmackExpand (unsigned far *source, unsigned far *dest,
-		unsigned length);
+void	CAL_CarmackExpand (u16int far *source, u16int far *dest,
+		u16int length);
 
 
 #ifdef THREEBYTEGRSTARTS
 #define FILEPOSSIZE	3
-//#define	GRFILEPOS(c) (*(long far *)(((byte far *)grstarts)+(c)*3)&0xffffff)
-long GRFILEPOS(int c)
+//#define	GRFILEPOS(c) (*(s32int far *)(((u8int far *)grstarts)+(c)*3)&0xffffff)
+s32int GRFILEPOS(s16int c)
 {
-	long value;
-	int	offset;
+	s32int value;
+	s16int	offset;
 
 	offset = c*3;
 
-	value = *(long far *)(((byte far *)grstarts)+offset);
+	value = *(s32int far *)(((u8int far *)grstarts)+offset);
 
 	value &= 0x00ffffffl;
 
@@ -192,7 +192,7 @@ void CA_CloseDebug (void)
 ============================
 */
 
-void CAL_GetGrChunkLength (int chunk)
+void CAL_GetGrChunkLength (s16int chunk)
 {
 	lseek(grhandle,GRFILEPOS(chunk),SEEK_SET);
 	read(grhandle,&chunkexplen,sizeof(chunkexplen));
@@ -210,7 +210,7 @@ void CAL_GetGrChunkLength (int chunk)
 ==========================
 */
 
-boolean CA_FarRead (int handle, byte far *dest, long length)
+int CA_FarRead (s16int handle, u8int far *dest, s32int length)
 {
 	if (length>0xffffl)
 		Quit ("CA_FarRead doesn't support 64K reads yet!");
@@ -246,7 +246,7 @@ done:
 ==========================
 */
 
-boolean CA_FarWrite (int handle, byte far *source, long length)
+int CA_FarWrite (s16int handle, u8int far *source, s32int length)
 {
 	if (length>0xffffl)
 		Quit ("CA_FarWrite doesn't support 64K reads yet!");
@@ -283,10 +283,10 @@ done:
 ==========================
 */
 
-boolean CA_ReadFile (char *filename, memptr *ptr)
+int CA_ReadFile (char *filename, uchar **ptr)
 {
-	int handle;
-	long size;
+	s16int handle;
+	s32int size;
 
 	if ((handle = open(filename,O_RDONLY | O_BINARY, S_IREAD)) == -1)
 		return false;
@@ -312,10 +312,10 @@ boolean CA_ReadFile (char *filename, memptr *ptr)
 ==========================
 */
 
-boolean CA_WriteFile (char *filename, void far *ptr, long length)
+int CA_WriteFile (char *filename, void far *ptr, s32int length)
 {
-	int handle;
-	long size;
+	s16int handle;
+	s32int size;
 
 	handle = open(filename,O_CREAT | O_BINARY | O_WRONLY,
 				S_IREAD | S_IWRITE | S_IFREG);
@@ -344,10 +344,10 @@ boolean CA_WriteFile (char *filename, void far *ptr, long length)
 ==========================
 */
 
-boolean CA_LoadFile (char *filename, memptr *ptr)
+int CA_LoadFile (char *filename, uchar **ptr)
 {
-	int handle;
-	long size;
+	s16int handle;
+	s32int size;
 
 	if ((handle = open(filename,O_RDONLY | O_BINARY, S_IREAD)) == -1)
 		return false;
@@ -387,16 +387,16 @@ boolean CA_LoadFile (char *filename, memptr *ptr)
 void CAL_OptimizeNodes (huffnode *table)
 {
   huffnode *node;
-  int i;
+  s16int i;
 
   node = table;
 
   for (i=0;i<255;i++)
   {
 	if (node->bit0 >= 256)
-	  node->bit0 = (unsigned)(table+(node->bit0-256));
+	  node->bit0 = (u16int)(table+(node->bit0-256));
 	if (node->bit1 >= 256)
-	  node->bit1 = (unsigned)(table+(node->bit1-256));
+	  node->bit1 = (u16int)(table+(node->bit1-256));
 	node++;
   }
 }
@@ -415,13 +415,13 @@ void CAL_OptimizeNodes (huffnode *table)
 ======================
 */
 
-void CAL_HuffExpand (byte huge *source, byte huge *dest,
-  long length,huffnode *hufftable, boolean screenhack)
+void CAL_HuffExpand (u8int huge *source, u8int huge *dest,
+  s32int length,huffnode *hufftable, int screenhack)
 {
-//  unsigned bit,byte,node,code;
-  unsigned sourceseg,sourceoff,destseg,destoff,endoff;
+//  u16int bit,byte,node,code;
+  u16int sourceseg,sourceoff,destseg,destoff,endoff;
   huffnode *headptr;
-  byte		mapmask;
+  u8int		mapmask;
 //  huffnode *nodeon;
 
   headptr = hufftable+254;	// head node is allways node 254
@@ -606,10 +606,10 @@ asm	mov	ds,ax
 #define NEARTAG	0xa7
 #define FARTAG	0xa8
 
-void CAL_CarmackExpand (unsigned far *source, unsigned far *dest, unsigned length)
+void CAL_CarmackExpand (u16int far *source, u16int far *dest, u16int length)
 {
-	unsigned	ch,chhigh,count,offset;
-	unsigned	far *copyptr, far *inptr, far *outptr;
+	u16int	ch,chhigh,count,offset;
+	u16int	far *copyptr, far *inptr, far *outptr;
 
 	length/=2;
 
@@ -625,13 +625,13 @@ void CAL_CarmackExpand (unsigned far *source, unsigned far *dest, unsigned lengt
 			count = ch&0xff;
 			if (!count)
 			{				// have to insert a word containing the tag byte
-				ch |= *((unsigned char far *)inptr)++;
+				ch |= *((uchar far *)inptr)++;
 				*outptr++ = ch;
 				length--;
 			}
 			else
 			{
-				offset = *((unsigned char far *)inptr)++;
+				offset = *((uchar far *)inptr)++;
 				copyptr = outptr - offset;
 				length -= count;
 				while (count--)
@@ -643,7 +643,7 @@ void CAL_CarmackExpand (unsigned far *source, unsigned far *dest, unsigned lengt
 			count = ch&0xff;
 			if (!count)
 			{				// have to insert a word containing the tag byte
-				ch |= *((unsigned char far *)inptr)++;
+				ch |= *((uchar far *)inptr)++;
 				*outptr++ = ch;
 				length --;
 			}
@@ -674,12 +674,12 @@ void CAL_CarmackExpand (unsigned far *source, unsigned far *dest, unsigned lengt
 ======================
 */
 
-long CA_RLEWCompress (unsigned huge *source, long length, unsigned huge *dest,
-  unsigned rlewtag)
+s32int CA_RLEWCompress (u16int huge *source, s32int length, u16int huge *dest,
+  u16int rlewtag)
 {
-  long complength;
-  unsigned value,count,i;
-  unsigned huge *start,huge *end;
+  s32int complength;
+  u16int value,count,i;
+  u16int huge *start,huge *end;
 
   start = dest;
 
@@ -731,12 +731,12 @@ long CA_RLEWCompress (unsigned huge *source, long length, unsigned huge *dest,
 ======================
 */
 
-void CA_RLEWexpand (unsigned huge *source, unsigned huge *dest,long length,
-  unsigned rlewtag)
+void CA_RLEWexpand (u16int huge *source, u16int huge *dest,s32int length,
+  u16int rlewtag)
 {
-//  unsigned value,count,i;
-  unsigned huge *end;
-  unsigned sourceseg,sourceoff,destseg,destoff,endseg,endoff;
+//  u16int value,count,i;
+  u16int huge *end;
+  u16int sourceseg,sourceoff,destseg,destoff,endseg,endoff;
 
 
 //
@@ -861,13 +861,13 @@ asm	mov	ds,ax
 void CAL_SetupGrFile (void)
 {
 	char fname[13];
-	int handle;
-	memptr compseg;
+	s16int handle;
+	uchar *compseg;
 
 #ifdef GRHEADERLINKED
 
 	grhuffman = (huffnode *)&EGAdict;
-	grstarts = (long _seg *)FP_SEG(&EGAhead);
+	grstarts = (s32int _seg *)FP_SEG(&EGAhead);
 
 	CAL_OptimizeNodes (grhuffman);
 
@@ -890,7 +890,7 @@ void CAL_SetupGrFile (void)
 //
 // load the data offsets from ???head.ext
 //
-	MM_GetPtr (&(memptr)grstarts,(NUMCHUNKS+1)*FILEPOSSIZE);
+	MM_GetPtr (&(uchar *)grstarts,(NUMCHUNKS+1)*FILEPOSSIZE);
 
 	strcpy(fname,gheadname);
 	strcat(fname,extension);
@@ -899,7 +899,7 @@ void CAL_SetupGrFile (void)
 		 O_RDONLY | O_BINARY, S_IREAD)) == -1)
 		CA_CannotOpen(fname);
 
-	CA_FarRead(handle, (memptr)grstarts, (NUMCHUNKS+1)*FILEPOSSIZE);
+	CA_FarRead(handle, (uchar *)grstarts, (NUMCHUNKS+1)*FILEPOSSIZE);
 
 	close(handle);
 
@@ -920,11 +920,11 @@ void CAL_SetupGrFile (void)
 //
 // load the pic and sprite headers into the arrays in the data segment
 //
-	MM_GetPtr(&(memptr)pictable,NUMPICS*sizeof(pictabletype));
+	MM_GetPtr(&(uchar *)pictable,NUMPICS*sizeof(pictabletype));
 	CAL_GetGrChunkLength(STRUCTPIC);		// position file pointer
 	MM_GetPtr(&compseg,chunkcomplen);
 	CA_FarRead (grhandle,compseg,chunkcomplen);
-	CAL_HuffExpand (compseg, (byte huge *)pictable,NUMPICS*sizeof(pictabletype),grhuffman,false);
+	CAL_HuffExpand (compseg, (u8int huge *)pictable,NUMPICS*sizeof(pictabletype),grhuffman,false);
 	MM_FreePtr(&compseg);
 }
 
@@ -941,9 +941,9 @@ void CAL_SetupGrFile (void)
 
 void CAL_SetupMapFile (void)
 {
-	int	i;
-	int handle;
-	long length,pos;
+	s16int	i;
+	s16int handle;
+	s32int length,pos;
 	char fname[13];
 
 //
@@ -958,12 +958,12 @@ void CAL_SetupMapFile (void)
 		CA_CannotOpen(fname);
 
 	length = filelength(handle);
-	MM_GetPtr (&(memptr)tinf,length);
+	MM_GetPtr (&(uchar *)tinf,length);
 	CA_FarRead(handle, tinf, length);
 	close(handle);
 #else
 
-	tinf = (byte _seg *)FP_SEG(&maphead);
+	tinf = (u8int _seg *)FP_SEG(&maphead);
 
 #endif
 
@@ -995,10 +995,10 @@ void CAL_SetupMapFile (void)
 		if (pos<0)						// $FFFFFFFF start is a sparse map
 			continue;
 
-		MM_GetPtr(&(memptr)mapheaderseg[i],sizeof(maptype));
-		MM_SetLock(&(memptr)mapheaderseg[i],true);
+		MM_GetPtr(&(uchar *)mapheaderseg[i],sizeof(maptype));
+		MM_SetLock(&(uchar *)mapheaderseg[i],true);
 		lseek(maphandle,pos,SEEK_SET);
-		CA_FarRead (maphandle,(memptr)mapheaderseg[i],sizeof(maptype));
+		CA_FarRead (maphandle,(uchar *)mapheaderseg[i],sizeof(maptype));
 	}
 
 //
@@ -1006,8 +1006,8 @@ void CAL_SetupMapFile (void)
 //
 	for (i=0;i<MAPPLANES;i++)
 	{
-		MM_GetPtr (&(memptr)mapsegs[i],64*64*2);
-		MM_SetLock (&(memptr)mapsegs[i],true);
+		MM_GetPtr (&(uchar *)mapsegs[i],64*64*2);
+		MM_SetLock (&(uchar *)mapsegs[i],true);
 	}
 }
 
@@ -1025,8 +1025,8 @@ void CAL_SetupMapFile (void)
 
 void CAL_SetupAudioFile (void)
 {
-	int handle;
-	long length;
+	s16int handle;
+	s32int length;
 	char fname[13];
 
 //
@@ -1041,13 +1041,13 @@ void CAL_SetupAudioFile (void)
 		CA_CannotOpen(fname);
 
 	length = filelength(handle);
-	MM_GetPtr (&(memptr)audiostarts,length);
-	CA_FarRead(handle, (byte far *)audiostarts, length);
+	MM_GetPtr (&(uchar *)audiostarts,length);
+	CA_FarRead(handle, (u8int far *)audiostarts, length);
 	close(handle);
 #else
 	audiohuffman = (huffnode *)&audiodict;
 	CAL_OptimizeNodes (audiohuffman);
-	audiostarts = (long _seg *)FP_SEG(&audiohead);
+	audiostarts = (s32int _seg *)FP_SEG(&audiohead);
 #endif
 
 //
@@ -1131,18 +1131,18 @@ void CA_Shutdown (void)
 ======================
 */
 
-void CA_CacheAudioChunk (int chunk)
+void CA_CacheAudioChunk (s16int chunk)
 {
-	long	pos,compressed;
+	s32int	pos,compressed;
 #ifdef AUDIOHEADERLINKED
-	long	expanded;
-	memptr	bigbufferseg;
-	byte	far *source;
+	s32int	expanded;
+	uchar *bigbufferseg;
+	u8int	far *source;
 #endif
 
 	if (audiosegs[chunk])
 	{
-		MM_SetPurge (&(memptr)audiosegs[chunk],0);
+		MM_SetPurge (&(uchar *)audiosegs[chunk],0);
 		return;							// allready in memory
 	}
 
@@ -1157,7 +1157,7 @@ void CA_CacheAudioChunk (int chunk)
 
 #ifndef AUDIOHEADERLINKED
 
-	MM_GetPtr (&(memptr)audiosegs[chunk],compressed);
+	MM_GetPtr (&(uchar *)audiosegs[chunk],compressed);
 	if (mmerror)
 		return;
 
@@ -1180,9 +1180,9 @@ void CA_CacheAudioChunk (int chunk)
 		source = bigbufferseg;
 	}
 
-	expanded = *(long far *)source;
+	expanded = *(s32int far *)source;
 	source += 4;			// skip over length
-	MM_GetPtr (&(memptr)audiosegs[chunk],expanded);
+	MM_GetPtr (&(uchar *)audiosegs[chunk],expanded);
 	if (mmerror)
 		goto done;
 	CAL_HuffExpand (source,audiosegs[chunk],expanded,audiohuffman,false);
@@ -1207,7 +1207,7 @@ done:
 
 void CA_LoadAllSounds (void)
 {
-	unsigned	start,i;
+	u16int	start,i;
 
 	switch (oldsoundmode)
 	{
@@ -1223,7 +1223,7 @@ void CA_LoadAllSounds (void)
 
 	for (i=0;i<NUMSOUNDS;i++,start++)
 		if (audiosegs[start])
-			MM_SetPurge (&(memptr)audiosegs[start],3);		// make purgable
+			MM_SetPurge (&(uchar *)audiosegs[start],3);		// make purgable
 
 cachein:
 
@@ -1258,9 +1258,9 @@ cachein:
 ======================
 */
 
-void CAL_ExpandGrChunk (int chunk, byte far *source)
+void CAL_ExpandGrChunk (s16int chunk, u8int far *source)
 {
-	long	expanded;
+	s32int	expanded;
 
 
 	if (chunk >= STARTTILE8 && chunk < STARTEXTERNS)
@@ -1288,9 +1288,9 @@ void CAL_ExpandGrChunk (int chunk, byte far *source)
 	else
 	{
 	//
-	// everything else has an explicit size longword
+	// everything else has an explicit size u32int
 	//
-		expanded = *(long far *)source;
+		expanded = *(s32int far *)source;
 		source += 4;			// skip over length
 	}
 
@@ -1315,12 +1315,12 @@ void CAL_ExpandGrChunk (int chunk, byte far *source)
 ======================
 */
 
-void CA_CacheGrChunk (int chunk)
+void CA_CacheGrChunk (s16int chunk)
 {
-	long	pos,compressed;
-	memptr	bigbufferseg;
-	byte	far *source;
-	int		next;
+	s32int	pos,compressed;
+	uchar *bigbufferseg;
+	u8int	far *source;
+	s16int		next;
 
 	grneeded[chunk] |= ca_levelbit;		// make sure it doesn't get removed
 	if (grsegs[chunk])
@@ -1378,12 +1378,12 @@ void CA_CacheGrChunk (int chunk)
 ======================
 */
 
-void CA_CacheScreen (int chunk)
+void CA_CacheScreen (s16int chunk)
 {
-	long	pos,compressed,expanded;
-	memptr	bigbufferseg;
-	byte	far *source;
-	int		next;
+	s32int	pos,compressed,expanded;
+	uchar *bigbufferseg;
+	u8int	far *source;
+	s16int		next;
 
 //
 // load the chunk into a buffer
@@ -1401,7 +1401,7 @@ void CA_CacheScreen (int chunk)
 	CA_FarRead(grhandle,bigbufferseg,compressed);
 	source = bigbufferseg;
 
-	expanded = *(long far *)source;
+	expanded = *(s32int far *)source;
 	source += 4;			// skip over length
 
 //
@@ -1425,16 +1425,16 @@ void CA_CacheScreen (int chunk)
 ======================
 */
 
-void CA_CacheMap (int mapnum)
+void CA_CacheMap (s16int mapnum)
 {
-	long	pos,compressed;
-	int		plane;
-	memptr	*dest,bigbufferseg;
-	unsigned	size;
-	unsigned	far	*source;
+	s32int	pos,compressed;
+	s16int		plane;
+	uchar **dest,bigbufferseg;
+	u16int	size;
+	u16int	far	*source;
 #ifdef CARMACIZED
-	memptr	buffer2seg;
-	long	expanded;
+	uchar *buffer2seg;
+	s32int	expanded;
 #endif
 
 	mapon = mapnum;
@@ -1449,7 +1449,7 @@ void CA_CacheMap (int mapnum)
 		pos = mapheaderseg[mapnum]->planestart[plane];
 		compressed = mapheaderseg[mapnum]->planelength[plane];
 
-		dest = &(memptr)mapsegs[plane];
+		dest = &(uchar *)mapsegs[plane];
 
 		lseek(maphandle,pos,SEEK_SET);
 		if (compressed<=BUFFERSIZE)
@@ -1461,7 +1461,7 @@ void CA_CacheMap (int mapnum)
 			source = bigbufferseg;
 		}
 
-		CA_FarRead(maphandle,(byte far *)source,compressed);
+		CA_FarRead(maphandle,(u8int far *)source,compressed);
 #ifdef CARMACIZED
 		//
 		// unhuffman, then unRLEW
@@ -1472,8 +1472,8 @@ void CA_CacheMap (int mapnum)
 		expanded = *source;
 		source++;
 		MM_GetPtr (&buffer2seg,expanded);
-		CAL_CarmackExpand (source, (unsigned far *)buffer2seg,expanded);
-		CA_RLEWexpand (((unsigned far *)buffer2seg)+1,*dest,size,
+		CAL_CarmackExpand (source, (u16int far *)buffer2seg,expanded);
+		CA_RLEWexpand (((u16int far *)buffer2seg)+1,*dest,size,
 		((mapfiletype _seg *)tinf)->RLEWtag);
 		MM_FreePtr (&buffer2seg);
 
@@ -1505,14 +1505,14 @@ void CA_CacheMap (int mapnum)
 
 void CA_UpLevel (void)
 {
-	int	i;
+	s16int	i;
 
 	if (ca_levelnum==7)
 		Quit ("CA_UpLevel: Up past level 7!");
 
 	for (i=0;i<NUMCHUNKS;i++)
 		if (grsegs[i])
-			MM_SetPurge (&(memptr)grsegs[i],3);
+			MM_SetPurge (&(uchar *)grsegs[i],3);
 	ca_levelbit<<=1;
 	ca_levelnum++;
 }
@@ -1553,7 +1553,7 @@ void CA_DownLevel (void)
 
 void CA_ClearMarks (void)
 {
-	int i;
+	s16int i;
 
 	for (i=0;i<NUMCHUNKS;i++)
 		grneeded[i]&=~ca_levelbit;
@@ -1594,7 +1594,7 @@ void CA_ClearAllMarks (void)
 
 void CA_SetGrPurge (void)
 {
-	int i;
+	s16int i;
 
 //
 // free graphics
@@ -1603,7 +1603,7 @@ void CA_SetGrPurge (void)
 
 	for (i=0;i<NUMCHUNKS;i++)
 		if (grsegs[i])
-			MM_SetPurge (&(memptr)grsegs[i],3);
+			MM_SetPurge (&(uchar *)grsegs[i],3);
 }
 
 
@@ -1620,7 +1620,7 @@ void CA_SetGrPurge (void)
 
 void CA_SetAllPurge (void)
 {
-	int i;
+	s16int i;
 
 
 //
@@ -1628,7 +1628,7 @@ void CA_SetAllPurge (void)
 //
 	for (i=0;i<NUMSNDCHUNKS;i++)
 		if (audiosegs[i])
-			MM_SetPurge (&(memptr)audiosegs[i],3);
+			MM_SetPurge (&(uchar *)audiosegs[i],3);
 
 //
 // free graphics
@@ -1650,11 +1650,11 @@ void CA_SetAllPurge (void)
 
 void CA_CacheMarks (void)
 {
-	int 	i,next,numcache;
-	long	pos,endpos,nextpos,nextendpos,compressed;
-	long	bufferstart,bufferend;	// file position of general buffer
-	byte	far *source;
-	memptr	bigbufferseg;
+	s16int 	i,next,numcache;
+	s32int	pos,endpos,nextpos,nextendpos,compressed;
+	s32int	bufferstart,bufferend;	// file position of general buffer
+	u8int	far *source;
+	uchar *bigbufferseg;
 
 	numcache = 0;
 //
@@ -1703,7 +1703,7 @@ void CA_CacheMarks (void)
 				&& bufferend>= endpos)
 				{
 				// data is allready in buffer
-					source = (byte _seg *)bufferseg+(pos-bufferstart);
+					source = (u8int _seg *)bufferseg+(pos-bufferstart);
 				}
 				else
 				{

@@ -25,18 +25,18 @@
 =============================================================================
 */
 
-boolean		ingame,fizzlein;
-unsigned	latchpics[NUMLATCHPICS];
+int		ingame,fizzlein;
+u16int	latchpics[NUMLATCHPICS];
 gametype	gamestate;
 
-long		spearx,speary;
-unsigned	spearangle;
-boolean		spearflag;
+s32int		spearx,speary;
+u16int	spearangle;
+int		spearflag;
 
 //
 // ELEVATOR BACK MAPS - REMEMBER (-1)!!
 //
-int ElevatorBackTo[]={1,1,7,3,5,3};
+s16int ElevatorBackTo[]={1,1,7,3,5,3};
 
 void ScanInfoPlane (void);
 void SetupGameLevel (void);
@@ -71,10 +71,10 @@ void GameLoop (void);
 ==========================
 */
 
-	fixed	globalsoundx,globalsoundy;
-	int		leftchannel,rightchannel;
+	s32int	globalsoundx,globalsoundy;
+	s16int		leftchannel,rightchannel;
 #define ATABLEMAX 15
-byte righttable[ATABLEMAX][ATABLEMAX * 2] = {
+u8int righttable[ATABLEMAX][ATABLEMAX * 2] = {
 { 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 6, 0, 0, 0, 0, 0, 1, 3, 5, 8, 8, 8, 8, 8, 8, 8, 8},
 { 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 6, 4, 0, 0, 0, 0, 0, 2, 4, 6, 8, 8, 8, 8, 8, 8, 8, 8},
 { 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 6, 6, 4, 1, 0, 0, 0, 1, 2, 4, 6, 8, 8, 8, 8, 8, 8, 8, 8},
@@ -91,7 +91,7 @@ byte righttable[ATABLEMAX][ATABLEMAX * 2] = {
 { 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8},
 { 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8}
 };
-byte lefttable[ATABLEMAX][ATABLEMAX * 2] = {
+u8int lefttable[ATABLEMAX][ATABLEMAX * 2] = {
 { 8, 8, 8, 8, 8, 8, 8, 8, 5, 3, 1, 0, 0, 0, 0, 0, 6, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8},
 { 8, 8, 8, 8, 8, 8, 8, 8, 6, 4, 2, 0, 0, 0, 0, 0, 4, 6, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8},
 { 8, 8, 8, 8, 8, 8, 8, 8, 6, 4, 2, 1, 0, 0, 0, 1, 4, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8},
@@ -110,10 +110,10 @@ byte lefttable[ATABLEMAX][ATABLEMAX * 2] = {
 };
 
 void
-SetSoundLoc(fixed gx,fixed gy)
+SetSoundLoc(s32int gx,s32int gy)
 {
-	fixed	xt,yt;
-	int		x,y;
+	s32int	xt,yt;
+	s16int		x,y;
 
 //
 // translate point to view centered coordinates
@@ -167,7 +167,7 @@ SetSoundLoc(fixed gx,fixed gy)
 =
 ==========================
 */
-void PlaySoundLocGlobal(word s,fixed gx,fixed gy)
+void PlaySoundLocGlobal(u16int s,s32int gx,s32int gy)
 {
 	SetSoundLoc(gx,gy);
 	SD_PositionSound(leftchannel,rightchannel);
@@ -220,9 +220,9 @@ void ClearMemory (void)
 
 void ScanInfoPlane (void)
 {
-	unsigned	x,y,i,j;
-	int			tile;
-	unsigned	far	*start;
+	u16int	x,y,i,j;
+	s16int			tile;
+	u16int	far	*start;
 
 	start = mapsegs[1];
 	for (y=0;y<mapheight;y++)
@@ -624,8 +624,8 @@ void ScanInfoPlane (void)
 
 void SetupGameLevel (void)
 {
-	int	x,y,i;
-	unsigned	far *map,tile,spot;
+	s16int	x,y,i;
+	u16int	far *map,tile,spot;
 
 
 	if (!loadedgame)
@@ -671,13 +671,13 @@ void SetupGameLevel (void)
 			{
 			// solid wall
 				tilemap[x][y] = tile;
-				(unsigned)actorat[x][y] = tile;
+				(u16int)actorat[x][y] = tile;
 			}
 			else
 			{
 			// area floor
 				tilemap[x][y] = 0;
-				(unsigned)actorat[x][y] = 0;
+				(u16int)actorat[x][y] = 0;
 			}
 		}
 
@@ -734,7 +734,7 @@ void SetupGameLevel (void)
 			if (tile == AMBUSHTILE)
 			{
 				tilemap[x][y] = 0;
-				if ( (unsigned)actorat[x][y] == AMBUSHTILE)
+				if ( (u16int)actorat[x][y] == AMBUSHTILE)
 					actorat[x][y] = NULL;
 
 				if (*map >= AREATILE)
@@ -776,7 +776,7 @@ void SetupGameLevel (void)
 
 void DrawPlayBorderSides (void)
 {
-	int	xl,yl;
+	s16int	xl,yl;
 
 	xl = 160-viewwidth/2;
 	yl = (200-STATUSLINES-viewheight)/2;
@@ -799,7 +799,7 @@ void DrawPlayBorderSides (void)
 
 void DrawAllPlayBorderSides (void)
 {
-	unsigned	i,temp;
+	u16int	i,temp;
 
 	temp = bufferofs;
 	for (i=0;i<3;i++)
@@ -819,7 +819,7 @@ void DrawAllPlayBorderSides (void)
 */
 void DrawAllPlayBorder (void)
 {
-	unsigned	i,temp;
+	u16int	i,temp;
 
 	temp = bufferofs;
 	for (i=0;i<3;i++)
@@ -840,7 +840,7 @@ void DrawAllPlayBorder (void)
 
 void DrawPlayBorder (void)
 {
-	int	xl,yl;
+	s16int	xl,yl;
 
 	VWB_Bar (0,0,320,200-STATUSLINES,127);
 
@@ -867,8 +867,8 @@ void DrawPlayBorder (void)
 
 void DrawPlayScreen (void)
 {
-	int	i,j,p,m;
-	unsigned	temp;
+	s16int	i,j,p,m;
+	u16int	temp;
 
 	VW_FadeOut ();
 
@@ -911,7 +911,7 @@ void DrawPlayScreen (void)
 
 #define MAXDEMOSIZE	8192
 
-void StartDemoRecord (int levelnumber)
+void StartDemoRecord (s16int levelnumber)
 {
 	MM_GetPtr (&demobuffer,MAXDEMOSIZE);
 	MM_SetLock (&demobuffer,true);
@@ -936,14 +936,14 @@ char	demoname[13] = "DEMO?.";
 
 void FinishDemoRecord (void)
 {
-	long	length,level;
+	s32int	length,level;
 
 	demorecord = false;
 
 	length = demoptr - (char far *)demobuffer;
 
 	demoptr = ((char far *)demobuffer)+1;
-	*(unsigned far *)demoptr = length;
+	*(u16int far *)demoptr = length;
 
 	CenterWindow(24,3);
 	PrintY+=6;
@@ -978,7 +978,7 @@ void FinishDemoRecord (void)
 
 void RecordDemo (void)
 {
-	int level,esc;
+	s16int level,esc;
 
 	CenterWindow(26,3);
 	PrintY+=6;
@@ -1041,16 +1041,16 @@ void RecordDemo (void)
 ==================
 */
 
-void PlayDemo (int demonumber)
+void PlayDemo (s16int demonumber)
 {
-	int length;
+	s16int length;
 
 #ifdef DEMOSEXTERN
 // debug: load chunk
 #ifndef SPEARDEMO
-	int dems[4]={T_DEMO0,T_DEMO1,T_DEMO2,T_DEMO3};
+	s16int dems[4]={T_DEMO0,T_DEMO1,T_DEMO2,T_DEMO3};
 #else
-	int dems[1]={T_DEMO0};
+	s16int dems[1]={T_DEMO0};
 #endif
 
 	CA_CacheGrChunk(dems[demonumber]);
@@ -1066,7 +1066,7 @@ void PlayDemo (int demonumber)
 	NewGame (1,0);
 	gamestate.mapon = *demoptr++;
 	gamestate.difficulty = gd_hard;
-	length = *((unsigned far *)demoptr)++;
+	length = *((u16int far *)demoptr)++;
 	demoptr++;
 	lastdemoptr = demoptr-4+length;
 
@@ -1114,8 +1114,8 @@ void PlayDemo (int demonumber)
 void Died (void)
 {
 	float	fangle;
-	long	dx,dy;
-	int		iangle,curangle,clockwise,counter,change;
+	s32int	dx,dy;
+	s16int		iangle,curangle,clockwise,counter,change;
 
 	gamestate.weapon = -1;			// take away weapon
 	SD_PlaySound (PLAYERDEATHSND);
@@ -1237,9 +1237,9 @@ void Died (void)
 
 void GameLoop (void)
 {
-	int i,xl,yl,xh,yh;
+	s16int i,xl,yl,xh,yh;
 	char num[20];
-	boolean	died;
+	int	died;
 #ifdef MYPROFILE
 	clock_t start,end;
 #endif
@@ -1291,7 +1291,7 @@ startplayloop:
 			SD_PlaySound(GETSPEARSND);
 			if (DigiMode != sds_Off)
 			{
-				long lasttimecount = TimeCount;
+				s32int lasttimecount = TimeCount;
 
 				while(TimeCount < lasttimecount+150)
 				//while(DigiPlaying!=false)
