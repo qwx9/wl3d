@@ -159,35 +159,17 @@ void Victory (void)
 
 
 	VWB_Bar (0,0,320,200-STATUSLINES,127);
-#ifdef JAPAN
-#ifndef JAPDEMO
-	CA_CacheGrChunk(C_ENDRATIOSPIC);
-	VWB_DrawPic(0,0,C_ENDRATIOSPIC);
-	UNCACHEGRCHUNK(C_ENDRATIOSPIC);
-#endif
-#else
 	Write(18,2,STR_YOUWIN);
 
 	Write(TIMEX,TIMEY-2,STR_TOTALTIME);
 
 	Write(12,RATIOY-2,"averages");
 
-	#ifdef SPANISH
-	Write(RATIOX+2,  RATIOY,      STR_RATKILL);
-	Write(RATIOX+2,  RATIOY+2,  STR_RATSECRET);
-	Write(RATIOX+2,  RATIOY+4,STR_RATTREASURE);
-	#else
 	Write(RATIOX+8,RATIOY,      STR_RATKILL);
 	Write(RATIOX+4,RATIOY+2,  STR_RATSECRET);
 	Write(RATIOX,  RATIOY+4,STR_RATTREASURE);
-	#endif
 
-#endif
-
-#ifndef JAPDEMO
 	VWB_DrawPic (8,4,L_BJWINSPIC);
-#endif
-
 
 #ifndef SPEAR
 	for (kr = sr = tr = sec = i = 0;i < 8;i++)
@@ -242,7 +224,6 @@ void Victory (void)
 	Write(x,RATIOY+4,tempstr);
 
 
-#ifndef SPANISH
 #ifndef UPLOAD
 #ifndef SPEAR
 	//
@@ -262,7 +243,6 @@ void Victory (void)
 		tempstr[3] = 0;
 		US_Print(tempstr);
 	}
-#endif
 #endif
 #endif
 
@@ -298,7 +278,6 @@ void Victory (void)
 
 //==========================================================================
 
-#ifndef JAPAN
 /*
 ==================
 =
@@ -323,7 +302,6 @@ void PG13 (void)
 
 	VW_FadeOut ();
 }
-#endif
 
 
 //==========================================================================
@@ -566,11 +544,6 @@ void LevelCompleted (void)
 	IN_ClearKeysDown();
 	IN_StartAck();
 
-#ifdef JAPAN
-	CA_CacheGrChunk(C_INTERMISSIONPIC);
-	VWB_DrawPic(0,0,C_INTERMISSIONPIC);
-	UNCACHEGRCHUNK(C_INTERMISSIONPIC);
-#endif
 	VWB_DrawPic(0,16,L_GUYPIC);
 
 #ifndef SPEAR
@@ -582,35 +555,19 @@ void LevelCompleted (void)
 		mapon < 17)
 #endif
 	{
-#ifndef JAPAN
-	 #ifdef SPANISH
-	 Write(14,2,"piso\ncompletado");
-	 #else
 	 Write(14,2,"floor\ncompleted");
-	 #endif
 
 	 Write(14,7,STR_BONUS"     0");
 	 Write(16,10,STR_TIME);
 	 Write(16,12,STR_PAR);
 
-	 #ifdef SPANISH
-	 Write(11,14,    STR_RAT2KILL);
-	 Write(11,16,  STR_RAT2SECRET);
-	 Write(11,18,STR_RAT2TREASURE);
-	 #else
 	 Write(9,14,    STR_RAT2KILL);
 	 Write(5,16,  STR_RAT2SECRET);
 	 Write(1,18,STR_RAT2TREASURE);
-	 #endif
 
 	 Write(26,2,itoa(gamestate.mapon+1,tempstr,10));
-#endif
 
-	 #ifdef SPANISH
-	 Write(30,12,parTimes[gamestate.episode*10+mapon].timestr);
-	 #else
 	 Write(26,12,parTimes[gamestate.episode*10+mapon].timestr);
-	 #endif
 
 	 //
 	 // PRINT TIME
@@ -626,11 +583,7 @@ void LevelCompleted (void)
 	 min=sec/60;
 	 sec%=60;
 
-	 #ifdef SPANISH
-	 i=30*8;
-	 #else
 	 i=26*8;
-	 #endif
 	 VWB_DrawPic(i,10*8,L_NUM0PIC+(min/10));
 	 i+=2*8;
 	 VWB_DrawPic(i,10*8,L_NUM0PIC+(min%10));
@@ -684,11 +637,7 @@ void LevelCompleted (void)
 	 }
 
 
-	 #ifdef SPANISH
-	 #define RATIOXX		33
-	 #else
 	 #define RATIOXX		37
-	 #endif
 	 //
 	 // KILL RATIO
 	 //
@@ -911,23 +860,6 @@ void LevelCompleted (void)
 		CA_CacheGrChunk (STARTFONT+1);
 		Message ("This concludes your demo\n"
 				 "of Spear of Destiny! Now,\n"
-				 "go to your local software\n"
-				 "store and buy it!");
-		UNCACHEGRCHUNK (STARTFONT+1);
-
-		IN_ClearKeysDown();
-		IN_Ack();
-	}
-#endif
-
-#ifdef JAPDEMO
-	if (gamestate.mapon == 3)
-	{
-		SD_PlaySound (BONUS1UPSND);
-
-		CA_CacheGrChunk (STARTFONT+1);
-		Message ("This concludes your demo\n"
-				 "of Wolfenstein 3-D! Now,\n"
 				 "go to your local software\n"
 				 "store and buy it!");
 		UNCACHEGRCHUNK (STARTFONT+1);
@@ -1263,7 +1195,6 @@ void	CheckHighScore (s32int score,u16int other)
 
 #ifndef UPLOAD
 #ifndef SPEAR
-#ifndef JAPAN
 ////////////////////////////////////////////////////////
 //
 // NON-SHAREWARE NOTICE
@@ -1283,31 +1214,20 @@ void NonShareware(void)
 	PrintX=110;
 	PrintY=15;
 
-	#ifdef SPANISH
-	US_Print("Atencion");
-	#else
 	US_Print("Attention");
-	#endif
 
 	SETFONTCOLOR(HIGHLIGHT,BKGDCOLOR);
 	WindowX=PrintX=40;
 	PrintY=60;
-	#ifdef SPANISH
-	US_Print("Este juego NO es gratis y\n");
-	US_Print("NO es Shareware; favor de\n");
-	US_Print("no distribuirlo.\n\n");
-	#else
 	US_Print("This game is NOT shareware.\n");
 	US_Print("Please do not distribute it.\n");
 	US_Print("Thanks.\n\n");
-	#endif
 	US_Print("        Id Software\n");
 
 	VW_UpdateScreen ();
 	VW_FadeIn();
 	IN_Ack();
 }
-#endif
 #endif
 #endif
 

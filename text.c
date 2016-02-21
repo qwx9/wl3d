@@ -59,7 +59,6 @@ int		layoutdone;
 
 //===========================================================================
 
-#ifndef JAPAN
 /*
 =====================
 =
@@ -478,21 +477,12 @@ void PageLayout (int shownumber)
 
 	if (shownumber)
 	{
-		#ifdef SPANISH
-		strcpy (str,"Hoja ");
-		itoa (pagenum,str2,10);
-		strcat (str,str2);
-		strcat (str," de ");
-		py = 183;
-		px = 208;
-		#else
 		strcpy (str,"pg ");
 		itoa (pagenum,str2,10);
 		strcat (str,str2);
 		strcat (str," of ");
 		py = 183;
 		px = 213;
-		#endif
 		itoa (numpages,str2,10);
 		strcat (str,str2);
 		fontcolor = 0x4f; 			   //12^BACKCOLOR;
@@ -584,8 +574,6 @@ void CacheLayoutGraphics (void)
 
 	Quit ("CacheLayoutGraphics: No ^E to terminate file!");
 }
-#endif
-
 
 /*
 =====================
@@ -595,53 +583,11 @@ void CacheLayoutGraphics (void)
 =====================
 */
 
-#ifdef JAPAN
-void ShowArticle (s16int which)
-#else
 void ShowArticle (char far *article)
-#endif
 {
-	#ifdef JAPAN
-	s16int		snames[10] = {	H_HELP1PIC,
-							H_HELP2PIC,
-							H_HELP3PIC,
-							H_HELP4PIC,
-							H_HELP5PIC,
-							H_HELP6PIC,
-							H_HELP7PIC,
-							H_HELP8PIC,
-							H_HELP9PIC,
-							H_HELP10PIC};
-	s16int		enames[14] = {
-							0,0,
-							#ifndef JAPDEMO
-							C_ENDGAME1APIC,
-							C_ENDGAME1BPIC,
-							C_ENDGAME2APIC,
-							C_ENDGAME2BPIC,
-							C_ENDGAME3APIC,
-							C_ENDGAME3BPIC,
-							C_ENDGAME4APIC,
-							C_ENDGAME4BPIC,
-							C_ENDGAME5APIC,
-							C_ENDGAME5BPIC,
-							C_ENDGAME6APIC,
-							C_ENDGAME6BPIC
-							#endif
-							};
-	#endif
 	u16int	oldfontnumber;
 	u16int	temp;
 	int 	newpage,firstpage;
-
-	#ifdef JAPAN
-	pagenum = 1;
-	if (!which)
-		numpages = 10;
-	else
-		numpages = 2;
-
-	#else
 
 	text = article;
 	oldfontnumber = fontnumber;
@@ -649,7 +595,6 @@ void ShowArticle (char far *article)
 	CA_MarkGrChunk(STARTFONT);
 	VWB_Bar (0,0,320,200,BACKCOLOR);
 	CacheLayoutGraphics ();
-	#endif
 
 	newpage = true;
 	firstpage = true;
@@ -659,14 +604,7 @@ void ShowArticle (char far *article)
 		if (newpage)
 		{
 			newpage = false;
-			#ifdef JAPAN
-			if (!which)
-				CA_CacheScreen(snames[pagenum - 1]);
-			else
-				CA_CacheScreen(enames[which*2 + pagenum - 1]);
-			#else
 			PageLayout (true);
-			#endif
 			VW_UpdateScreen ();
 			if (firstpage)
 			{
@@ -687,12 +625,8 @@ void ShowArticle (char far *article)
 		case sc_LeftArrow:
 			if (pagenum>1)
 			{
-				#ifndef JAPAN
 				BackPage ();
 				BackPage ();
-				#else
-				pagenum--;
-				#endif
 				newpage = true;
 			}
 			break;
@@ -704,9 +638,6 @@ void ShowArticle (char far *article)
 			if (pagenum<numpages)
 			{
 				newpage = true;
-				#ifdef JAPAN
-				pagenum++;
-				#endif
 			}
 			break;
 		}
@@ -725,7 +656,6 @@ void ShowArticle (char far *article)
 
 //===========================================================================
 
-#ifndef JAPAN
 #ifdef ARTSEXTERN
 s16int 	endextern = T_ENDART1;
 #ifndef SPEAR
@@ -734,7 +664,6 @@ s16int		helpextern = T_HELPART;
 #endif
 char helpfilename[13] = "HELPART.",
 	 endfilename[13] = "ENDART1.";
-#endif
 
 /*
 =================
@@ -750,19 +679,8 @@ void HelpScreens (void)
 	char far 	*text;
 	uchar *layout;
 
-
 	CA_UpLevel ();
 	MM_SortMem ();
-#ifdef JAPAN
-	ShowArticle (0);
-	VW_FadeOut();
-	FreeMusic ();
-	CA_DownLevel ();
-	MM_SortMem ();
-#else
-
-
-
 
 #ifdef ARTSEXTERN
 	artnum = helpextern;
@@ -790,7 +708,6 @@ void HelpScreens (void)
 	FreeMusic ();
 	CA_DownLevel ();
 	MM_SortMem ();
-#endif
 }
 #endif
 
@@ -808,22 +725,6 @@ void EndText (void)
 
 	CA_UpLevel ();
 	MM_SortMem ();
-#ifdef JAPAN
-	ShowArticle(gamestate.episode + 1);
-
-	VW_FadeOut();
-
-	SETFONTCOLOR(0,15);
-	IN_ClearKeysDown();
-	if (MousePresent)
-		Mouse(MDelta);	// Clear accumulated mouse movement
-
-	FreeMusic ();
-	CA_DownLevel ();
-	MM_SortMem ();
-#else
-
-
 
 #ifdef ARTSEXTERN
 	artnum = endextern+gamestate.episode;
@@ -855,5 +756,4 @@ void EndText (void)
 	FreeMusic ();
 	CA_DownLevel ();
 	MM_SortMem ();
-#endif
 }

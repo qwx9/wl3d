@@ -9,11 +9,7 @@
 
 #include "WL_MENU.H"
 
-#ifdef SPANISH
-#include "SPANISH.H"
-#else
 #include "FOREIGN.H"
-#endif
 
 #ifdef SPEAR
 #include "F_SPEAR.H"

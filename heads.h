@@ -6,16 +6,6 @@ extern	char		far signon;
 
 #define	introscn	signon
 
-#ifdef JAPAN
-#ifdef JAPDEMO
-#include "FOREIGN\JAPAN\GFXV_WJ1.H"
-#else
-#include "FOREIGN\JAPAN\GFXV_WJ6.H"
-#endif
-#include "AUDIOWL6.H"
-#include "MAPSWL6.H"
-#else
-
 #ifndef SPEAR
 
 #include "GFXV_WL6.H"
@@ -35,7 +25,6 @@ extern	char		far signon;
 #endif
 
 #endif
-#endif
 //-----------------
 
 
@@ -47,8 +36,6 @@ extern	char		far signon;
 //	v1.0d1
 //
 
-typedef short s16int;
-typedef int s32int;
 
 #include "ID_MM.H"
 #include "ID_PM.H"

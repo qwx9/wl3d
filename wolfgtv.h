@@ -1,5 +1,4 @@
 //#define SPEAR
-//#define JAPAN
 #define GOODTIMES
 #define ARTSEXTERN
 #define DEMOSEXTERN
