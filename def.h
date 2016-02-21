@@ -1,8 +1,3 @@
-//#define BETA
-#define YEAR	1992
-#define MONTH	9
-#define DAY		30
-
 #include "ID_HEADS.H"
 #include <MATH.H>
 #include <VALUES.H>
@@ -1263,8 +1258,6 @@ void SpawnHitler (s16int tilex, s16int tiley);
 
 =============================================================================
 */
-
-extern	char	helpfilename[],endfilename[];
 
 extern	void	HelpScreens(void);
 extern	void	EndText(void);

@@ -1,9 +1,3 @@
-// ID_MM.H
-
-#ifndef __ID_CA__
-
-#define __ID_CA__
-
 #define SAVENEARHEAP	0x400		// space to leave in data segment
 #define SAVEFARHEAP		0			// space to leave in far heap
 
@@ -90,5 +84,3 @@ s32int MM_TotalFree (void);
 void MM_BombOnError (int bomb);
 
 void MML_UseSpace (u16int segstart, u16int seglength);
-
-#endif

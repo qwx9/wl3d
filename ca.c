@@ -99,18 +99,8 @@ void CA_CannotOpen(char *string);
 s32int		_seg *grstarts;	// array of offsets in egagraph, -1 for sparse
 s32int		_seg *audiostarts;	// array of offsets in audio / audiot
 
-#ifdef GRHEADERLINKED
-huffnode	*grhuffman;
-#else
 huffnode	grhuffman[255];
-#endif
-
-#ifdef AUDIOHEADERLINKED
-huffnode	*audiohuffman;
-#else
 huffnode	audiohuffman[255];
-#endif
-
 
 s16int			grhandle;		// handle to EGAGRAPH
 s16int			maphandle;		// handle to MAPTEMP / GAMEMAPS
@@ -864,15 +854,6 @@ void CAL_SetupGrFile (void)
 	s16int handle;
 	uchar *compseg;
 
-#ifdef GRHEADERLINKED
-
-	grhuffman = (huffnode *)&EGAdict;
-	grstarts = (s32int _seg *)FP_SEG(&EGAhead);
-
-	CAL_OptimizeNodes (grhuffman);
-
-#else
-
 //
 // load ???dict.ext (huffman dictionary for graphics files)
 //
@@ -902,9 +883,6 @@ void CAL_SetupGrFile (void)
 	CA_FarRead(handle, (uchar *)grstarts, (NUMCHUNKS+1)*FILEPOSSIZE);
 
 	close(handle);
-
-
-#endif
 
 //
 // Open the graphics file, leaving it open until the game is finished
@@ -949,7 +927,6 @@ void CAL_SetupMapFile (void)
 //
 // load maphead.ext (offsets and tileinfo for map file)
 //
-#ifndef MAPHEADERLINKED
 	strcpy(fname,mheadname);
 	strcat(fname,extension);
 
@@ -961,30 +938,16 @@ void CAL_SetupMapFile (void)
 	MM_GetPtr (&(uchar *)tinf,length);
 	CA_FarRead(handle, tinf, length);
 	close(handle);
-#else
-
-	tinf = (u8int _seg *)FP_SEG(&maphead);
-
-#endif
 
 //
 // open the data file
 //
-#ifdef CARMACIZED
 	strcpy(fname,"GAMEMAPS.");
 	strcat(fname,extension);
 
 	if ((maphandle = open(fname,
 		 O_RDONLY | O_BINARY, S_IREAD)) == -1)
 		CA_CannotOpen(fname);
-#else
-	strcpy(fname,mfilename);
-	strcat(fname,extension);
-
-	if ((maphandle = open(fname,
-		 O_RDONLY | O_BINARY, S_IREAD)) == -1)
-		CA_CannotOpen(fname);
-#endif
 
 //
 // load all map header
@@ -1032,7 +995,6 @@ void CAL_SetupAudioFile (void)
 //
 // load maphead.ext (offsets and tileinfo for map file)
 //
-#ifndef AUDIOHEADERLINKED
 	strcpy(fname,aheadname);
 	strcat(fname,extension);
 
@@ -1044,27 +1006,16 @@ void CAL_SetupAudioFile (void)
 	MM_GetPtr (&(uchar *)audiostarts,length);
 	CA_FarRead(handle, (u8int far *)audiostarts, length);
 	close(handle);
-#else
-	audiohuffman = (huffnode *)&audiodict;
-	CAL_OptimizeNodes (audiohuffman);
-	audiostarts = (s32int _seg *)FP_SEG(&audiohead);
-#endif
 
 //
 // open the data file
 //
-#ifndef AUDIOHEADERLINKED
 	strcpy(fname,afilename);
 	strcat(fname,extension);
 
 	if ((audiohandle = open(fname,
 		 O_RDONLY | O_BINARY, S_IREAD)) == -1)
 		CA_CannotOpen(fname);
-#else
-	if ((audiohandle = open("AUDIO."EXTENSION,
-		 O_RDONLY | O_BINARY, S_IREAD)) == -1)
-		Quit ("Can't open AUDIO."EXTENSION"!");
-#endif
 }
 
 //==========================================================================
@@ -1082,11 +1033,6 @@ void CAL_SetupAudioFile (void)
 
 void CA_Startup (void)
 {
-#ifdef PROFILE
-	unlink ("PROFILE.TXT");
-	profilehandle = open("PROFILE.TXT", O_CREAT | O_WRONLY | O_TEXT);
-#endif
-
 	CAL_SetupMapFile ();
 	CAL_SetupGrFile ();
 	CAL_SetupAudioFile ();
@@ -1112,10 +1058,6 @@ void CA_Startup (void)
 
 void CA_Shutdown (void)
 {
-#ifdef PROFILE
-	close (profilehandle);
-#endif
-
 	close (maphandle);
 	close (grhandle);
 	close (audiohandle);
@@ -1134,11 +1076,6 @@ void CA_Shutdown (void)
 void CA_CacheAudioChunk (s16int chunk)
 {
 	s32int	pos,compressed;
-#ifdef AUDIOHEADERLINKED
-	s32int	expanded;
-	uchar *bigbufferseg;
-	u8int	far *source;
-#endif
 
 	if (audiosegs[chunk])
 	{
@@ -1155,42 +1092,11 @@ void CA_CacheAudioChunk (s16int chunk)
 
 	lseek(audiohandle,pos,SEEK_SET);
 
-#ifndef AUDIOHEADERLINKED
-
 	MM_GetPtr (&(uchar *)audiosegs[chunk],compressed);
 	if (mmerror)
 		return;
 
 	CA_FarRead(audiohandle,audiosegs[chunk],compressed);
-
-#else
-
-	if (compressed<=BUFFERSIZE)
-	{
-		CA_FarRead(audiohandle,bufferseg,compressed);
-		source = bufferseg;
-	}
-	else
-	{
-		MM_GetPtr(&bigbufferseg,compressed);
-		if (mmerror)
-			return;
-		MM_SetLock (&bigbufferseg,true);
-		CA_FarRead(audiohandle,bigbufferseg,compressed);
-		source = bigbufferseg;
-	}
-
-	expanded = *(s32int far *)source;
-	source += 4;			// skip over length
-	MM_GetPtr (&(uchar *)audiosegs[chunk],expanded);
-	if (mmerror)
-		goto done;
-	CAL_HuffExpand (source,audiosegs[chunk],expanded,audiohuffman,false);
-
-done:
-	if (compressed>BUFFERSIZE)
-		MM_FreePtr(&bigbufferseg);
-#endif
 }
 
 //===========================================================================
@@ -1432,10 +1338,8 @@ void CA_CacheMap (s16int mapnum)
 	uchar **dest,bigbufferseg;
 	u16int	size;
 	u16int	far	*source;
-#ifdef CARMACIZED
 	uchar *buffer2seg;
 	s32int	expanded;
-#endif
 
 	mapon = mapnum;
 
@@ -1462,7 +1366,6 @@ void CA_CacheMap (s16int mapnum)
 		}
 
 		CA_FarRead(maphandle,(u8int far *)source,compressed);
-#ifdef CARMACIZED
 		//
 		// unhuffman, then unRLEW
 		// The huffman'd chunk has a two byte expanded length first
@@ -1476,14 +1379,6 @@ void CA_CacheMap (s16int mapnum)
 		CA_RLEWexpand (((u16int far *)buffer2seg)+1,*dest,size,
 		((mapfiletype _seg *)tinf)->RLEWtag);
 		MM_FreePtr (&buffer2seg);
-
-#else
-		//
-		// unRLEW, skipping expanded length
-		//
-		CA_RLEWexpand (source+1, *dest,size,
-		((mapfiletype _seg *)tinf)->RLEWtag);
-#endif
 
 		if (compressed>BUFFERSIZE)
 			MM_FreePtr(&bigbufferseg);

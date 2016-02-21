@@ -1432,30 +1432,10 @@ void    DemoLoop (void)
 //	nsize = (s32int)40*1024;
 //	MM_GetPtr(&nullblock,nsize);
 
-#ifndef DEMOTEST
-
-	#ifndef UPLOAD
-		#ifndef GOODTIMES
-		#ifndef SPEAR
-		if (!NoWait)
-			NonShareware();
-		#else
-
-			#ifndef GOODTIMES
-			#ifndef SPEARDEMO
-			CopyProtection();
-			#endif
-			#endif
-		#endif
-		#endif
-	#endif
-
 	StartCPMusic(INTROSONG);
 
 	if (!NoWait)
 		PG13 ();
-
-#endif
 
 	while (1)
 	{
@@ -1465,7 +1445,6 @@ void    DemoLoop (void)
 // title page
 //
 			MM_SortMem ();
-#ifndef DEMOTEST
 
 #ifdef SPEAR
 			CA_CacheGrChunk (TITLEPALETTE);
@@ -1507,7 +1486,6 @@ void    DemoLoop (void)
 
 			if (IN_UserInput(TickBase*10))
 				break;
-#endif
 //
 // demo
 //
@@ -1560,22 +1538,6 @@ char    *nosprtxt[] = {"nospr",nil};
 void main (void)
 {
 	s16int     i;
-
-
-#ifdef BETA
-	//
-	// THIS IS FOR BETA ONLY!
-	//
-	struct dosdate_t d;
-
-	_dos_getdate(&d);
-	if (d.year > YEAR ||
-		(d.month >= MONTH && d.day >= DAY))
-	{
-	 printf("Sorry, BETA-TESTING is over. Thanks for you help.\n");
-	 exit(1);
-	}
-#endif
 
 	CheckForEpisodes();
 

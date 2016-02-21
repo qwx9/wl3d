@@ -3,10 +3,6 @@
 #include "WL_DEF.H"
 #pragma hdrstop
 
-#ifdef MYPROFILE
-#include <TIME.H>
-#endif
-
 
 /*
 =============================================================================
@@ -1045,7 +1041,6 @@ void PlayDemo (s16int demonumber)
 {
 	s16int length;
 
-#ifdef DEMOSEXTERN
 // debug: load chunk
 #ifndef SPEARDEMO
 	s16int dems[4]={T_DEMO0,T_DEMO1,T_DEMO2,T_DEMO3};
@@ -1056,12 +1051,6 @@ void PlayDemo (s16int demonumber)
 	CA_CacheGrChunk(dems[demonumber]);
 	demoptr = grsegs[dems[demonumber]];
 	MM_SetLock (&grsegs[dems[demonumber]],true);
-#else
-	demoname[4] = '0'+demonumber;
-	CA_LoadFile (demoname,&demobuffer);
-	MM_SetLock (&demobuffer,true);
-	demoptr = (char far *)demobuffer;
-#endif
 
 	NewGame (1,0);
 	gamestate.mapon = *demoptr++;
@@ -1086,11 +1075,7 @@ void PlayDemo (s16int demonumber)
 
 	PlayLoop ();
 
-#ifdef DEMOSEXTERN
 	UNCACHEGRCHUNK(dems[demonumber]);
-#else
-	MM_FreePtr (&demobuffer);
-#endif
 
 	demoplayback = false;
 
@@ -1240,9 +1225,6 @@ void GameLoop (void)
 	s16int i,xl,yl,xh,yh;
 	char num[20];
 	int	died;
-#ifdef MYPROFILE
-	clock_t start,end;
-#endif
 
 restartgame:
 	ClearMemory ();

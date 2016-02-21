@@ -1,19 +1,3 @@
-//
-//	ID Engine
-//	ID_US.h - Header file for the User Manager
-//	v1.0d1
-//	By Jason Blochowiak
-//
-
-#ifndef	__ID_US__
-#define	__ID_US__
-
-#ifdef	__DEBUG__
-#define	__DEBUG_UserMgr__
-#endif
-
-//#define	HELPTEXTLINKED
-
 #define	MaxX	320
 #define	MaxY	200
 
@@ -120,4 +104,3 @@ extern	s16int		US_CheckParm(char *parm,char **strings),
 
 		void	USL_PrintInCenter(char far *s,Rct r);
 		char 	*USL_GiveSaveName(u16int game);
-#endif

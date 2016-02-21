@@ -656,14 +656,10 @@ void ShowArticle (char far *article)
 
 //===========================================================================
 
-#ifdef ARTSEXTERN
 s16int 	endextern = T_ENDART1;
 #ifndef SPEAR
 s16int		helpextern = T_HELPART;
 #endif
-#endif
-char helpfilename[13] = "HELPART.",
-	 endfilename[13] = "ENDART1.";
 
 /*
 =================
@@ -682,26 +678,14 @@ void HelpScreens (void)
 	CA_UpLevel ();
 	MM_SortMem ();
 
-#ifdef ARTSEXTERN
 	artnum = helpextern;
 	CA_CacheGrChunk (artnum);
 	text = (char _seg *)grsegs[artnum];
 	MM_SetLock (&grsegs[artnum], true);
-#else
-	CA_LoadFile (helpfilename,&layout);
-	text = (char _seg *)layout;
-	MM_SetLock (&layout, true);
-#endif
 
 	ShowArticle (text);
 
-#ifdef ARTSEXTERN
 	MM_FreePtr (&grsegs[artnum]);
-#else
-	MM_FreePtr (&layout);
-#endif
-
-
 
 	VW_FadeOut();
 
@@ -726,25 +710,14 @@ void EndText (void)
 	CA_UpLevel ();
 	MM_SortMem ();
 
-#ifdef ARTSEXTERN
 	artnum = endextern+gamestate.episode;
 	CA_CacheGrChunk (artnum);
 	text = (char _seg *)grsegs[artnum];
 	MM_SetLock (&grsegs[artnum], true);
-#else
-	endfilename[6] = '1'+gamestate.episode;
-	CA_LoadFile (endfilename,&layout);
-	text = (char _seg *)layout;
-	MM_SetLock (&layout, true);
-#endif
 
 	ShowArticle (text);
 
-#ifdef ARTSEXTERN
 	MM_FreePtr (&grsegs[artnum]);
-#else
-	MM_FreePtr (&layout);
-#endif
 
 
 	VW_FadeOut();

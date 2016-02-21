@@ -5,13 +5,6 @@
 //	By Jason Blochowiak
 //
 
-#ifndef	__ID_IN__
-#define	__ID_IN__
-
-#ifdef	__DEBUG__
-#define	__DEBUG_InputMgr__
-#endif
-
 #define	MaxPlayers	4
 #define	MaxKbds		2
 #define	MaxJoys		2
@@ -197,5 +190,3 @@ u8int	IN_JoyButtons (void);
 void INL_GetJoyDelta(u16int joy,s16int *dx,s16int *dy);
 void IN_StartAck(void);
 int IN_CheckAck (void);
-
-#endif

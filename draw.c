@@ -1251,14 +1251,6 @@ void CalcTics (void)
 
 	lasttimecount = newtime;
 
-#ifdef FILEPROFILE
-		strcpy (scratch,"\tTics:");
-		itoa (tics,str,10);
-		strcat (scratch,str);
-		strcat (scratch,"\n");
-		write (profilehandle,scratch,strlen(scratch));
-#endif
-
 	if (tics>MAXTICS)
 	{
 		TimeCount -= (tics-MAXTICS);

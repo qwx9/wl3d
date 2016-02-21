@@ -12,17 +12,7 @@
 //
 void CP_ReadThis(void);
 
-#ifdef SPEAR
 #define STARTITEM	newgame
-
-#else
-#ifdef GOODTIMES
-#define STARTITEM	newgame
-
-#else
-#define STARTITEM	readthis
-#endif
-#endif
 
 char far endStrings[9][80]=
 {
@@ -68,13 +58,9 @@ MainMenu[]=
 	{1,STR_LG,CP_LoadGame},
 	{0,STR_SG,CP_SaveGame},
 	{1,STR_CV,CP_ChangeView},
-
-#ifndef GOODTIMES
 #ifndef SPEAR
 	{2,"Read This!",CP_ReadThis},
 #endif
-#endif
-
 	{1,STR_VS,CP_ViewScores},
 	{1,STR_BD,0},
 	{1,STR_QT,0}
@@ -246,14 +232,8 @@ void US_ControlPanel(u8int scancode)
 	switch(scancode)
 	{
 		case sc_F1:
-			#ifdef SPEAR
-			BossKey();
-			#else
-			#ifdef GOODTIMES
-			BossKey();
-			#else
+			#ifndef SPEAR
 			HelpScreens();
-			#endif
 			#endif
 			goto finishup;
 
@@ -461,8 +441,6 @@ void DrawMainMenu(void)
 	VW_UpdateScreen();
 }
 
-#ifndef GOODTIMES
-#ifndef SPEAR
 ////////////////////////////////////////////////////////////////////
 //
 // READ THIS!
@@ -474,34 +452,6 @@ void CP_ReadThis(void)
 	HelpScreens();
 	StartCPMusic(MENUSONG);
 }
-#endif
-#endif
-
-#ifndef SPEAR
-#ifndef GOODTIMES
-#else
-////////////////////////////////////////////////////////////////////
-//
-// BOSS KEY
-//
-////////////////////////////////////////////////////////////////////
-void BossKey(void)
-{
-	SD_MusicOff();
-	_AX = 3;
-	geninterrupt(0x10);
-	printf("C>");
-	while (!Keyboard[sc_Escape])
-	IN_ClearKeysDown();
-
-	SD_MusicOn();
-	VL_SetVGAPlaneMode ();
-	VL_TestPaletteSet ();
-	VL_SetPalette (&gamepal);
-	LoadLatchMem();
-}
-#endif
-#endif
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -867,9 +817,7 @@ firstpart:
 	// CHANGE "READ THIS!" TO NORMAL COLOR
 	//
 	#ifndef SPEAR
-	#ifndef GOODTIMES
 	MainMenu[readthis].active=1;
-	#endif
 	#endif
 
 	pickquick = 0;
@@ -1249,11 +1197,8 @@ s16int CP_LoadGame(s16int quick)
 			//
 			// CHANGE "READ THIS!" TO NORMAL COLOR
 			//
-
 			#ifndef SPEAR
-			#ifndef GOODTIMES
 			MainMenu[readthis].active=1;
-			#endif
 			#endif
 
 			exit=1;
@@ -3569,10 +3514,4 @@ void CheckForEpisodes(void)
 	strcat(PageFileName,extension);
 	strcat(audioname,extension);
 	strcat(demoname,extension);
-#ifndef SPEAR
-#ifndef GOODTIMES
-	strcat(helpfilename,extension);
-#endif
-	strcat(endfilename,extension);
-#endif
 }

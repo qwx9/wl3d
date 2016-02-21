@@ -1,18 +1,4 @@
-//
-//	ID Engine
-//	ID_SD.h - Sound Manager Header
-//	Version for Wolfenstein
-//	By Jason Blochowiak
-//
-
-#ifndef	__ID_SD__
-#define	__ID_SD__
-
 void	alOut(u8int n,u8int b);
-
-#ifdef	__DEBUG__
-#define	__DEBUG_SoundMgr__
-#endif
 
 #define	TickBase	70		// 70Hz per tick - used as a base for timer 0
 
@@ -225,13 +211,3 @@ extern	void	SD_SetDigiDevice(SDSMode),
 				SD_PlayDigitized(u16int which,int leftpos,int rightpos),
 				SD_StopDigitized(void),
 				SD_Poll(void);
-
-#ifdef	_MUSE_	// MUSE Goes directly to the lower level routines
-extern	void	SDL_PCPlaySound(PCSound far *sound),
-				SDL_PCStopSound(void),
-				SDL_ALPlaySound(AdLibSound far *sound),
-				SDL_ALStopSound(void);
-#endif
-
-#endif
-

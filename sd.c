@@ -28,22 +28,7 @@
 //			NeedsMusic - load music?
 //
 
-#pragma hdrstop		// Wierdo thing with MUSE
-
-#include <dos.h>
-
-#ifdef	_MUSE_      // Will be defined in ID_Types.h
-#include "ID_SD.h"
-#else
 #include "ID_HEADS.H"
-#endif
-#pragma	hdrstop
-#pragma	warn	-pia
-
-#ifdef	nil
-#undef	nil
-#endif
-#define	nil	0
 
 #define	SDL_SoundFinished()	{SoundNumber = SoundPriority = 0;}
 
@@ -179,7 +164,6 @@ static	u16int			sqMode,sqFadeStep;
 static void
 SDL_SetTimer0(u16int speed)
 {
-#ifndef TPROF	// If using Borland's profiling, don't screw with the timer
 asm	pushf
 asm	cli
 
@@ -193,9 +177,6 @@ asm	cli
 		TimerDivisor = speed;
 
 asm	popf
-#else
-	TimerDivisor = 0x10000;
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -255,11 +236,7 @@ SDL_SetTimerSpeed(void)
 //		requests from the SoundBlaster to cease
 //
 ///////////////////////////////////////////////////////////////////////////
-#ifdef	_MUSE_
-void
-#else
 static void
-#endif
 SDL_SBStopSample(void)
 {
 	u8int	is;
@@ -375,11 +352,7 @@ SDL_SBService(void)
 //		DMA to play the sound
 //
 ///////////////////////////////////////////////////////////////////////////
-#ifdef	_MUSE_
-void
-#else
 static void
-#endif
 SDL_SBPlaySample(u8int huge *data,u32int len)
 {
 	u32int	used;
@@ -629,11 +602,7 @@ SDL_ShutSB(void)
 //	SDL_SSStopSample() - Stops a sample playing on the Sound Source
 //
 ///////////////////////////////////////////////////////////////////////////
-#ifdef	_MUSE_
-void
-#else
 static void
-#endif
 SDL_SSStopSample(void)
 {
 asm	pushf
@@ -694,11 +663,7 @@ done:;
 //	SDL_SSPlaySample() - Plays the specified sample on the Sound Source
 //
 ///////////////////////////////////////////////////////////////////////////
-#ifdef	_MUSE_
-void
-#else
 static void
-#endif
 SDL_SSPlaySample(u8int huge *data,u32int len)
 {
 asm	pushf
@@ -822,11 +787,7 @@ SDL_DetectSoundSource(void)
 //	SDL_PCPlaySample() - Plays the specified sample on the PC speaker
 //
 ///////////////////////////////////////////////////////////////////////////
-#ifdef	_MUSE_
-void
-#else
 static void
-#endif
 SDL_PCPlaySample(u8int huge *data,u32int len)
 {
 asm	pushf
@@ -845,11 +806,7 @@ asm	popf
 //	SDL_PCStopSample() - Stops a sample playing on the PC speaker
 //
 ///////////////////////////////////////////////////////////////////////////
-#ifdef	_MUSE_
-void
-#else
 static void
-#endif
 SDL_PCStopSample(void)
 {
 asm	pushf
@@ -871,11 +828,7 @@ asm	popf
 //	SDL_PCPlaySound() - Plays the specified sound on the PC speaker
 //
 ///////////////////////////////////////////////////////////////////////////
-#ifdef	_MUSE_
-void
-#else
 static void
-#endif
 SDL_PCPlaySound(PCSound far *sound)
 {
 asm	pushf
@@ -893,11 +846,7 @@ asm	popf
 //	SDL_PCStopSound() - Stops the current sound playing on the PC Speaker
 //
 ///////////////////////////////////////////////////////////////////////////
-#ifdef	_MUSE_
-void
-#else
 static void
-#endif
 SDL_PCStopSound(void)
 {
 asm	pushf
@@ -1381,11 +1330,7 @@ SDL_SetInstrument(s16int track,s16int which,Instrument far *inst,int percussive)
 //		AdLib card
 //
 ///////////////////////////////////////////////////////////////////////////
-#ifdef	_MUSE_
-void
-#else
 static void
-#endif
 SDL_ALStopSound(void)
 {
 asm	pushf
@@ -1425,11 +1370,7 @@ SDL_AlSetFXInst(Instrument far *inst)
 //	SDL_ALPlaySound() - Plays the specified sound on the AdLib card
 //
 ///////////////////////////////////////////////////////////////////////////
-#ifdef	_MUSE_
-void
-#else
 static void
-#endif
 SDL_ALPlaySound(AdLibSound far *sound)
 {
 	Instrument	far *inst;
@@ -1778,7 +1719,6 @@ SD_SetSoundMode(SDMode mode)
 
 	SD_StopSound();
 
-#ifndef	_MUSE_
 	if ((mode == sdm_AdLib) && !AdLibPresent)
 		mode = sdm_PC;
 
@@ -1802,17 +1742,12 @@ SD_SetSoundMode(SDMode mode)
 		}
 		break;
 	}
-#else
-	result = true;
-#endif
 
 	if (result && (mode != SoundMode))
 	{
 		SDL_ShutDevice();
 		SoundMode = mode;
-#ifndef	_MUSE_
 		SoundTable = (u16int *)(&audiosegs[tableoffset]);
-#endif
 		SDL_StartDevice();
 	}
 
@@ -1879,7 +1814,6 @@ SD_Startup(void)
 	alNoCheck = false;
 	sbNoCheck = false;
 	sbNoProCheck = false;
-#ifndef	_MUSE_
 	for (i = 1;i < _argc;i++)
 	{
 		switch (US_CheckParm(_argv[i],ParmStrings))
@@ -1913,7 +1847,6 @@ SD_Startup(void)
 			break;
 		}
 	}
-#endif
 
 	SoundUserHook = 0;
 
