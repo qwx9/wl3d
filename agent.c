@@ -273,10 +273,10 @@ void DrawFace (void)
 	{
 		#ifdef SPEAR
 		if (godmode)
-			StatusDrawPic (17,4,GODMODEFACE1PIC+gamestate.faceframe);
+			StatusDrawPic (17,4,Pgod+gamestate.faceframe);
 		else
 		#endif
-		StatusDrawPic (17,4,FACE1APIC+3*((100-gamestate.health)/16)+gamestate.faceframe);
+		StatusDrawPic (17,4,Pface1+3*((100-gamestate.health)/16)+gamestate.faceframe);
 	}
 	else
 	{
@@ -285,7 +285,7 @@ void DrawFace (void)
 	   StatusDrawPic (17,4,MUTANTBJPIC);
 	 else
 #endif
-	   StatusDrawPic (17,4,FACE8APIC);
+	   StatusDrawPic (17,4,Pface8);
 	}
 }
 
@@ -307,7 +307,7 @@ s16int	facecount;
 void	UpdateFace (void)
 {
 
-	if (SD_SoundPlaying() == GETGATLINGSND)
+	if (SD_SoundPlaying() == Sgetgatling)
 	  return;
 
 	facecount += tics;
@@ -345,7 +345,7 @@ void	LatchNumber (s16int x, s16int y, s16int width, s32int number)
 
 	while (length<width)
 	{
-		StatusDrawPic (x,y,N_BLANKPIC);
+		StatusDrawPic (x,y,Pblank);
 		x++;
 		width--;
 	}
@@ -354,7 +354,7 @@ void	LatchNumber (s16int x, s16int y, s16int width, s32int number)
 
 	while (c<length)
 	{
-		StatusDrawPic (x,y,str[c]-'0'+ N_0PIC);
+		StatusDrawPic (x,y,str[c]-'0'+ Pn0);
 		x++;
 		c++;
 	}
@@ -415,7 +415,7 @@ void	TakeDamage (s16int points,objtype *attacker)
 	#ifdef SPEAR
 	if (points > 30 && gamestate.health!=0 && !godmode)
 	{
-		StatusDrawPic (17,4,BJOUCHPIC);
+		StatusDrawPic (17,4,Pouch);
 		facecount = 0;
 	}
 	#endif
@@ -494,7 +494,7 @@ void	GiveExtraMan (void)
 	if (gamestate.lives<9)
 		gamestate.lives++;
 	DrawLives ();
-	SD_PlaySound (BONUS1UPSND);
+	SD_PlaySound (S1up);
 }
 
 //===========================================================================
@@ -543,7 +543,7 @@ void	GivePoints (s32int points)
 
 void DrawWeapon (void)
 {
-	StatusDrawPic (32,8,KNIFEPIC+gamestate.weapon);
+	StatusDrawPic (32,8,Pknife+gamestate.weapon);
 }
 
 
@@ -558,14 +558,14 @@ void DrawWeapon (void)
 void DrawKeys (void)
 {
 	if (gamestate.keys & 1)
-		StatusDrawPic (30,4,GOLDKEYPIC);
+		StatusDrawPic (30,4,Pgkey);
 	else
-		StatusDrawPic (30,4,NOKEYPIC);
+		StatusDrawPic (30,4,Pnokey);
 
 	if (gamestate.keys & 2)
-		StatusDrawPic (30,20,SILVERKEYPIC);
+		StatusDrawPic (30,20,Pskey);
 	else
-		StatusDrawPic (30,20,NOKEYPIC);
+		StatusDrawPic (30,20,Pnokey);
 }
 
 
@@ -672,7 +672,7 @@ void GetBonus (statobj_t *check)
 		if (gamestate.health == 100)
 			return;
 
-		SD_PlaySound (HEALTH2SND);
+		SD_PlaySound (Shealth2);
 		HealSelf (25);
 		break;
 
@@ -681,26 +681,26 @@ void GetBonus (statobj_t *check)
 	case	bo_key3:
 	case	bo_key4:
 		GiveKey (check->itemnumber - bo_key1);
-		SD_PlaySound (GETKEYSND);
+		SD_PlaySound (Sgetkey);
 		break;
 
 	case	bo_cross:
-		SD_PlaySound (BONUS1SND);
+		SD_PlaySound (Sbonus1);
 		GivePoints (100);
 		gamestate.treasurecount++;
 		break;
 	case	bo_chalice:
-		SD_PlaySound (BONUS2SND);
+		SD_PlaySound (Sbonus2);
 		GivePoints (500);
 		gamestate.treasurecount++;
 		break;
 	case	bo_bible:
-		SD_PlaySound (BONUS3SND);
+		SD_PlaySound (Sbonus3);
 		GivePoints (1000);
 		gamestate.treasurecount++;
 		break;
 	case	bo_crown:
-		SD_PlaySound (BONUS4SND);
+		SD_PlaySound (Sbonus4);
 		GivePoints (5000);
 		gamestate.treasurecount++;
 		break;
@@ -709,14 +709,14 @@ void GetBonus (statobj_t *check)
 		if (gamestate.ammo == 99)
 			return;
 
-		SD_PlaySound (GETAMMOSND);
+		SD_PlaySound (Sgetammo);
 		GiveAmmo (8);
 		break;
 	case	bo_clip2:
 		if (gamestate.ammo == 99)
 			return;
 
-		SD_PlaySound (GETAMMOSND);
+		SD_PlaySound (Sgetammo);
 		GiveAmmo (4);
 		break;
 
@@ -725,26 +725,26 @@ void GetBonus (statobj_t *check)
 		if (gamestate.ammo == 99)
 		  return;
 
-		SD_PlaySound (GETAMMOBOXSND);
+		SD_PlaySound (Sammobox);
 		GiveAmmo (25);
 		break;
 #endif
 
 	case	bo_machinegun:
-		SD_PlaySound (GETMACHINESND);
+		SD_PlaySound (Sgetmg);
 		GiveWeapon (wp_machinegun);
 		break;
 	case	bo_chaingun:
-		SD_PlaySound (GETGATLINGSND);
+		SD_PlaySound (Sgetgatling);
 		GiveWeapon (wp_chaingun);
 
-		StatusDrawPic (17,4,GOTGATLINGPIC);
+		StatusDrawPic (17,4,Pgat);
 		facecount = 0;
 		gotgatgun = 1;
 		break;
 
 	case	bo_fullheal:
-		SD_PlaySound (BONUS1UPSND);
+		SD_PlaySound (S1up);
 		HealSelf (99);
 		GiveAmmo (25);
 		GiveExtraMan ();
@@ -755,7 +755,7 @@ void GetBonus (statobj_t *check)
 		if (gamestate.health == 100)
 			return;
 
-		SD_PlaySound (HEALTH1SND);
+		SD_PlaySound (Shealth1);
 		HealSelf (10);
 		break;
 
@@ -763,7 +763,7 @@ void GetBonus (statobj_t *check)
 		if (gamestate.health == 100)
 			return;
 
-		SD_PlaySound (HEALTH1SND);
+		SD_PlaySound (Shealth1);
 		HealSelf (4);
 		break;
 
@@ -771,7 +771,7 @@ void GetBonus (statobj_t *check)
 		if (gamestate.health >10)
 			return;
 
-		SD_PlaySound (SLURPIESND);
+		SD_PlaySound (Sslurp);
 		HealSelf (1);
 		break;
 
@@ -881,7 +881,7 @@ void ClipMove (objtype *ob, s32int xmove, s32int ymove)
 		return;		// walk through walls
 
 	if (!SD_SoundPlaying())
-		SD_PlaySound (HITWALLSND);
+		SD_PlaySound (Shitwall);
 
 	ob->x = basex+xmove;
 	ob->y = basey;
@@ -1066,7 +1066,7 @@ void Cmd_Use (void)
 			playstate = ex_secretlevel;
 		else
 			playstate = ex_completed;
-		SD_PlaySound (LEVELDONESND);
+		SD_PlaySound (Slvlend);
 		SD_WaitSoundDone();
 	}
 	else if (!buttonheld[bt_use] && doornum & 0x80)
@@ -1075,7 +1075,7 @@ void Cmd_Use (void)
 		OperateDoor (doornum & ~0x80);
 	}
 	else
-		SD_PlaySound (DONOTHINGSND);
+		SD_PlaySound (Snope);
 
 }
 
@@ -1135,7 +1135,7 @@ void	KnifeAttack (objtype *ob)
 	objtype *check,*closest;
 	s32int	dist;
 
-	SD_PlaySound (ATKKNIFESND);
+	SD_PlaySound (Sknife);
 // actually fire
 	dist = 0x7fffffff;
 	closest = NULL;
@@ -1175,13 +1175,13 @@ void	GunAttack (objtype *ob)
 	switch (gamestate.weapon)
 	{
 	case wp_pistol:
-		SD_PlaySound (ATKPISTOLSND);
+		SD_PlaySound (Spistol);
 		break;
 	case wp_machinegun:
-		SD_PlaySound (ATKMACHINEGUNSND);
+		SD_PlaySound (Smg);
 		break;
 	case wp_chaingun:
-		SD_PlaySound (ATKGATLINGSND);
+		SD_PlaySound (Sgatling);
 		break;
 	}
 

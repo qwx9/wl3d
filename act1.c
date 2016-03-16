@@ -472,7 +472,7 @@ void CloseDoor (s16int door)
 			+doorobjlist[door].tilex)-AREATILE;
 	if (areabyplayer[area])
 	{
-		PlaySoundLocTile(CLOSEDOORSND,doorobjlist[door].tilex,doorobjlist[door].tiley);	// JAB
+		PlaySoundLocTile(Sclosedoor,doorobjlist[door].tilex,doorobjlist[door].tiley);	// JAB
 	}
 
 	doorobjlist[door].action = dr_closing;
@@ -504,7 +504,7 @@ void OperateDoor (s16int door)
 	{
 		if ( ! (gamestate.keys & (1 << (lock-dr_lock1) ) ) )
 		{
-			SD_PlaySound (NOWAYSND);		// locked
+			SD_PlaySound (Snoway);		// locked
 			return;
 		}
 	}
@@ -583,7 +583,7 @@ void DoorOpening (s16int door)
 		ConnectAreas ();
 		if (areabyplayer[area1])
 		{
-			PlaySoundLocTile(OPENDOORSND,doorobjlist[door].tilex,doorobjlist[door].tiley);	// JAB
+			PlaySoundLocTile(Sopendoor,doorobjlist[door].tilex,doorobjlist[door].tiley);	// JAB
 		}
 	}
 
@@ -746,7 +746,7 @@ void PushWall (s16int checkx, s16int checky, s16int dir)
 	case di_north:
 		if (actorat[checkx][checky-1])
 		{
-			SD_PlaySound (NOWAYSND);
+			SD_PlaySound (Snoway);
 			return;
 		}
 		(u16int)actorat[checkx][checky-1] =
@@ -756,7 +756,7 @@ void PushWall (s16int checkx, s16int checky, s16int dir)
 	case di_east:
 		if (actorat[checkx+1][checky])
 		{
-			SD_PlaySound (NOWAYSND);
+			SD_PlaySound (Snoway);
 			return;
 		}
 		(u16int)actorat[checkx+1][checky] =
@@ -766,7 +766,7 @@ void PushWall (s16int checkx, s16int checky, s16int dir)
 	case di_south:
 		if (actorat[checkx][checky+1])
 		{
-			SD_PlaySound (NOWAYSND);
+			SD_PlaySound (Snoway);
 			return;
 		}
 		(u16int)actorat[checkx][checky+1] =
@@ -776,7 +776,7 @@ void PushWall (s16int checkx, s16int checky, s16int dir)
 	case di_west:
 		if (actorat[checkx-1][checky])
 		{
-			SD_PlaySound (NOWAYSND);
+			SD_PlaySound (Snoway);
 			return;
 		}
 		(u16int)actorat[checkx-1][checky] =
@@ -793,7 +793,7 @@ void PushWall (s16int checkx, s16int checky, s16int dir)
 	tilemap[pwallx][pwally] |= 0xc0;
 	*(mapsegs[1]+farmapylookup[pwally]+pwallx) = 0;	// remove P tile info
 
-	SD_PlaySound (PUSHWALLSND);
+	SD_PlaySound (Spushwall);
 }
 
 

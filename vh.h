@@ -16,26 +16,8 @@
 
 typedef struct
 {
-  s16int	width,
-	height,
-	orgx,orgy,
-	xl,yl,xh,yh,
-	shifts;
-} spritetabletype;
-
-typedef	struct
-{
-	u16int	sourceoffset[MAXSHIFTS];
-	u16int	planesize[MAXSHIFTS];
-	u16int	width[MAXSHIFTS];
-	u8int		data[];
-} spritetype;		// the uchar* for each sprite points to this
-
-typedef struct
-{
 	s16int width,height;
 } pictabletype;
-
 
 typedef struct
 {
@@ -71,16 +53,9 @@ void VW_UpdateScreen (void);
 //
 
 void VWB_DrawTile8 (s16int x, s16int y, s16int tile);
-void VWB_DrawTile8M (s16int x, s16int y, s16int tile);
-void VWB_DrawTile16 (s16int x, s16int y, s16int tile);
-void VWB_DrawTile16M (s16int x, s16int y, s16int tile);
 void VWB_DrawPic (s16int x, s16int y, s16int chunknum);
-void VWB_DrawMPic(s16int x, s16int y, s16int chunknum);
 void VWB_Bar (s16int x, s16int y, s16int width, s16int height, s16int color);
-
 void VWB_DrawPropString	 (char far *string);
-void VWB_DrawMPropString (char far *string);
-void VWB_DrawSprite (s16int x, s16int y, s16int chunknum);
 void VWB_Plot (s16int x, s16int y, s16int color);
 void VWB_Hlin (s16int x1, s16int x2, s16int y, s16int color);
 void VWB_Vlin (s16int y1, s16int y2, s16int x, s16int color);
@@ -93,8 +68,6 @@ extern u8int far gamepal;
 
 void VH_SetDefaultColors (void);
 
-#define VW_Startup		VL_Startup
-#define VW_Shutdown		VL_Shutdown
 #define VW_SetCRTC		VL_SetCRTC
 #define VW_SetScreen	VL_SetScreen
 #define VW_Bar			VL_Bar
@@ -113,11 +86,6 @@ void VH_SetDefaultColors (void);
 void	VW_MeasurePropString (char far *string, u16int *width, u16int *height);
 #define EGAMAPMASK(x)	VGAMAPMASK(x)
 #define EGAWRITEMODE(x)	VGAWRITEMODE(x)
-
-//#define VW_MemToScreen	VL_MemToLatch
-
-#define MS_Quit			Quit
-
 
 #define LatchDrawChar(x,y,p) VL_LatchToScreen(latchpics[0]+(p)*16,2,8,x,y)
 #define LatchDrawTile(x,y,p) VL_LatchToScreen(latchpics[1]+(p)*64,4,16,x,y)

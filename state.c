@@ -1258,13 +1258,13 @@ void FirstSighting (objtype *ob)
 	switch (ob->obclass)
 	{
 	case guardobj:
-		PlaySoundLocActor(HALTSND,ob);
+		PlaySoundLocActor(Sgd,ob);
 		NewState (ob,&s_grdchase1);
 		ob->speed *= 3;			// go faster when chasing player
 		break;
 
 	case officerobj:
-		PlaySoundLocActor(SPIONSND,ob);
+		PlaySoundLocActor(Soffc,ob);
 		NewState (ob,&s_ofcchase1);
 		ob->speed *= 5;			// go faster when chasing player
 		break;
@@ -1275,62 +1275,62 @@ void FirstSighting (objtype *ob)
 		break;
 
 	case ssobj:
-		PlaySoundLocActor(SCHUTZADSND,ob);
+		PlaySoundLocActor(Sss,ob);
 		NewState (ob,&s_sschase1);
 		ob->speed *= 4;			// go faster when chasing player
 		break;
 
 	case dogobj:
-		PlaySoundLocActor(DOGBARKSND,ob);
+		PlaySoundLocActor(Sdogbark,ob);
 		NewState (ob,&s_dogchase1);
 		ob->speed *= 2;			// go faster when chasing player
 		break;
 
 #ifndef SPEAR
 	case bossobj:
-		SD_PlaySound(GUTENTAGSND);
+		SD_PlaySound(Shans);
 		NewState (ob,&s_bosschase1);
 		ob->speed = SPDPATROL*3;	// go faster when chasing player
 		break;
 
 	case gretelobj:
-		SD_PlaySound(KEINSND);
+		SD_PlaySound(Sgretel);
 		NewState (ob,&s_gretelchase1);
 		ob->speed *= 3;			// go faster when chasing player
 		break;
 
 	case giftobj:
-		SD_PlaySound(EINESND);
+		SD_PlaySound(Sotto);
 		NewState (ob,&s_giftchase1);
 		ob->speed *= 3;			// go faster when chasing player
 		break;
 
 	case fatobj:
-		SD_PlaySound(ERLAUBENSND);
+		SD_PlaySound(Sfett);
 		NewState (ob,&s_fatchase1);
 		ob->speed *= 3;			// go faster when chasing player
 		break;
 
 	case schabbobj:
-		SD_PlaySound(SCHABBSHASND);
+		SD_PlaySound(Sschb);
 		NewState (ob,&s_schabbchase1);
 		ob->speed *= 3;			// go faster when chasing player
 		break;
 
 	case fakeobj:
-		SD_PlaySound(TOT_HUNDSND);
+		SD_PlaySound(Sfake);
 		NewState (ob,&s_fakechase1);
 		ob->speed *= 3;			// go faster when chasing player
 		break;
 
 	case mechahitlerobj:
-		SD_PlaySound(DIESND);
+		SD_PlaySound(Shilterdeath);
 		NewState (ob,&s_mechachase1);
 		ob->speed *= 3;			// go faster when chasing player
 		break;
 
 	case realhitlerobj:
-		SD_PlaySound(DIESND);
+		SD_PlaySound(Shilterdeath);
 		NewState (ob,&s_hitlerchase1);
 		ob->speed *= 5;			// go faster when chasing player
 		break;
@@ -1342,19 +1342,19 @@ void FirstSighting (objtype *ob)
 #else
 
 	case spectreobj:
-		SD_PlaySound(GHOSTSIGHTSND);
+		SD_PlaySound(Sghost);
 		NewState (ob,&s_spectrechase1);
 		ob->speed = 800;			// go faster when chasing player
 		break;
 
 	case angelobj:
-		SD_PlaySound(ANGELSIGHTSND);
+		SD_PlaySound(Sangel);
 		NewState (ob,&s_angelchase1);
 		ob->speed = 1536;			// go faster when chasing player
 		break;
 
 	case transobj:
-		SD_PlaySound(TRANSSIGHTSND);
+		SD_PlaySound(Strans);
 		NewState (ob,&s_transchase1);
 		ob->speed = 1536;			// go faster when chasing player
 		break;
@@ -1365,13 +1365,13 @@ void FirstSighting (objtype *ob)
 		break;
 
 	case willobj:
-		SD_PlaySound(WILHELMSIGHTSND);
+		SD_PlaySound(Swilh);
 		NewState (ob,&s_willchase1);
 		ob->speed = 2048;			// go faster when chasing player
 		break;
 
 	case deathobj:
-		SD_PlaySound(KNIGHTSIGHTSND);
+		SD_PlaySound(Sknight);
 		NewState (ob,&s_deathchase1);
 		ob->speed = 2048;			// go faster when chasing player
 		break;

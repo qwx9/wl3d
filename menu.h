@@ -31,12 +31,12 @@
 #define MenuFadeIn()	VL_FadeIn(0,255,&gamepal,10)
 
 
-#define MENUSONG	WONDERIN_MUS
+#define MENUSONG	14
 
 #ifndef SPEAR
-#define INTROSONG	NAZI_NOR_MUS
+#define INTROSONG	7
 #else
-#define INTROSONG	XTOWER2_MUS
+#define INTROSONG	23
 #endif
 
 #define SENSITIVE	60
@@ -123,8 +123,6 @@ void DrawOutline(s16int x,s16int y,s16int w,s16int h,s16int color1,s16int color2
 void WaitKeyUp(void);
 void ReadAnyControl(ControlInfo *ci);
 void TicDelay(s16int count);
-void CacheLump(s16int lumpstart,s16int lumpend);
-void UnCacheLump(s16int lumpstart,s16int lumpend);
 void StartCPMusic(s16int song);
 s16int  Confirm(char far *string);
 void Message(char far *string);
@@ -141,7 +139,6 @@ void DrawMenuGun(CP_iteminfo *iteminfo);
 void DrawStripes(s16int y);
 
 void DefineMouseBtns(void);
-void DefineJoyBtns(void);
 void DefineKeyBtns(void);
 void DefineKeyMove(void);
 void EnterCtrlData(s16int index,CustomCtrls *cust,void (*DrawRtn)(s16int),void (*PrintRtn)(s16int),s16int type);
@@ -157,11 +154,9 @@ void DrawCtlScreen(void);
 void DrawCustomScreen(void);
 void DrawLSAction(s16int which);
 void DrawCustMouse(s16int hilight);
-void DrawCustJoy(s16int hilight);
 void DrawCustKeybd(s16int hilight);
 void DrawCustKeys(s16int hilight);
 void PrintCustMouse(s16int i);
-void PrintCustJoy(s16int i);
 void PrintCustKeybd(s16int i);
 void PrintCustKeys(s16int i);
 
@@ -183,8 +178,6 @@ s16int  CP_EndGame(void);
 s16int  CP_CheckQuick(u16int scancode);
 void CustomControls(void);
 void MouseSensitivity(void);
-
-void CheckForEpisodes(void);
 
 //
 // VARIABLES

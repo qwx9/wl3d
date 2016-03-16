@@ -1,43 +1,5 @@
-//
-//	ID Engine
-//	ID_IN.c - Input Manager
-//	v1.0d1
-//	By Jason Blochowiak
-//
-
-//
-//	This module handles dealing with the various input devices
-//
-//	Depends on: Memory Mgr (for demo recording), Sound Mgr (for timing stuff),
-//				User Mgr (for command line parms)
-//
-//	Globals:
-//		LastScan - The keyboard scan code of the last key pressed
-//		LastASCII - The ASCII value of the last key pressed
-//	DEBUG - there are more globals
-//
-
-#include "ID_HEADS.H"
-#pragma	hdrstop
-
 #define	KeyInt		9	// The keyboard ISR number
 
-//
-// mouse constants
-//
-#define	MReset		0
-#define	MButtons	3
-#define	MDelta		11
-
-#define	MouseInt	0x33
-#define	Mouse(x)	_AX = x,geninterrupt(MouseInt)
-
-//
-// joystick constants
-//
-#define	JoyScaleMax		32768
-#define	JoyScaleShift	8
-#define	MaxJoyValue		5000
 
 /*
 =============================================================================
@@ -51,8 +13,6 @@
 // configuration variables
 //
 int			MousePresent;
-int			JoysPresent[MaxJoys];
-int			JoyPadPresent;
 
 
 // 	Global variables
@@ -62,7 +22,6 @@ int			JoyPadPresent;
 		u8int	LastScan;
 
 		KeyboardDef	KbdDefs = {0x1d,0x38,0x47,0x48,0x49,0x4b,0x4d,0x4f,0x50,0x51};
-		JoystickDef	JoyDefs[MaxJoys];
 		ControlType	Controls[MaxPlayers];
 
 		u32int MouseDownCount;
@@ -129,8 +88,6 @@ static	Direction	DirTable[] =		// Quick lookup for total direction
 
 static	void			(*INL_KeyHook)(void);
 static	void interrupt	(*OldKeyVect)(void);
-
-static	char			*ParmStrings[] = {"nojoys","nomouse",nil};
 
 //	Internal routines
 
@@ -240,189 +197,6 @@ INL_GetMouseButtons(void)
 
 ///////////////////////////////////////////////////////////////////////////
 //
-//	IN_GetJoyAbs() - Reads the absolute position of the specified joystick
-//
-///////////////////////////////////////////////////////////////////////////
-void
-IN_GetJoyAbs(u16int joy,u16int *xp,u16int *yp)
-{
-	u8int	xb,yb,
-			xs,ys;
-	u16int	x,y;
-
-	x = y = 0;
-	xs = joy? 2 : 0;		// Find shift value for x axis
-	xb = 1 << xs;			// Use shift value to get x bit mask
-	ys = joy? 3 : 1;		// Do the same for y axis
-	yb = 1 << ys;
-
-// Read the absolute joystick values
-asm		pushf				// Save some registers
-asm		push	si
-asm		push	di
-asm		cli					// Make sure an interrupt doesn't screw the timings
-
-
-asm		mov		dx,0x201
-asm		in		al,dx
-asm		out		dx,al		// Clear the resistors
-
-asm		mov		ah,[xb]		// Get masks into registers
-asm		mov		ch,[yb]
-
-asm		xor		si,si		// Clear count registers
-asm		xor		di,di
-asm		xor		bh,bh		// Clear high byte of bx for later
-
-asm		push	bp			// Don't mess up stack frame
-asm		mov		bp,MaxJoyValue
-
-loop:
-asm		in		al,dx		// Get bits indicating whether all are finished
-
-asm		dec		bp			// Check bounding register
-asm		jz		done		// We have a silly value - abort
-
-asm		mov		bl,al		// Duplicate the bits
-asm		and		bl,ah		// Mask off useless bits (in [xb])
-asm		add		si,bx		// Possibly increment count register
-asm		mov		cl,bl		// Save for testing later
-
-asm		mov		bl,al
-asm		and		bl,ch		// [yb]
-asm		add		di,bx
-
-asm		add		cl,bl
-asm		jnz		loop 		// If both bits were 0, drop out
-
-done:
-asm     pop		bp
-
-asm		mov		cl,[xs]		// Get the number of bits to shift
-asm		shr		si,cl		//  and shift the count that many times
-
-asm		mov		cl,[ys]
-asm		shr		di,cl
-
-asm		mov		[x],si		// Store the values into the variables
-asm		mov		[y],di
-
-asm		pop		di
-asm		pop		si
-asm		popf				// Restore the registers
-
-	*xp = x;
-	*yp = y;
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	INL_GetJoyDelta() - Returns the relative movement of the specified
-//		joystick (from +/-127)
-//
-///////////////////////////////////////////////////////////////////////////
-void INL_GetJoyDelta(u16int joy,s16int *dx,s16int *dy)
-{
-	u16int		x,y;
-	u32int time;
-	JoystickDef	*def;
-	static u32int lasttime;
-
-	IN_GetJoyAbs(joy,&x,&y);
-	def = JoyDefs + joy;
-
-	if (x < def->threshMinX)
-	{
-		if (x < def->joyMinX)
-			x = def->joyMinX;
-
-		x = -(x - def->threshMinX);
-		x *= def->joyMultXL;
-		x >>= JoyScaleShift;
-		*dx = (x > 127)? -127 : -x;
-	}
-	else if (x > def->threshMaxX)
-	{
-		if (x > def->joyMaxX)
-			x = def->joyMaxX;
-
-		x = x - def->threshMaxX;
-		x *= def->joyMultXH;
-		x >>= JoyScaleShift;
-		*dx = (x > 127)? 127 : x;
-	}
-	else
-		*dx = 0;
-
-	if (y < def->threshMinY)
-	{
-		if (y < def->joyMinY)
-			y = def->joyMinY;
-
-		y = -(y - def->threshMinY);
-		y *= def->joyMultYL;
-		y >>= JoyScaleShift;
-		*dy = (y > 127)? -127 : -y;
-	}
-	else if (y > def->threshMaxY)
-	{
-		if (y > def->joyMaxY)
-			y = def->joyMaxY;
-
-		y = y - def->threshMaxY;
-		y *= def->joyMultYH;
-		y >>= JoyScaleShift;
-		*dy = (y > 127)? 127 : y;
-	}
-	else
-		*dy = 0;
-
-	lasttime = TimeCount;
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	INL_GetJoyButtons() - Returns the button status of the specified
-//		joystick
-//
-///////////////////////////////////////////////////////////////////////////
-static u16int
-INL_GetJoyButtons(u16int joy)
-{
-register	u16int	result;
-
-	result = inportb(0x201);	// Get all the joystick buttons
-	result >>= joy? 6 : 4;	// Shift into bits 0-1
-	result &= 3;				// Mask off the useless bits
-	result ^= 3;
-	return(result);
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	IN_GetJoyButtonsDB() - Returns the de-bounced button status of the
-//		specified joystick
-//
-///////////////////////////////////////////////////////////////////////////
-u16int
-IN_GetJoyButtonsDB(u16int joy)
-{
-	u32int lasttime;
-	u16int		result1,result2;
-
-	do
-	{
-		result1 = INL_GetJoyButtons(joy);
-		lasttime = TimeCount;
-		while (TimeCount == lasttime)
-			;
-		result2 = INL_GetJoyButtons(joy);
-	} while (result1 != result2);
-	return(result1);
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
 //	INL_StartKbd() - Sets up my keyboard stuff for use
 //
 ///////////////////////////////////////////////////////////////////////////
@@ -491,89 +265,6 @@ INL_ShutMouse(void)
 {
 }
 
-//
-//	INL_SetJoyScale() - Sets up scaling values for the specified joystick
-//
-static void
-INL_SetJoyScale(u16int joy)
-{
-	JoystickDef	*def;
-
-	def = &JoyDefs[joy];
-	def->joyMultXL = JoyScaleMax / (def->threshMinX - def->joyMinX);
-	def->joyMultXH = JoyScaleMax / (def->joyMaxX - def->threshMaxX);
-	def->joyMultYL = JoyScaleMax / (def->threshMinY - def->joyMinY);
-	def->joyMultYH = JoyScaleMax / (def->joyMaxY - def->threshMaxY);
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	IN_SetupJoy() - Sets up thresholding values and calls INL_SetJoyScale()
-//		to set up scaling values
-//
-///////////////////////////////////////////////////////////////////////////
-void
-IN_SetupJoy(u16int joy,u16int minx,u16int maxx,u16int miny,u16int maxy)
-{
-	u16int		d,r;
-	JoystickDef	*def;
-
-	def = &JoyDefs[joy];
-
-	def->joyMinX = minx;
-	def->joyMaxX = maxx;
-	r = maxx - minx;
-	d = r / 3;
-	def->threshMinX = ((r / 2) - d) + minx;
-	def->threshMaxX = ((r / 2) + d) + minx;
-
-	def->joyMinY = miny;
-	def->joyMaxY = maxy;
-	r = maxy - miny;
-	d = r / 3;
-	def->threshMinY = ((r / 2) - d) + miny;
-	def->threshMaxY = ((r / 2) + d) + miny;
-
-	INL_SetJoyScale(joy);
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	INL_StartJoy() - Detects & auto-configures the specified joystick
-//					The auto-config assumes the joystick is centered
-//
-///////////////////////////////////////////////////////////////////////////
-static int
-INL_StartJoy(u16int joy)
-{
-	u16int		x,y;
-
-	IN_GetJoyAbs(joy,&x,&y);
-
-	if
-	(
-		((x == 0) || (x > MaxJoyValue - 10))
-	||	((y == 0) || (y > MaxJoyValue - 10))
-	)
-		return(false);
-	else
-	{
-		IN_SetupJoy(joy,0,x * 2,0,y * 2);
-		return(true);
-	}
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	INL_ShutJoy() - Cleans up the joystick stuff
-//
-///////////////////////////////////////////////////////////////////////////
-static void
-INL_ShutJoy(u16int joy)
-{
-	JoysPresent[joy] = false;
-}
-
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -583,32 +274,11 @@ INL_ShutJoy(u16int joy)
 void
 IN_Startup(void)
 {
-	int	checkjoys,checkmouse;
-	u16int	i;
-
 	if (IN_Started)
 		return;
 
-	checkjoys = true;
-	checkmouse = true;
-	for (i = 1;i < _argc;i++)
-	{
-		switch (US_CheckParm(_argv[i],ParmStrings))
-		{
-		case 0:
-			checkjoys = false;
-			break;
-		case 1:
-			checkmouse = false;
-			break;
-		}
-	}
-
 	INL_StartKbd();
-	MousePresent = checkmouse? INL_StartMouse() : false;
-
-	for (i = 0;i < MaxJoys;i++)
-		JoysPresent[i] = checkjoys? INL_StartJoy(i) : false;
+	INL_StartMouse();
 
 	IN_Started = true;
 }
@@ -624,8 +294,6 @@ IN_Default(int gotit,ControlType in)
 	if
 	(
 		(!gotit)
-	|| 	((in == ctrl_Joystick1) && !JoysPresent[0])
-	|| 	((in == ctrl_Joystick2) && !JoysPresent[1])
 	|| 	((in == ctrl_Mouse) && !MousePresent)
 	)
 		in = ctrl_Keyboard1;
@@ -646,8 +314,6 @@ IN_Shutdown(void)
 		return;
 
 	INL_ShutMouse();
-	for (i = 0;i < MaxJoys;i++)
-		INL_ShutJoy(i);
 	INL_ShutKbd();
 
 	IN_Started = false;
@@ -751,12 +417,6 @@ register	KeyboardDef	*def;
 			if (Keyboard[def->button1])
 				buttons += 1 << 1;
 			realdelta = false;
-			break;
-		case ctrl_Joystick1:
-		case ctrl_Joystick2:
-			INL_GetJoyDelta(type - ctrl_Joystick,&dx,&dy);
-			buttons = INL_GetJoyButtons(type - ctrl_Joystick);
-			realdelta = true;
 			break;
 		case ctrl_Mouse:
 			INL_GetMouseDelta(&dx,&dy);
@@ -878,7 +538,6 @@ void IN_StartAck(void)
 	IN_ClearKeysDown();
 	memset (btnstate,0,sizeof(btnstate));
 
-	buttons = IN_JoyButtons () << 4;
 	if (MousePresent)
 		buttons |= IN_MouseButtons ();
 
@@ -898,7 +557,6 @@ int IN_CheckAck (void)
 	if (LastScan)
 		return true;
 
-	buttons = IN_JoyButtons () << 4;
 	if (MousePresent)
 		buttons |= IN_MouseButtons ();
 
@@ -966,25 +624,3 @@ u8int	IN_MouseButtons (void)
 	else
 		return 0;
 }
-
-
-/*
-===================
-=
-= IN_JoyButtons
-=
-===================
-*/
-
-u8int	IN_JoyButtons (void)
-{
-	u16int joybits;
-
-	joybits = inportb(0x201);	// Get all the joystick buttons
-	joybits >>= 4;				// only the high bits are useful
-	joybits ^= 15;				// return with 1=pressed
-
-	return joybits;
-}
-
-

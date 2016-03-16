@@ -745,13 +745,7 @@ typedef	enum	{
 =============================================================================
 */
 
-extern	int		MS_CheckParm (char far *string);
-
 extern	char		str[80],str2[20];
-extern	s16int			tedlevelnum;
-extern	int		tedlevel;
-extern	int		nospr;
-extern	int		IsA386;
 
 extern	u8int far	*scalermemory;
 
@@ -765,7 +759,7 @@ extern	s16int			shootdelta;
 
 extern	s16int			dirangle[9];
 
-extern	int         startgame,loadedgame,virtualreality;
+extern	int         startgame,loadedgame;
 extern	s16int		mouseadjustment;
 //
 // math tables
@@ -941,7 +935,6 @@ void ClearSplitVWB (void);
 */
 
 s16int DebugKeys (void);
-void PicturePause (void);
 
 
 /*

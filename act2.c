@@ -325,13 +325,13 @@ void T_Projectile (objtype *ob)
 	{
 		if (ob->obclass == rocketobj)
 		{
-			PlaySoundLocActor(MISSILEHITSND,ob);
+			PlaySoundLocActor(Smissilehit,ob);
 			ob->state = &s_boom1;
 		}
 #ifdef SPEAR
 		else if (ob->obclass == hrocketobj)
 		{
-			PlaySoundLocActor(MISSILEHITSND,ob);
+			PlaySoundLocActor(Srockethit,ob);
 			ob->state = &s_hboom1;
 		}
 #endif
@@ -1074,7 +1074,7 @@ void A_DeathScream (objtype *ob)
 	  case officerobj:
 	  case ssobj:
 	  case dogobj:
-		PlaySoundLocActor(DEATHSCREAM6SND,ob);
+		PlaySoundLocActor(Sscream6,ob);
 		return;
 	 }
 	}
@@ -1083,19 +1083,19 @@ void A_DeathScream (objtype *ob)
 	switch (ob->obclass)
 	{
 	case mutantobj:
-		PlaySoundLocActor(AHHHGSND,ob);
+		PlaySoundLocActor(Smutdeath,ob);
 		break;
 
 	case guardobj:
 		{
-		 s16int sounds[9]={ DEATHSCREAM1SND,
-				 DEATHSCREAM2SND,
-				 DEATHSCREAM3SND,
-				 DEATHSCREAM4SND,
-				 DEATHSCREAM5SND,
-				 DEATHSCREAM7SND,
-				 DEATHSCREAM8SND,
-				 DEATHSCREAM9SND
+		 s16int sounds[9]={ Sscream1,
+				 Sscream2,
+				 Sscream3,
+				 Sscream4,
+				 Sscream5,
+				 Sscream7,
+				 Sscream8,
+				 Sscream9
 				 };
 
 		 #ifndef UPLOAD
@@ -1106,57 +1106,57 @@ void A_DeathScream (objtype *ob)
 		}
 		break;
 	case officerobj:
-		PlaySoundLocActor(NEINSOVASSND,ob);
+		PlaySoundLocActor(Soffcdeath,ob);
 		break;
 	case ssobj:
-		PlaySoundLocActor(LEBENSND,ob);	// JAB
+		PlaySoundLocActor(Sssdeath,ob);	// JAB
 		break;
 	case dogobj:
-		PlaySoundLocActor(DOGDEATHSND,ob);	// JAB
+		PlaySoundLocActor(Sdogdeath,ob);	// JAB
 		break;
 #ifndef SPEAR
 	case bossobj:
-		SD_PlaySound(MUTTISND);				// JAB
+		SD_PlaySound(Shansdeath);				// JAB
 		break;
 	case schabbobj:
-		SD_PlaySound(MEINGOTTSND);
+		SD_PlaySound(Sschbdeath);
 		break;
 	case fakeobj:
-		SD_PlaySound(HITLERHASND);
+		SD_PlaySound(Shilter);
 		break;
 	case mechahitlerobj:
-		SD_PlaySound(SCHEISTSND);
+		SD_PlaySound(Smechadeath);
 		break;
 	case realhitlerobj:
-		SD_PlaySound(EVASND);
+		SD_PlaySound(Seva);
 		break;
 	case gretelobj:
-		SD_PlaySound(MEINSND);
+		SD_PlaySound(Sgreteldeath);
 		break;
 	case giftobj:
-		SD_PlaySound(DONNERSND);
+		SD_PlaySound(Sottodeath);
 		break;
 	case fatobj:
-		SD_PlaySound(ROSESND);
+		SD_PlaySound(Sfettdeath);
 		break;
 #else
 	case spectreobj:
-		SD_PlaySound(GHOSTFADESND);
+		SD_PlaySound(Sghostdeath);
 		break;
 	case angelobj:
-		SD_PlaySound(ANGELDEATHSND);
+		SD_PlaySound(Sangeldeath);
 		break;
 	case transobj:
-		SD_PlaySound(TRANSDEATHSND);
+		SD_PlaySound(Stransdeath);
 		break;
 	case uberobj:
-		SD_PlaySound(UBERDEATHSND);
+		SD_PlaySound(Suberdeath);
 		break;
 	case willobj:
-		SD_PlaySound(WILHELMDEATHSND);
+		SD_PlaySound(Swilhdeath);
 		break;
 	case deathobj:
-		SD_PlaySound(KNIGHTDEATHSND);
+		SD_PlaySound(Sknightdeath);
 		break;
 #endif
 	}
@@ -1664,15 +1664,15 @@ void T_Launch (objtype *ob)
 	case deathobj:
 		new->state = &s_hrocket;
 		new->obclass = hrocketobj;
-		PlaySoundLocActor (KNIGHTMISSILESND,new);
+		PlaySoundLocActor (Sknightmissile,new);
 		break;
 	case angelobj:
 		new->state = &s_spark1;
 		new->obclass = sparkobj;
-		PlaySoundLocActor (ANGELFIRESND,new);
+		PlaySoundLocActor (Sangelfire,new);
 		break;
 	default:
-		PlaySoundLocActor (MISSILEFIRESND,new);
+		PlaySoundLocActor (Sthrow,new);
 	}
 
 	new->dir = nodir;
@@ -1774,13 +1774,13 @@ statetype s_spark4 	= {false,SPR_SPARK4,6,T_Projectile,NULL,&s_spark1};
 #pragma argsused
 void A_Slurpie (objtype *ob)
 {
- SD_PlaySound(SLURPIESND);
+ SD_PlaySound(Sslurp);
 }
 
 #pragma argsused
 void A_Breathing (objtype *ob)
 {
- SD_PlaySound(ANGELTIREDSND);
+ SD_PlaySound(Sangeltired);
 }
 
 /*
@@ -2325,7 +2325,7 @@ void T_SchabbThrow (objtype *ob)
 	new->flags = FL_NONMARK;
 	new->active = true;
 
-	PlaySoundLocActor (SCHABBSTHROWSND,new);
+	PlaySoundLocActor (Sthrow,new);
 }
 
 /*
@@ -2364,7 +2364,7 @@ void T_GiftThrow (objtype *ob)
 	new->flags = FL_NONMARK;
 	new->active = true;
 
-	PlaySoundLocActor (MISSILEFIRESND,new);
+	PlaySoundLocActor (Smissile,new);
 }
 
 
@@ -2912,14 +2912,14 @@ void A_HitlerMorph (objtype *ob)
 void A_MechaSound (objtype *ob)
 {
 	if (areabyplayer[ob->areanumber])
-		PlaySoundLocActor (MECHSTEPSND,ob);
+		PlaySoundLocActor (Smechwalk,ob);
 }
 
 
 #pragma argsused
 void A_Slurpie (objtype *ob)
 {
- SD_PlaySound(SLURPIESND);
+ SD_PlaySound(Sslurp);
 }
 
 /*
@@ -2958,7 +2958,7 @@ void T_FakeFire (objtype *ob)
 	new->flags = FL_NEVERMARK;
 	new->active = true;
 
-	PlaySoundLocActor (FLAMETHROWERSND,new);
+	PlaySoundLocActor (Sflame,new);
 }
 
 
@@ -3493,27 +3493,27 @@ void T_Shoot (objtype *ob)
 	switch(ob->obclass)
 	{
 	 case ssobj:
-	   PlaySoundLocActor(SSFIRESND,ob);
+	   PlaySoundLocActor(Sssfire,ob);
 	   break;
 #ifndef SPEAR
 	 case giftobj:
 	 case fatobj:
-	   PlaySoundLocActor(MISSILEFIRESND,ob);
+	   PlaySoundLocActor(Smissile,ob);
 	   break;
 	 case mechahitlerobj:
 	 case realhitlerobj:
 	 case bossobj:
-	   PlaySoundLocActor(BOSSFIRESND,ob);
+	   PlaySoundLocActor(Shansfire,ob);
 	   break;
 	 case schabbobj:
-	   PlaySoundLocActor(SCHABBSTHROWSND,ob);
+	   PlaySoundLocActor(Sthrow,ob);
 	   break;
 	 case fakeobj:
-	   PlaySoundLocActor(FLAMETHROWERSND,ob);
+	   PlaySoundLocActor(Sflame,ob);
 	   break;
 #endif
 	 default:
-	   PlaySoundLocActor(NAZIFIRESND,ob);
+	   PlaySoundLocActor(Sgdfire,ob);
 	}
 
 }
@@ -3533,7 +3533,7 @@ void T_Bite (objtype *ob)
 	s16int	hitchance,damage;
 
 
-	PlaySoundLocActor(DOGATTACKSND,ob);	// JAB
+	PlaySoundLocActor(Sdogfire,ob);	// JAB
 
 	dx = player->x - ob->x;
 	if (dx<0)
@@ -3697,7 +3697,7 @@ void T_BJJump (objtype *ob)
 
 void T_BJYell (objtype *ob)
 {
-	PlaySoundLocActor(YEAHSND,ob);	// JAB
+	PlaySoundLocActor(Syeah,ob);	// JAB
 }
 
 
@@ -3786,7 +3786,6 @@ void	A_StartDeathCam (objtype *ob)
 
 	PM_UnlockMainMem ();
 	CA_UpLevel ();
-	CacheLump(LEVELEND_LUMP_START,LEVELEND_LUMP_END);
 	Write(0,7,STR_SEEAGAIN);
 	CA_DownLevel ();
 	PM_CheckMainMem ();

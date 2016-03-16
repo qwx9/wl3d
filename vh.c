@@ -1,22 +1,4 @@
-// ID_VH.C
-
-#include "ID_HEADS.H"
-
-#define	SCREENWIDTH		80
-#define CHARWIDTH		2
-#define TILEWIDTH		4
-#define GRPLANES		4
-#define BYTEPIXELS		4
-
-#define SCREENXMASK		(~3)
-#define SCREENXPLUS		(3)
-#define SCREENXDIV		(4)
-
-#define VIEWWIDTH		80
-
 #define PIXTOBLOCK		4		// 16 pixels to an update block
-
-#define UNCACHEGRCHUNK(chunk)	{MM_FreePtr(&grsegs[chunk]);grneeded[chunk]&=~ca_levelbit;}
 
 u8int	update[UPDATEHIGH][UPDATEWIDE];
 
@@ -175,7 +157,7 @@ void VL_MungePic (u8int far *source, u16int width, u16int height)
 	size = width*height;
 
 	if (width&3)
-		MS_Quit ("VL_MungePic: Not divisable by 4!");
+		Quit ("VL_MungePic: Not divisable by 4!");
 
 //
 // copy the pic to a temp buffer
@@ -215,12 +197,6 @@ void	VW_MeasurePropString (char far *string, u16int *width, u16int *height)
 {
 	VWL_MeasureString(string,width,height,(fontstruct _seg *)grsegs[STARTFONT+fontnumber]);
 }
-
-void	VW_MeasureMPropString  (char far *string, u16int *width, u16int *height)
-{
-	VWL_MeasureString(string,width,height,(fontstruct _seg *)grsegs[STARTFONTM+fontnumber]);
-}
-
 
 
 /*
@@ -293,13 +269,6 @@ void VWB_DrawTile8 (s16int x, s16int y, s16int tile)
 	if (VW_MarkUpdateBlock (x,y,x+7,y+7))
 		LatchDrawChar(x,y,tile);
 }
-
-void VWB_DrawTile8M (s16int x, s16int y, s16int tile)
-{
-	if (VW_MarkUpdateBlock (x,y,x+7,y+7))
-		VL_MemToScreen (((u8int far *)grsegs[STARTTILE8M])+tile*64,8,8,x,y);
-}
-
 
 void VWB_DrawPic (s16int x, s16int y, s16int chunknum)
 {
@@ -403,8 +372,8 @@ void LoadLatchMem (void)
 //
 // tile 8s
 //
+	FIXME: fuck this
 	latchpics[0] = freelatch;
-	CA_CacheGrChunk (STARTTILE8);
 	src = (u8int _seg *)grsegs[STARTTILE8];
 	destoff = freelatch;
 
@@ -414,25 +383,6 @@ void LoadLatchMem (void)
 		src += 64;
 		destoff +=16;
 	}
-	UNCACHEGRCHUNK (STARTTILE8);
-
-#if 0	// ran out of latch space!
-//
-// tile 16s
-//
-	src = (u8int _seg *)grsegs[STARTTILE16];
-	latchpics[1] = destoff;
-
-	for (i=0;i<NUMTILE16;i++)
-	{
-		CA_CacheGrChunk (STARTTILE16+i);
-		src = (u8int _seg *)grsegs[STARTTILE16+i];
-		VL_MemToLatch (src,16,16,destoff);
-		destoff+=64;
-		if (src)
-			UNCACHEGRCHUNK (STARTTILE16+i);
-	}
-#endif
 
 //
 // pics
@@ -443,12 +393,10 @@ void LoadLatchMem (void)
 	for (i=start;i<=end;i++)
 	{
 		latchpics[2+i-start] = destoff;
-		CA_CacheGrChunk (i);
 		width = pictable[i-STARTPICS].width;
 		height = pictable[i-STARTPICS].height;
 		VL_MemToLatch (grsegs[i],width,height,destoff);
 		destoff += width/4 *height;
-		UNCACHEGRCHUNK(i);
 	}
 
 	EGAMAPMASK(15);

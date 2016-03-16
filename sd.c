@@ -62,26 +62,12 @@ extern	void interrupt	SDL_t0ExtremeAsmService(void),
 	u32int	TimeCount;
 	u16int		HackCount;
 	u16int		*SoundTable;	// Really * _seg *SoundTable, but that don't work
-	int		ssIsTandy;
-	u16int		ssPort = 2;
 	s16int			DigiMap[LASTSOUND];
 
 //	Internal variables
 static	int			SD_Started;
 		int			nextsoundpos;
 		u32int		TimerDivisor,TimerCount;
-static	char			*ParmStrings[] =
-						{
-							"noal",
-							"nosb",
-							"nopro",
-							"noss",
-							"sst",
-							"ss1",
-							"ss2",
-							"ss3",
-							nil
-						};
 static	void			(*SoundUserHook)(void);
 		soundnames		SoundNumber,DigiNumber;
 		u16int			SoundPriority,DigiPriority;
@@ -99,7 +85,6 @@ static	uchar *DigiNextAddr;
 static	u16int			DigiNextLen;
 
 //	SoundBlaster variables
-static	int					sbNoCheck,sbNoProCheck;
 static	volatile int		sbSamplePlaying;
 static	u8int					sbOldIntMask = -1;
 static	volatile u8int			huge *sbNextSegPtr;
@@ -116,7 +101,6 @@ static	void interrupt			(*sbOldIntHand)(void);
 static	u8int					sbpOldFMMix,sbpOldVOCMix;
 
 //	SoundSource variables
-		int				ssNoCheck;
 		int				ssActive;
 		u16int				ssControl,ssStatus,ssData;
 		u8int				ssOn,ssOff;
@@ -129,7 +113,6 @@ static	u8int					sbpOldFMMix,sbpOldVOCMix;
 		u16int			pcSoundLookup[255];
 
 //	AdLib variables
-		int			alNoCheck;
 		u8int			far *alSound;
 		u16int			alBlock;
 		u32int		alLengthLeft;
@@ -543,8 +526,6 @@ SDL_StartSB(void)
 	sbOut(sbWriteData,timevalue);
 
 	SBProPresent = false;
-	if (sbNoProCheck)
-		return;
 
 	// Check to see if this is a SB Pro
 	sbOut(sbpMixerAddr,sbpmFMVol);
@@ -683,21 +664,12 @@ asm	popf
 static void
 SDL_StartSS(void)
 {
-	if (ssPort == 3)
-		ssControl = 0x27a;	// If using LPT3
-	else if (ssPort == 2)
-		ssControl = 0x37a;	// If using LPT2
-	else
-		ssControl = 0x3be;	// If using LPT1
+	ssControl = 0x3be;	// If using LPT1
 	ssStatus = ssControl - 1;
 	ssData = ssStatus - 1;
 
 	ssOn = 0x04;
-	if (ssIsTandy)
-		ssOff = 0x0e;				// Tandy wierdness
-	else
-		ssOff = 0x0c;				// For normal machines
-
+	ssOff = 0x0c;
 	outportb(ssControl,ssOn);		// Enable SS
 }
 
@@ -710,72 +682,6 @@ static void
 SDL_ShutSS(void)
 {
 	outportb(ssControl,ssOff);
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	SDL_CheckSS() - Checks to see if a Sound Source is present at the
-//		location specified by the sound source variables
-//
-///////////////////////////////////////////////////////////////////////////
-static int
-SDL_CheckSS(void)
-{
-	int		present = false;
-	u32int	lasttime;
-
-	// Turn the Sound Source on and wait awhile (4 ticks)
-	SDL_StartSS();
-
-	lasttime = TimeCount;
-	while (TimeCount < lasttime + 4)
-		;
-
-asm	mov		dx,[ssStatus]	// Check to see if FIFO is currently empty
-asm	in		al,dx
-asm	test	al,0x40
-asm	jnz		checkdone		// Nope - Sound Source not here
-
-asm	mov		cx,32			// Force FIFO overflow (FIFO is 16 bytes)
-outloop:
-asm	mov		dx,[ssData]		// Pump a neutral value out
-asm	mov		al,0x80
-asm	out		dx,al
-
-asm	mov		dx,[ssControl]	// Pulse printer select
-asm	mov		al,[ssOff]
-asm	out		dx,al
-asm	push	ax
-asm	pop		ax
-asm	mov		al,[ssOn]
-asm	out		dx,al
-
-asm	push	ax				// Delay a short while before we do this again
-asm	pop		ax
-asm	push	ax
-asm	pop		ax
-
-asm	loop	outloop
-
-asm	mov		dx,[ssStatus]	// Is FIFO overflowed now?
-asm	in		al,dx
-asm	test	al,0x40
-asm	jz		checkdone		// Nope, still not - Sound Source not here
-
-	present = true;			// Yes - it's here!
-
-checkdone:
-	SDL_ShutSS();
-	return(present);
-}
-
-static int
-SDL_DetectSoundSource(void)
-{
-	for (ssPort = 1;ssPort <= 3;ssPort++)
-		if (SDL_CheckSS())
-			return(true);
-	return(false);
 }
 
 //
@@ -1793,12 +1699,6 @@ SD_SetMusicMode(SMMode mode)
 	return(result);
 }
 
-///////////////////////////////////////////////////////////////////////////
-//
-//	SD_Startup() - starts up the Sound Mgr
-//		Detects all additional sound hardware and installs my ISR
-//
-///////////////////////////////////////////////////////////////////////////
 void
 SD_Startup(void)
 {
@@ -1809,45 +1709,6 @@ SD_Startup(void)
 
 	SDL_SetDS();
 
-	ssIsTandy = false;
-	ssNoCheck = false;
-	alNoCheck = false;
-	sbNoCheck = false;
-	sbNoProCheck = false;
-	for (i = 1;i < _argc;i++)
-	{
-		switch (US_CheckParm(_argv[i],ParmStrings))
-		{
-		case 0:						// No AdLib detection
-			alNoCheck = true;
-			break;
-		case 1:						// No SoundBlaster detection
-			sbNoCheck = true;
-			break;
-		case 2:						// No SoundBlaster Pro detection
-			sbNoProCheck = true;
-			break;
-		case 3:
-			ssNoCheck = true;		// No Sound Source detection
-			break;
-		case 4:						// Tandy Sound Source handling
-			ssIsTandy = true;
-			break;
-		case 5:						// Sound Source present at LPT1
-			ssPort = 1;
-			ssNoCheck = SoundSourcePresent = true;
-			break;
-		case 6:                     // Sound Source present at LPT2
-			ssPort = 2;
-			ssNoCheck = SoundSourcePresent = true;
-			break;
-		case 7:                     // Sound Source present at LPT3
-			ssPort = 3;
-			ssNoCheck = SoundSourcePresent = true;
-			break;
-		}
-	}
-
 	SoundUserHook = 0;
 
 	t0OldService = getvect(8);	// Get old timer 0 ISR
@@ -1857,13 +1718,14 @@ SD_Startup(void)
 	SD_SetSoundMode(sdm_Off);
 	SD_SetMusicMode(smm_Off);
 
-	if (!ssNoCheck)
-		SoundSourcePresent = SDL_DetectSoundSource();
+	/* → detect and select sound card */
 
-	if (!alNoCheck)
+	SoundSourcePresent = true;
+
+	if (1)
 	{
 		AdLibPresent = SDL_DetectAdLib();
-		if (AdLibPresent && !sbNoCheck)
+		if (AdLibPresent)
 		{
 			s16int port = -1;
 			char *env = getenv("BLASTER");

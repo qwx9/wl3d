@@ -870,18 +870,14 @@ void DrawPlayScreen (void)
 
 	temp = bufferofs;
 
-	CA_CacheGrChunk (STATUSBARPIC);
-
 	for (i=0;i<3;i++)
 	{
 		bufferofs = screenloc[i];
 		DrawPlayBorder ();
-		VWB_DrawPic (0,200-STATUSLINES,STATUSBARPIC);
+		VWB_DrawPic (0,200-STATUSLINES,Pstat);
 	}
 
 	bufferofs = temp;
-
-	UNCACHEGRCHUNK (STATUSBARPIC);
 
 	DrawFace ();
 	DrawHealth ();
@@ -1041,16 +1037,8 @@ void PlayDemo (s16int demonumber)
 {
 	s16int length;
 
-// debug: load chunk
-#ifndef SPEARDEMO
-	s16int dems[4]={T_DEMO0,T_DEMO1,T_DEMO2,T_DEMO3};
-#else
-	s16int dems[1]={T_DEMO0};
-#endif
-
-	CA_CacheGrChunk(dems[demonumber]);
-	demoptr = grsegs[dems[demonumber]];
-	MM_SetLock (&grsegs[dems[demonumber]],true);
+	/* deme==dems → no demos, etc. */
+	demoptr = dems+demonumber;
 
 	NewGame (1,0);
 	gamestate.mapon = *demoptr++;
@@ -1074,8 +1062,6 @@ void PlayDemo (s16int demonumber)
 	fizzlein = true;
 
 	PlayLoop ();
-
-	UNCACHEGRCHUNK(dems[demonumber]);
 
 	demoplayback = false;
 
@@ -1103,7 +1089,7 @@ void Died (void)
 	s16int		iangle,curangle,clockwise,counter,change;
 
 	gamestate.weapon = -1;			// take away weapon
-	SD_PlaySound (PLAYERDEATHSND);
+	SD_PlaySound (Sdeath);
 //
 // swing around to face attacker
 //
@@ -1270,7 +1256,7 @@ startplayloop:
 		if (spearflag)
 		{
 			SD_StopSound();
-			SD_PlaySound(GETSPEARSND);
+			SD_PlaySound(Spear);
 			if (DigiMode != sds_Off)
 			{
 				s32int lasttimecount = TimeCount;

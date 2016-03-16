@@ -1,49 +1,8 @@
-//
-//	ID Engine
-//	ID_US_1.c - User Manager - General routines
-//	v1.1d1
-//	By Jason Blochowiak
-//	Hacked up for Catacomb 3D
-//
-
-//
-//	This module handles dealing with user input & feedback
-//
-//	Depends on: Input Mgr, View Mgr, some variables from the Sound, Caching,
-//		and Refresh Mgrs, Memory Mgr for background save/restore
-//
-//	Globals:
-//		ingame - Flag set by game indicating if a game is in progress
-//      abortgame - Flag set if the current game should be aborted (if a load
-//			game fails)
-//		loadedgame - Flag set if a game was loaded
-//		abortprogram - Normally nil, this points to a terminal error message
-//			if the program needs to abort
-//		restartgame - Normally set to gd_Continue, this is set to one of the
-//			difficulty levels if a new game should be started
-//		PrintX, PrintY - Where the User Mgr will print (global coords)
-//		WindowX,WindowY,WindowW,WindowH - The dimensions of the current
-//			window
-//
-
-#include "ID_HEADS.H"
-
-#pragma	hdrstop
-
-#pragma	warn	-pia
-
-
-//	Global variables
 		char		*abortprogram;
 		int		NoWait;
 		u16int		PrintX,PrintY;
 		u16int		WindowX,WindowY,WindowW,WindowH;
 
-//	Internal variables
-#define	ConfigVersion	1
-
-static	char		*ParmStrings[] = {"TEDLEVEL","NOWAIT"},
-					*ParmStrings2[] = {"COMP","NOCOMP"};
 static	int		US_Started;
 
 		int		Button0,Button1,
@@ -65,101 +24,6 @@ static	int		US_Started;
 						{"Jay Wilbur",10000,1},
 					};
 
-//	Internal routines
-
-//	Public routines
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	USL_HardError() - Handles the Abort/Retry/Fail sort of errors passed
-//			from DOS.
-//
-///////////////////////////////////////////////////////////////////////////
-#pragma	warn	-par
-#pragma	warn	-rch
-int
-USL_HardError(u16int errval,s16int ax,s16int bp,s16int si)
-{
-#define IGNORE  0
-#define RETRY   1
-#define	ABORT   2
-extern	void	ShutdownId(void);
-
-static	char		buf[32];
-static	WindowRec	wr;
-		s16int			di;
-		char		c,*s,*t;
-
-
-	di = _DI;
-
-	if (ax < 0)
-		s = "Device Error";
-	else
-	{
-		if ((di & 0x00ff) == 0)
-			s = "Drive ~ is Write Protected";
-		else
-			s = "Error on Drive ~";
-		for (t = buf;*s;s++,t++)	// Can't use sprintf()
-			if ((*t = *s) == '~')
-				*t = (ax & 0x00ff) + 'A';
-		*t = '\0';
-		s = buf;
-	}
-
-	c = peekb(0x40,0x49);	// Get the current screen mode
-	if ((c < 4) || (c == 7))
-		goto oh_kill_me;
-
-	// DEBUG - handle screen cleanup
-
-	US_SaveWindow(&wr);
-	US_CenterWindow(30,3);
-	US_CPrint(s);
-	US_CPrint("(R)etry or (A)bort?");
-	VW_UpdateScreen();
-	IN_ClearKeysDown();
-
-asm	sti	// Let the keyboard interrupts come through
-
-	while (true)
-	{
-		switch (IN_WaitForASCII())
-		{
-		case key_Escape:
-		case 'a':
-		case 'A':
-			goto oh_kill_me;
-			break;
-		case key_Return:
-		case key_Space:
-		case 'r':
-		case 'R':
-			US_ClearWindow();
-			VW_UpdateScreen();
-			US_RestoreWindow(&wr);
-			return(RETRY);
-			break;
-		}
-	}
-
-oh_kill_me:
-	abortprogram = s;
-	ShutdownId();
-	fprintf(stderr,"Terminal Error: %s\n",s);
-	if (tedlevel)
-		fprintf(stderr,"You launched from TED. I suggest that you reboot...\n");
-
-	return(ABORT);
-#undef	IGNORE
-#undef	RETRY
-#undef	ABORT
-}
-#pragma	warn	+par
-#pragma	warn	+rch
-
-
 ///////////////////////////////////////////////////////////////////////////
 //
 //	US_Startup() - Starts the User Mgr
@@ -168,46 +32,9 @@ oh_kill_me:
 void
 US_Startup(void)
 {
-	s16int	i,n;
-
 	if (US_Started)
 		return;
-
-	harderr(USL_HardError);	// Install the fatal error handler
-
 	US_InitRndT(true);		// Initialize the random number generator
-
-	for (i = 1;i < _argc;i++)
-	{
-		switch (US_CheckParm(_argv[i],ParmStrings2))
-		{
-		case 0:
-			compatability = true;
-			break;
-		case 1:
-			compatability = false;
-			break;
-		}
-	}
-
-	// Check for TED launching here
-	for (i = 1;i < _argc;i++)
-	{
-		n = US_CheckParm(_argv[i],ParmStrings);
-		switch(n)
-		{
-		 case 0:
-		   tedlevelnum = atoi(_argv[i + 1]);
-		   if (tedlevelnum >= 0)
-		     tedlevel = true;
-		   break;
-
-		 case 1:
-		   NoWait = true;
-		   break;
-		}
-	}
-
 	US_Started = true;
 }
 
@@ -225,42 +52,6 @@ US_Shutdown(void)
 
 	US_Started = false;
 }
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	US_CheckParm() - checks to see if a string matches one of a set of
-//		strings. The check is case insensitive. The routine returns the
-//		index of the string that matched, or -1 if no matches were found
-//
-///////////////////////////////////////////////////////////////////////////
-int
-US_CheckParm(char *parm,char **strings)
-{
-	char	cp,cs,
-			*p,*s;
-	s16int		i;
-
-	while (!isalpha(*parm))	// Skip non-alphas
-		parm++;
-
-	for (i = 0;*strings && **strings;i++)
-	{
-		for (s = *strings++,p = parm,cs = cp = 0;cs == cp;)
-		{
-			cs = *s++;
-			if (!cs)
-				return(i);
-			cp = *p++;
-
-			if (isupper(cs))
-				cs = tolower(cs);
-			if (isupper(cp))
-				cp = tolower(cp);
-		}
-	}
-	return(-1);
-}
-
 
 //	Window/Printing routines
 

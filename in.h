@@ -7,7 +7,6 @@
 
 #define	MaxPlayers	4
 #define	MaxKbds		2
-#define	MaxJoys		2
 #define	NumCodes	128
 
 #define	sc_None			0
@@ -107,8 +106,6 @@ typedef	enum		{
 typedef	enum		{
 						ctrl_Keyboard,
 							ctrl_Keyboard1 = ctrl_Keyboard,ctrl_Keyboard2,
-						ctrl_Joystick,
-							ctrl_Joystick1 = ctrl_Joystick,ctrl_Joystick2,
 						ctrl_Mouse
 					} ControlType;
 typedef	enum		{
@@ -136,23 +133,12 @@ typedef	struct		{
 									left,				right,
 									downleft,	down,	downright;
 					} KeyboardDef;
-typedef	struct		{
-						u16int		joyMinX,joyMinY,
-									threshMinX,threshMinY,
-									threshMaxX,threshMaxY,
-									joyMaxX,joyMaxY,
-									joyMultXL,joyMultYL,
-									joyMultXH,joyMultYH;
-					} JoystickDef;
 // Global variables
-extern	int		Keyboard[],
-					MousePresent,
-					JoysPresent[];
+extern	int		Keyboard[], MousePresent;
 extern	int		Paused;
 extern	char		LastASCII;
 extern	u8int	LastScan;
 extern	KeyboardDef	KbdDefs;
-extern	JoystickDef	JoyDefs[];
 extern	ControlType	Controls[MaxPlayers];
 
 extern	Demo		DemoMode;
@@ -172,21 +158,15 @@ extern	void		IN_Startup(void),IN_Shutdown(void),
 					IN_ReadCursor(CursorInfo *),
 					IN_ReadControl(s16int,ControlInfo *),
 					IN_SetControlType(s16int,ControlType),
-					IN_GetJoyAbs(u16int joy,u16int *xp,u16int *yp),
-					IN_SetupJoy(u16int joy,u16int minx,u16int maxx,
-								u16int miny,u16int maxy),
 					IN_StopDemo(void),IN_FreeDemoBuffer(void),
 					IN_Ack(void),IN_AckBack(void);
 extern	int		IN_UserInput(u32int delay);
 extern	char		IN_WaitForASCII(void);
 extern	u8int	IN_WaitForKey(void);
-extern	u16int		IN_GetJoyButtonsDB(u16int joy);
 extern	u8int		*IN_GetScanName(u8int);
 
 
 u8int	IN_MouseButtons (void);
-u8int	IN_JoyButtons (void);
 
-void INL_GetJoyDelta(u16int joy,s16int *dx,s16int *dy);
 void IN_StartAck(void);
 int IN_CheckAck (void);

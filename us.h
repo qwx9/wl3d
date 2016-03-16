@@ -99,8 +99,7 @@ extern	void	US_Startup(void),
 extern	int	US_UpdateCursor(void),
 				US_LineInput(s16int x,s16int y,char *buf,char *def,int escok,
 								s16int maxchars,s16int maxwidth);
-extern	s16int		US_CheckParm(char *parm,char **strings),
-				US_RndT(void);
+extern	s16int		US_RndT(void);
 
 		void	USL_PrintInCenter(char far *s,Rct r);
 		char 	*USL_GiveSaveName(u16int game);

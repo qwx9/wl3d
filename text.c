@@ -420,11 +420,12 @@ void PageLayout (int shownumber)
 //
 // clear the screen
 //
+	/* wl. lumps only, never used with spear */
 	VWB_Bar (0,0,320,200,BACKCOLOR);
-	VWB_DrawPic (0,0,H_TOPWINDOWPIC);
-	VWB_DrawPic (0,8,H_LEFTWINDOWPIC);
-	VWB_DrawPic (312,8,H_RIGHTWINDOWPIC);
-	VWB_DrawPic (8,176,H_BOTTOMINFOPIC);
+	VWB_DrawPic (0,0,Pbackdrop);
+	VWB_DrawPic (0,8,Pbackdrop+1);
+	VWB_DrawPic (312,8,Pbackdrop+2);
+	VWB_DrawPic (8,176,Pbackdrop+3);
 
 
 	for (i=0;i<TEXTROWS;i++)
@@ -548,10 +549,6 @@ void CacheLayoutGraphics (void)
 				numpages++;
 			if (ch == 'E')		// end of file, so load graphics and return
 			{
-				CA_MarkGrChunk(H_TOPWINDOWPIC);
-				CA_MarkGrChunk(H_LEFTWINDOWPIC);
-				CA_MarkGrChunk(H_RIGHTWINDOWPIC);
-				CA_MarkGrChunk(H_BOTTOMINFOPIC);
 				CA_CacheMarks ();
 				text = textstart;
 				return;
@@ -559,12 +556,10 @@ void CacheLayoutGraphics (void)
 			if (ch == 'G')		// draw graphic command, so mark graphics
 			{
 				ParsePicCommand ();
-				CA_MarkGrChunk (picnum);
 			}
 			if (ch == 'T')		// timed draw graphic command, so mark graphics
 			{
 				ParseTimedCommand ();
-				CA_MarkGrChunk (picnum);
 			}
 		}
 		else
@@ -592,7 +587,6 @@ void ShowArticle (char far *article)
 	text = article;
 	oldfontnumber = fontnumber;
 	fontnumber = 0;
-	CA_MarkGrChunk(STARTFONT);
 	VWB_Bar (0,0,320,200,BACKCOLOR);
 	CacheLayoutGraphics ();
 
@@ -641,25 +635,11 @@ void ShowArticle (char far *article)
 			}
 			break;
 		}
-
-		#ifndef SPEAR
-		if (Keyboard[sc_Tab] && Keyboard[sc_P] && MS_CheckParm("goobers"))
-			PicturePause();
-		#endif
-
 	} while (LastScan != sc_Escape);
 
 	IN_ClearKeysDown ();
 	fontnumber = oldfontnumber;
 }
-
-
-//===========================================================================
-
-s16int 	endextern = T_ENDART1;
-#ifndef SPEAR
-s16int		helpextern = T_HELPART;
-#endif
 
 /*
 =================
@@ -671,27 +651,15 @@ s16int		helpextern = T_HELPART;
 #ifndef SPEAR
 void HelpScreens (void)
 {
-	s16int			artnum;
-	char far 	*text;
 	uchar *layout;
 
 	CA_UpLevel ();
-	MM_SortMem ();
 
-	artnum = helpextern;
-	CA_CacheGrChunk (artnum);
-	text = (char _seg *)grsegs[artnum];
-	MM_SetLock (&grsegs[artnum], true);
-
-	ShowArticle (text);
-
-	MM_FreePtr (&grsegs[artnum]);
+	ShowArticle (Etitpal);
 
 	VW_FadeOut();
 
-	FreeMusic ();
 	CA_DownLevel ();
-	MM_SortMem ();
 }
 #endif
 
@@ -700,25 +668,13 @@ void HelpScreens (void)
 //
 void EndText (void)
 {
-	s16int			artnum;
-	char far 	*text;
 	uchar *layout;
 
 
 	ClearMemory ();
-
 	CA_UpLevel ();
-	MM_SortMem ();
 
-	artnum = endextern+gamestate.episode;
-	CA_CacheGrChunk (artnum);
-	text = (char _seg *)grsegs[artnum];
-	MM_SetLock (&grsegs[artnum], true);
-
-	ShowArticle (text);
-
-	MM_FreePtr (&grsegs[artnum]);
-
+	ShowArticle (epis+gamestate.episode);
 
 	VW_FadeOut();
 	SETFONTCOLOR(0,15);
@@ -726,7 +682,5 @@ void EndText (void)
 	if (MousePresent)
 		Mouse(MDelta);	// Clear accumulated mouse movement
 
-	FreeMusic ();
 	CA_DownLevel ();
-	MM_SortMem ();
 }

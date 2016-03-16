@@ -259,15 +259,8 @@ void US_ControlPanel(u8int scancode)
 
 		finishup:
 			CleanupControlPanel();
-			#ifdef SPEAR
-			UnCacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-			#endif
 			return;
 	}
-
-#ifdef SPEAR
-	CacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-#endif
 
 	DrawMainMenu();
 	MenuFadeIn();
@@ -288,26 +281,16 @@ void US_ControlPanel(u8int scancode)
 		if (Keyboard[sc_I] && Keyboard[sc_D])
 		{
 			VW_FadeOut();
-			StartCPMusic (XJAZNAZI_MUS);
-			UnCacheLump(OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-			UnCacheLump(BACKDROP_LUMP_START,BACKDROP_LUMP_END);
+			StartCPMusic (18);
 			MM_SortMem ();
 			ClearMemory ();
 
-
-			CA_CacheGrChunk (IDGUYS1PIC);
-			VWB_DrawPic(0,0,IDGUYS1PIC);
-			UNCACHEGRCHUNK(IDGUYS1PIC);
-
-			CA_CacheGrChunk (IDGUYS2PIC);
-			VWB_DrawPic(0,80,IDGUYS2PIC);
-			UNCACHEGRCHUNK(IDGUYS2PIC);
+			VWB_DrawPic(0,0,Pid1);
+			VWB_DrawPic(0,80,Pid2);
 
 			VW_UpdateScreen();
 
-			CA_CacheGrChunk (IDGUYSPALETTE);
-			VL_FadeIn(0,255,grsegs[IDGUYSPALETTE],30);
-			UNCACHEGRCHUNK(IDGUYSPALETTE);
+			VL_FadeIn(0,255,Eid,30);	/* sod only */
 
 			while (Keyboard[sc_I] || Keyboard[sc_D]);
 			IN_ClearKeysDown();
@@ -315,8 +298,6 @@ void US_ControlPanel(u8int scancode)
 
 			VW_FadeOut();
 
-			CacheLump(BACKDROP_LUMP_START,BACKDROP_LUMP_END);
-			CacheLump(OPTIONS_LUMP_START,OPTIONS_LUMP_END);
 			DrawMainMenu();
 			StartCPMusic (MENUSONG);
 			MenuFadeIn();
@@ -336,29 +317,6 @@ void US_ControlPanel(u8int scancode)
 				break;
 
 			case backtodemo:
-				#ifdef SPEAR
-				if (!ingame)
-				{
-					//
-					// DEALLOCATE ALL SOUNDS!
-					//
-					switch (SoundMode)
-					{
-						case sdm_PC:
-							start = STARTPCSOUNDS;
-							break;
-						case sdm_AdLib:
-							start = STARTADLIBSOUNDS;
-							break;
-					}
-
-					if (SoundMode != sdm_Off)
-						for (i=0;i<NUMSOUNDS;i++,start++)
-							if (audiosegs[start])
-								MM_SetPurge (&(uchar *)audiosegs[start],3);		// make purgable
-				}
-				#endif
-
 				MM_SortMem();
 				StartGame=1;
 				if (!ingame)
@@ -399,13 +357,6 @@ void US_ControlPanel(u8int scancode)
 		_fstrcpy(MainMenu[viewscores].string,STR_EG);
 		#pragma warn +sus
 	}
-
-	// RETURN/START GAME EXECUTION
-
-#ifdef SPEAR
-	UnCacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-	MM_SortMem ();
-#endif
 }
 
 
@@ -417,9 +368,9 @@ void DrawMainMenu(void)
 {
 	ClearMScreen();
 
-	VWB_DrawPic(112,184,C_MOUSELBACKPIC);
+	VWB_DrawPic(112,184,Pmouselback);
 	DrawStripes(10);
-	VWB_DrawPic(84,0,C_OPTIONSPIC);
+	VWB_DrawPic(84,0,Popt);
 
 	DrawWindow(MENU_X-8,MENU_Y-3,MENU_W,MENU_H,BKGDCOLOR);
 
@@ -448,7 +399,7 @@ void DrawMainMenu(void)
 ////////////////////////////////////////////////////////////////////
 void CP_ReadThis(void)
 {
-	StartCPMusic(CORNER_MUS);
+	StartCPMusic(0);
 	HelpScreens();
 	StartCPMusic(MENUSONG);
 }
@@ -495,19 +446,6 @@ s16int CP_CheckQuick(u16int scancode)
 			}
 			else
 			{
-				#ifndef SPEAR
-				CA_CacheGrChunk(STARTFONT+1);
-				CA_CacheGrChunk(C_CURSOR1PIC);
-				CA_CacheGrChunk(C_CURSOR2PIC);
-				CA_CacheGrChunk(C_DISKLOADING1PIC);
-				CA_CacheGrChunk(C_DISKLOADING2PIC);
-				CA_CacheGrChunk(C_SAVEGAMEPIC);
-				CA_CacheGrChunk(C_MOUSELBACKPIC);
-				#else
-				CacheLump (BACKDROP_LUMP_START,BACKDROP_LUMP_END);
-				CA_CacheGrChunk(C_CURSOR1PIC);
-				#endif
-
 				VW_FadeOut ();
 
 				StartCPMusic(MENUSONG);
@@ -531,17 +469,6 @@ s16int CP_CheckQuick(u16int scancode)
 					Mouse(MDelta);	// Clear accumulated mouse movement
 
 				PM_CheckMainMem ();
-
-				#ifndef SPEAR
-				UNCACHEGRCHUNK(C_CURSOR1PIC);
-				UNCACHEGRCHUNK(C_CURSOR2PIC);
-				UNCACHEGRCHUNK(C_DISKLOADING1PIC);
-				UNCACHEGRCHUNK(C_DISKLOADING2PIC);
-				UNCACHEGRCHUNK(C_SAVEGAMEPIC);
-				UNCACHEGRCHUNK(C_MOUSELBACKPIC);
-				#else
-				UnCacheLump (BACKDROP_LUMP_START,BACKDROP_LUMP_END);
-				#endif
 			}
 			return 1;
 
@@ -568,19 +495,6 @@ s16int CP_CheckQuick(u16int scancode)
 			}
 			else
 			{
-				#ifndef SPEAR
-				CA_CacheGrChunk(STARTFONT+1);
-				CA_CacheGrChunk(C_CURSOR1PIC);
-				CA_CacheGrChunk(C_CURSOR2PIC);
-				CA_CacheGrChunk(C_DISKLOADING1PIC);
-				CA_CacheGrChunk(C_DISKLOADING2PIC);
-				CA_CacheGrChunk(C_LOADGAMEPIC);
-				CA_CacheGrChunk(C_MOUSELBACKPIC);
-				#else
-				CA_CacheGrChunk(C_CURSOR1PIC);
-				CacheLump (BACKDROP_LUMP_START,BACKDROP_LUMP_END);
-				#endif
-
 				VW_FadeOut ();
 
 				StartCPMusic(MENUSONG);
@@ -604,17 +518,6 @@ s16int CP_CheckQuick(u16int scancode)
 				if (MousePresent)
 					Mouse(MDelta);	// Clear accumulated mouse movement
 				PM_CheckMainMem ();
-
-				#ifndef SPEAR
-				UNCACHEGRCHUNK(C_CURSOR1PIC);
-				UNCACHEGRCHUNK(C_CURSOR2PIC);
-				UNCACHEGRCHUNK(C_DISKLOADING1PIC);
-				UNCACHEGRCHUNK(C_DISKLOADING2PIC);
-				UNCACHEGRCHUNK(C_LOADGAMEPIC);
-				UNCACHEGRCHUNK(C_MOUSELBACKPIC);
-				#else
-				UnCacheLump (BACKDROP_LUMP_START,BACKDROP_LUMP_END);
-				#endif
 			}
 			return 1;
 
@@ -688,10 +591,9 @@ void CP_ViewScores(void)
 	fontnumber=0;
 
 #ifdef SPEAR
-	UnCacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-	StartCPMusic (XAWARD_MUS);
+	StartCPMusic (20);
 #else
-	StartCPMusic (ROSTER_MUS);
+	StartCPMusic (23);
 #endif
 
 	DrawHighScores ();
@@ -703,11 +605,6 @@ void CP_ViewScores(void)
 
 	StartCPMusic(MENUSONG);
 	MenuFadeOut();
-
-#ifdef SPEAR
-	CacheLump (BACKDROP_LUMP_START,BACKDROP_LUMP_END);
-	CacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-#endif
 }
 
 
@@ -719,11 +616,6 @@ void CP_ViewScores(void)
 void CP_NewGame(void)
 {
 	s16int which,episode;
-
-#ifdef SPEAR
-	UnCacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-#endif
-
 
 #ifndef SPEAR
 firstpart:
@@ -741,7 +633,7 @@ firstpart:
 			default:
 				if (!EpisodeSelect[which/2])
 				{
-					SD_PlaySound (NOWAYSND);
+					SD_PlaySound (Snoway);
 					Message("Please select \"Read This!\"\n"
 							"from the Options menu to\n"
 							"find out how to order this\n"
@@ -781,14 +673,11 @@ firstpart:
 	//
 	// ALREADY IN A GAME?
 	//
-	CacheLump (NEWGAME_LUMP_START,NEWGAME_LUMP_END);
 	DrawNewGame();
 	if (ingame)
 		if (!Confirm(CURGAME))
 		{
 			MenuFadeOut();
-			UnCacheLump (NEWGAME_LUMP_START,NEWGAME_LUMP_END);
-			CacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
 			return;
 		}
 
@@ -802,8 +691,6 @@ firstpart:
 		#ifndef SPEAR
 		goto firstpart;
 		#else
-		UnCacheLump (NEWGAME_LUMP_START,NEWGAME_LUMP_END);
-		CacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
 		return;
 		#endif
 	}
@@ -821,11 +708,6 @@ firstpart:
 	#endif
 
 	pickquick = 0;
-
-#ifdef SPEAR
-	UnCacheLump (NEWGAME_LUMP_START,NEWGAME_LUMP_END);
-	CacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-#endif
 }
 
 
@@ -839,7 +721,7 @@ void DrawNewEpisode(void)
 	s16int i;
 
 	ClearMScreen();
-	VWB_DrawPic(112,184,C_MOUSELBACKPIC);
+	VWB_DrawPic(112,184,Pmouselback);
 
 	DrawWindow(NE_X-4,NE_Y-4,NE_W+8,NE_H+8,BKGDCOLOR);
 	SETFONTCOLOR(READHCOLOR,BKGDCOLOR);
@@ -851,7 +733,7 @@ void DrawNewEpisode(void)
 	DrawMenu(&NewEitems,&NewEmenu[0]);
 
 	for (i=0;i<6;i++)
-		VWB_DrawPic(NE_X+32,NE_Y+i*26,C_EPISODE1PIC+i);
+		VWB_DrawPic(NE_X+32,NE_Y+i*26,Pep1+i);
 
 	VW_UpdateScreen();
 	MenuFadeIn();
@@ -866,7 +748,7 @@ void DrawNewEpisode(void)
 void DrawNewGame(void)
 {
 	ClearMScreen();
-	VWB_DrawPic(112,184,C_MOUSELBACKPIC);
+	VWB_DrawPic(112,184,Pmouselback);
 
 	SETFONTCOLOR(READHCOLOR,BKGDCOLOR);
 	PrintX=NM_X+20;
@@ -875,7 +757,7 @@ void DrawNewGame(void)
 #ifndef SPEAR
 	US_Print("How tough are you?");
 #else
-	VWB_DrawPic (PrintX,PrintY,C_HOWTOUGHPIC);
+	VWB_DrawPic (PrintX,PrintY,Pdiffc);
 #endif
 
 	DrawWindow(NM_X-5,NM_Y-10,NM_W,NM_H,BKGDCOLOR);
@@ -894,7 +776,7 @@ void DrawNewGame(void)
 //
 void DrawNewGameDiff(s16int w)
 {
-	VWB_DrawPic(NM_X+185,NM_Y+7,w+C_BABYMODEPIC);
+	VWB_DrawPic(NM_X+185,NM_Y+7,w+Pbaby);
 }
 
 
@@ -906,12 +788,6 @@ void DrawNewGameDiff(s16int w)
 void CP_Sound(void)
 {
 	s16int which,i;
-
-
-#ifdef SPEAR
-	UnCacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-	CacheLump (SOUND_LUMP_START,SOUND_LUMP_END);
-#endif
 
 	DrawSoundMenu();
 	MenuFadeIn();
@@ -1008,11 +884,6 @@ void CP_Sound(void)
 	} while(which>=0);
 
 	MenuFadeOut();
-
-#ifdef SPEAR
-	UnCacheLump (SOUND_LUMP_START,SOUND_LUMP_END);
-	CacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-#endif
 }
 
 
@@ -1028,7 +899,7 @@ void DrawSoundMenu(void)
 	// DRAW SOUND MENU
 	//
 	ClearMScreen();
-	VWB_DrawPic(112,184,C_MOUSELBACKPIC);
+	VWB_DrawPic(112,184,Pmouselback);
 
 	DrawWindow(SM_X-8,SM_Y1-3,SM_W,SM_H1,BKGDCOLOR);
 	DrawWindow(SM_X-8,SM_Y2-3,SM_W,SM_H2,BKGDCOLOR);
@@ -1052,9 +923,9 @@ void DrawSoundMenu(void)
 		SndMenu[5].active=0;
 
 	DrawMenu(&SndItems,&SndMenu[0]);
-	VWB_DrawPic(100,SM_Y1-20,C_FXTITLEPIC);
-	VWB_DrawPic(100,SM_Y2-20,C_DIGITITLEPIC);
-	VWB_DrawPic(100,SM_Y3-20,C_MUSICTITLEPIC);
+	VWB_DrawPic(100,SM_Y1-20,Psfx);
+	VWB_DrawPic(100,SM_Y2-20,Ppcm);
+	VWB_DrawPic(100,SM_Y3-20,Pmus);
 
 	for (i=0;i<SndItems.amount;i++)
 		if (SndMenu[i].string[0])
@@ -1087,9 +958,9 @@ void DrawSoundMenu(void)
 			}
 
 			if (on)
-				VWB_DrawPic(SM_X+24,SM_Y1+i*13+2,C_SELECTEDPIC);
+				VWB_DrawPic(SM_X+24,SM_Y1+i*13+2,Psel);
 			else
-				VWB_DrawPic(SM_X+24,SM_Y1+i*13+2,C_NOTSELECTEDPIC);
+				VWB_DrawPic(SM_X+24,SM_Y1+i*13+2,Punsel);
 		}
 
 	DrawMenuGun(&SndItems);
@@ -1109,7 +980,7 @@ void DrawLSAction(s16int which)
 
 	DrawWindow(LSA_X,LSA_Y,LSA_W,LSA_H,TEXTCOLOR);
 	DrawOutline(LSA_X,LSA_Y,LSA_W,LSA_H,0,HIGHLIGHT);
-	VWB_DrawPic(LSA_X+8,LSA_Y+5,C_DISKLOADING1PIC);
+	VWB_DrawPic(LSA_X+8,LSA_Y+5,Pread1);
 
 	fontnumber=1;
 	SETFONTCOLOR(0,TEXTCOLOR);
@@ -1167,12 +1038,6 @@ s16int CP_LoadGame(s16int quick)
 		}
 	}
 
-
-#ifdef SPEAR
-	UnCacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-	CacheLump (LOADSAVE_LUMP_START,LOADSAVE_LUMP_END);
-#endif
-
 	DrawLoadSaveScreen(0);
 
 	do
@@ -1209,11 +1074,6 @@ s16int CP_LoadGame(s16int quick)
 
 	MenuFadeOut();
 
-#ifdef SPEAR
-	UnCacheLump (LOADSAVE_LUMP_START,LOADSAVE_LUMP_END);
-	CacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-#endif
-
 	return exit;
 }
 
@@ -1247,14 +1107,14 @@ void DrawLoadSaveScreen(s16int loadsave)
 
 	ClearMScreen();
 	fontnumber=1;
-	VWB_DrawPic(112,184,C_MOUSELBACKPIC);
+	VWB_DrawPic(112,184,Pmouselback);
 	DrawWindow(LSM_X-10,LSM_Y-5,LSM_W,LSM_H,BKGDCOLOR);
 	DrawStripes(10);
 
 	if (!loadsave)
-		VWB_DrawPic(60,0,C_LOADGAMEPIC);
+		VWB_DrawPic(60,0,Pload);
 	else
-		VWB_DrawPic(60,0,C_SAVEGAMEPIC);
+		VWB_DrawPic(60,0,Psave);
 
 	for (i=0;i<10;i++)
 		PrintLSEntry(i,TEXTCOLOR);
@@ -1325,12 +1185,6 @@ s16int CP_SaveGame(s16int quick)
 		}
 	}
 
-
-#ifdef SPEAR
-	UnCacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-	CacheLump (LOADSAVE_LUMP_START,LOADSAVE_LUMP_END);
-#endif
-
 	DrawLoadSaveScreen(1);
 
 	do
@@ -1387,7 +1241,7 @@ s16int CP_SaveGame(s16int quick)
 				VWB_Bar(LSM_X+LSItems.indent+1,LSM_Y+which*13+1,LSM_W-LSItems.indent-16,10,BKGDCOLOR);
 				PrintLSEntry(which,HIGHLIGHT);
 				VW_UpdateScreen();
-				SD_PlaySound(ESCPRESSEDSND);
+				SD_PlaySound(Sesc);
 				continue;
 			}
 
@@ -1399,104 +1253,8 @@ s16int CP_SaveGame(s16int quick)
 
 	MenuFadeOut();
 
-#ifdef SPEAR
-	UnCacheLump (LOADSAVE_LUMP_START,LOADSAVE_LUMP_END);
-	CacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-#endif
-
 	return exit;
 }
-
-
-////////////////////////////////////////////////////////////////////
-//
-// CALIBRATE JOYSTICK
-//
-////////////////////////////////////////////////////////////////////
-s16int CalibrateJoystick(void)
-{
-	#define CALX	85
-	#define CALY	40
-	#define CALW	158
-	#define CALH	140
-
-	u16int xmin,ymin,xmax,ymax,jb;
-
-
-
-	DrawWindow(CALX-5,CALY-5,CALW,CALH,TEXTCOLOR);
-	DrawOutline(CALX-5,CALY-5,CALW,CALH,0,HIGHLIGHT);
-	SETFONTCOLOR(0,TEXTCOLOR);
-
-	WindowX = PrintX = CALX;
-	WindowW = CALW;
-	WindowH = CALH;
-	WindowY = PrintY = CALY;
-	US_Print("    "STR_CALIB"\n    "STR_JOYST"\n");
-	VWB_DrawPic(CALX+40,CALY+30,C_JOY1PIC);
-	PrintY = CALY+80;
-	US_Print(STR_MOVEJOY);
-	SETFONTCOLOR(BKGDCOLOR,TEXTCOLOR);
-	US_Print("   "STR_ESCEXIT);
-	VW_UpdateScreen();
-
-	do
-	{
-		jb=IN_JoyButtons();
-		if (Keyboard[sc_Escape])
-			return 0;
-		#ifndef SPEAR
-		if (Keyboard[sc_Tab] && Keyboard[sc_P] && MS_CheckParm("goobers"))
-			PicturePause();
-		#endif
-
-	} while(!(jb&1));
-
-	SD_PlaySound(SHOOTSND);
-	IN_GetJoyAbs(joystickport,&xmin,&ymin);
-
-
-	DrawWindow(CALX-5,CALY-5,CALW,CALH,TEXTCOLOR);
-	DrawOutline(CALX-5,CALY-5,CALW,CALH,0,HIGHLIGHT);
-	SETFONTCOLOR(0,TEXTCOLOR);
-
-	PrintX = CALX;
-	PrintY = CALY;
-	US_Print("    "STR_CALIB"\n    "STR_JOYST"\n");
-	VWB_DrawPic(CALX+40,CALY+30,C_JOY2PIC);
-	PrintY = CALY+80;
-	US_Print(STR_MOVEJOY2);
-	SETFONTCOLOR(BKGDCOLOR,TEXTCOLOR);
-	US_Print("   "STR_ESCEXIT);
-	VW_UpdateScreen();
-
-	do
-	{
-		jb=IN_JoyButtons();
-		if (Keyboard[sc_Escape])
-			return 0;
-		#ifndef SPEAR
-		if (Keyboard[sc_Tab] && Keyboard[sc_P] && MS_CheckParm("goobers"))
-			PicturePause();
-		#endif
-	} while(!(jb&2));
-
-	IN_GetJoyAbs(joystickport,&xmax,&ymax);
-	SD_PlaySound(SHOOTSND);
-
-	while (IN_JoyButtons());
-
-	//
-	// ASSIGN ACTUAL VALUES HERE
-	//
-	if ((xmin != xmax) && (ymin != ymax))
-		IN_SetupJoy(joystickport,xmin,xmax,ymin,ymax);
-	else
-		return 0;
-
-	return 1;
-}
-
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -1508,12 +1266,6 @@ void CP_Control(void)
 	#define CTL_SPC	70
 	enum {MOUSEENABLE,JOYENABLE,USEPORT2,PADENABLE,MOUSESENS,CUSTOMIZE};
 	s16int i,which;
-
-
-#ifdef SPEAR
-	UnCacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-	CacheLump (CONTROL_LUMP_START,CONTROL_LUMP_END);
-#endif
 
 	DrawCtlScreen();
 	MenuFadeIn();
@@ -1535,9 +1287,6 @@ void CP_Control(void)
 
 			case JOYENABLE:
 				joystickenabled^=1;
-				if (joystickenabled)
-					if (!CalibrateJoystick())
-						joystickenabled = 0;
 				DrawCtlScreen();
 				CusItems.curpos=-1;
 				ShootSnd();
@@ -1565,11 +1314,6 @@ void CP_Control(void)
 	} while(which>=0);
 
 	MenuFadeOut();
-
-#ifdef SPEAR
-	UnCacheLump (CONTROL_LUMP_START,CONTROL_LUMP_END);
-	CacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
-#endif
 }
 
 
@@ -1580,7 +1324,7 @@ void CP_Control(void)
 void DrawMouseSens(void)
 {
 	ClearMScreen();
-	VWB_DrawPic(112,184,C_MOUSELBACKPIC);
+	VWB_DrawPic(112,184,Pmouselback);
 	DrawWindow(10,80,300,30,BKGDCOLOR);
 
 	WindowX=0;
@@ -1633,7 +1377,7 @@ void MouseSensitivity(void)
 					DrawOutline(60+20*mouseadjustment,97,20,10,0,READCOLOR);
 					VWB_Bar(61+20*mouseadjustment,98,19,9,READHCOLOR);
 					VW_UpdateScreen();
-					SD_PlaySound(MOVEGUN1SND);
+					SD_PlaySound(Sdrawgun1);
 					while(Keyboard[sc_LeftArrow]);
 					WaitKeyUp();
 				}
@@ -1649,19 +1393,12 @@ void MouseSensitivity(void)
 					DrawOutline(60+20*mouseadjustment,97,20,10,0,READCOLOR);
 					VWB_Bar(61+20*mouseadjustment,98,19,9,READHCOLOR);
 					VW_UpdateScreen();
-					SD_PlaySound(MOVEGUN1SND);
+					SD_PlaySound(Sdrawgun1);
 					while(Keyboard[sc_RightArrow]);
 					WaitKeyUp();
 				}
 				break;
 		}
-
-		#ifndef SPEAR
-		if (Keyboard[sc_Tab] && Keyboard[sc_P] && MS_CheckParm("goobers"))
-		#else
-		if (Keyboard[sc_Tab] && Keyboard[sc_P] && MS_CheckParm("debugmode"))
-		#endif
-			PicturePause();
 
 		if (ci.button0 || Keyboard[sc_Space] || Keyboard[sc_Enter])
 			exit=1;
@@ -1674,10 +1411,10 @@ void MouseSensitivity(void)
 	if (exit==2)
 	{
 		mouseadjustment=oldMA;
-		SD_PlaySound(ESCPRESSEDSND);
+		SD_PlaySound(Sesc);
 	}
 	else
-		SD_PlaySound(SHOOTSND);
+		SD_PlaySound(Sshoot);
 
 	WaitKeyUp();
 	MenuFadeOut();
@@ -1694,17 +1431,19 @@ void DrawCtlScreen(void)
 
  ClearMScreen();
  DrawStripes(10);
- VWB_DrawPic(80,0,C_CONTROLPIC);
- VWB_DrawPic(112,184,C_MOUSELBACKPIC);
+ VWB_DrawPic(80,0,Pctl);
+ VWB_DrawPic(112,184,Pmouselback);
  DrawWindow(CTL_X-8,CTL_Y-5,CTL_W,CTL_H,BKGDCOLOR);
  WindowX=0;
  WindowW=320;
  SETFONTCOLOR(TEXTCOLOR,BKGDCOLOR);
 
+/*
  if (JoysPresent[0])
    CtlMenu[1].active=
    CtlMenu[2].active=
    CtlMenu[3].active=1;
+*/
 
  CtlMenu[2].active=CtlMenu[3].active=joystickenabled;
 
@@ -1723,27 +1462,27 @@ void DrawCtlScreen(void)
  x=CTL_X+CtlItems.indent-24;
  y=CTL_Y+3;
  if (mouseenabled)
-   VWB_DrawPic(x,y,C_SELECTEDPIC);
+   VWB_DrawPic(x,y,Psel);
  else
-   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+   VWB_DrawPic(x,y,Punsel);
 
  y=CTL_Y+16;
  if (joystickenabled)
-   VWB_DrawPic(x,y,C_SELECTEDPIC);
+   VWB_DrawPic(x,y,Psel);
  else
-   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+   VWB_DrawPic(x,y,Punsel);
 
  y=CTL_Y+29;
  if (joystickport)
-   VWB_DrawPic(x,y,C_SELECTEDPIC);
+   VWB_DrawPic(x,y,Psel);
  else
-   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+   VWB_DrawPic(x,y,Punsel);
 
  y=CTL_Y+42;
  if (joypadenabled)
-   VWB_DrawPic(x,y,C_SELECTEDPIC);
+   VWB_DrawPic(x,y,Psel);
  else
-   VWB_DrawPic(x,y,C_NOTSELECTEDPIC);
+   VWB_DrawPic(x,y,Punsel);
 
  //
  // PICK FIRST AVAILABLE SPOT
@@ -1787,8 +1526,7 @@ void CustomControls(void)
 	 DrawCustMouse(1);
 	 break;
    case 3:
-	 DefineJoyBtns();
-	 DrawCustJoy(0);
+	 // joystick
 	 break;
    case 6:
 	 DefineKeyBtns();
@@ -1814,17 +1552,6 @@ void DefineMouseBtns(void)
 {
  CustomCtrls mouseallowed={0,1,1,1};
  EnterCtrlData(2,&mouseallowed,DrawCustMouse,PrintCustMouse,MOUSE);
-}
-
-
-////////////////////////
-//
-// DEFINE THE JOYSTICK BUTTONS
-//
-void DefineJoyBtns(void)
-{
- CustomCtrls joyallowed={1,1,1,1};
- EnterCtrlData(5,&joyallowed,DrawCustJoy,PrintCustJoy,JOYSTICK);
 }
 
 
@@ -1936,7 +1663,7 @@ void EnterCtrlData(s16int index,CustomCtrls *cust,void (*DrawRtn)(s16int),void (
 	  case 1:
 	PrintX=x;
 	US_Print("?");
-	SD_PlaySound(HITWALLSND);
+	SD_PlaySound(Shitwall);
 	 }
 	 tick^=1;
 	 TimeCount=0;
@@ -1972,7 +1699,7 @@ void EnterCtrlData(s16int index,CustomCtrls *cust,void (*DrawRtn)(s16int),void (
 
 	buttonmouse[result-1]=order[which];
 	picked=1;
-	SD_PlaySound(SHOOTDOORSND);
+	SD_PlaySound(Shitdoor);
 	   }
 	   break;
 
@@ -1999,7 +1726,7 @@ void EnterCtrlData(s16int index,CustomCtrls *cust,void (*DrawRtn)(s16int),void (
 
 	buttonjoy[result-1]=order[which];
 	picked=1;
-	SD_PlaySound(SHOOTDOORSND);
+	SD_PlaySound(Shitdoor);
 	   }
 	   break;
 
@@ -2057,7 +1784,7 @@ void EnterCtrlData(s16int index,CustomCtrls *cust,void (*DrawRtn)(s16int),void (
 	which=3;
 	 } while(!cust->allowed[which]);
 	 redraw=1;
-	 SD_PlaySound(MOVEGUN1SND);
+	 SD_PlaySound(Sdrawgun1);
 	 while(ReadAnyControl(&ci),ci.dir!=dir_None);
 	 IN_ClearKeysDown();
 	 break;
@@ -2070,7 +1797,7 @@ void EnterCtrlData(s16int index,CustomCtrls *cust,void (*DrawRtn)(s16int),void (
 	which=0;
 	 } while(!cust->allowed[which]);
 	 redraw=1;
-	 SD_PlaySound(MOVEGUN1SND);
+	 SD_PlaySound(Sdrawgun1);
 	 while(ReadAnyControl(&ci),ci.dir!=dir_None);
 	 IN_ClearKeysDown();
 	 break;
@@ -2080,7 +1807,7 @@ void EnterCtrlData(s16int index,CustomCtrls *cust,void (*DrawRtn)(s16int),void (
   }
  } while(!exit);
 
- SD_PlaySound(ESCPRESSEDSND);
+ SD_PlaySound(Sesc);
  WaitKeyUp();
  DrawWindow(5,PrintY-1,310,13,BKGDCOLOR);
 }
@@ -2109,7 +1836,7 @@ void FixupCustom(s16int w)
 	switch(w)
 	{
 		case 0: DrawCustMouse(1); break;
-		case 3: DrawCustJoy(1); break;
+		case 3: /* joystick */ break;
 		case 6: DrawCustKeybd(1); break;
 		case 8: DrawCustKeys(1);
 	}
@@ -2132,7 +1859,7 @@ void FixupCustom(s16int w)
 			switch(lastwhich)
 			{
 				case 0: DrawCustMouse(0); break;
-				case 3: DrawCustJoy(0); break;
+				case 3: /* joystick */ break;
 				case 6: DrawCustKeybd(0); break;
 				case 8: DrawCustKeys(0);
 			}
@@ -2153,9 +1880,9 @@ void DrawCustomScreen(void)
 	ClearMScreen();
 	WindowX=0;
 	WindowW=320;
-	VWB_DrawPic(112,184,C_MOUSELBACKPIC);
+	VWB_DrawPic(112,184,Pmouselback);
 	DrawStripes(10);
-	VWB_DrawPic(80,0,C_CUSTOMIZEPIC);
+	VWB_DrawPic(80,0,Pcustom);
 
 	//
 	// MOUSE
@@ -2169,7 +1896,7 @@ void DrawCustomScreen(void)
 	US_CPrint("Mouse\n");
 #else
 	PrintY = CST_Y+13;
-	VWB_DrawPic (128,48,C_MOUSEPIC);
+	VWB_DrawPic (128,48,Pmouse);
 #endif
 
 	SETFONTCOLOR(TEXTCOLOR,BKGDCOLOR);
@@ -2195,11 +1922,11 @@ void DrawCustomScreen(void)
 	US_CPrint("Joystick/Gravis GamePad\n");
 #else
 	PrintY += 13;
-	VWB_DrawPic (40,88,C_JOYSTICKPIC);
+	VWB_DrawPic (40,88,Pjs);
 #endif
 
 #ifdef SPEAR
-	VWB_DrawPic (112,120,C_KEYBOARDPIC);
+	VWB_DrawPic (112,120,Pkb);
 #endif
 
 	SETFONTCOLOR(TEXTCOLOR,BKGDCOLOR);
@@ -2212,7 +1939,7 @@ void DrawCustomScreen(void)
 	PrintX=CST_START+CST_SPC*3;
 	US_Print(STR_CSTRAFE"\n");
 	DrawWindow(5,PrintY-1,310,13,BKGDCOLOR);
-	DrawCustJoy(0);
+	//DrawCustJoy(0);
 	US_Print("\n");
 
 
@@ -2306,43 +2033,6 @@ void DrawCustMouse(s16int hilight)
 		PrintCustMouse(i);
 }
 
-void PrintCustJoy(s16int i)
-{
-	s16int j;
-
-	for (j=0;j<4;j++)
-		if (order[i]==buttonjoy[j])
-		{
-			PrintX=CST_START+CST_SPC*i;
-			US_Print(mbarray[j]);
-			break;
-		}
-}
-
-void DrawCustJoy(s16int hilight)
-{
-	s16int i,color;
-
-
-	color=TEXTCOLOR;
-	if (hilight)
-		color=HIGHLIGHT;
-	SETFONTCOLOR(color,BKGDCOLOR);
-
-	if (!joystickenabled)
-	{
-		SETFONTCOLOR(DEACTIVE,BKGDCOLOR);
-		CusMenu[3].active=0;
-	}
-	else
-		CusMenu[3].active=1;
-
-	PrintY=CST_Y+13*5;
-	for (i=0;i<4;i++)
-		PrintCustJoy(i);
-}
-
-
 void PrintCustKeybd(s16int i)
 {
 	PrintX=CST_START+CST_SPC*i;
@@ -2416,7 +2106,7 @@ void CP_ChangeView(void)
 				newview=4;
 			ShowViewSize(newview);
 			VW_UpdateScreen();
-			SD_PlaySound(HITWALLSND);
+			SD_PlaySound(Shitwall);
 			TicDelay(10);
 			break;
 
@@ -2427,17 +2117,10 @@ void CP_ChangeView(void)
 				newview=19;
 			ShowViewSize(newview);
 			VW_UpdateScreen();
-			SD_PlaySound(HITWALLSND);
+			SD_PlaySound(Shitwall);
 			TicDelay(10);
 			break;
 		}
-
-		#ifndef SPEAR
-		if (Keyboard[sc_Tab] && Keyboard[sc_P] && MS_CheckParm("goobers"))
-		#else
-		if (Keyboard[sc_Tab] && Keyboard[sc_P] && MS_CheckParm("debugmode"))
-		#endif
-			PicturePause();
 
 		if (ci.button0 || Keyboard[sc_Enter])
 			exit=1;
@@ -2445,7 +2128,7 @@ void CP_ChangeView(void)
 		if (ci.button1 || Keyboard[sc_Escape])
 		{
 			viewwidth=oldview*16;
-			SD_PlaySound(ESCPRESSEDSND);
+			SD_PlaySound(Sesc);
 			MenuFadeOut();
 			return;
 		}
@@ -2455,7 +2138,7 @@ void CP_ChangeView(void)
 
 	if (oldview!=newview)
 	{
-		SD_PlaySound (SHOOTSND);
+		SD_PlaySound (Sshoot);
 		Message(STR_THINK"...");
 		NewViewSize(newview);
 	}
@@ -2580,9 +2263,6 @@ void IntroScreen(void)
 	if (MousePresent)
 		VWB_Bar(164,82,12,2,FILLCOLOR);
 
-	if (JoysPresent[0] || JoysPresent[1])
-		VWB_Bar(164,105,12,2,FILLCOLOR);
-
 	if (AdLibPresent && !SoundBlasterPresent)
 		VWB_Bar(164,128,12,2,FILLCOLOR);
 
@@ -2612,34 +2292,9 @@ void ClearMScreen(void)
 #ifndef SPEAR
 	VWB_Bar(0,0,320,200,BORDCOLOR);
 #else
-	VWB_DrawPic(0,0,C_BACKDROPPIC);
+	VWB_DrawPic(0,0,Pbackdrop);
 #endif
 }
-
-
-////////////////////////////////////////////////////////////////////
-//
-// Un/Cache a LUMP of graphics
-//
-////////////////////////////////////////////////////////////////////
-void CacheLump(s16int lumpstart,s16int lumpend)
-{
- s16int i;
-
- for (i=lumpstart;i<=lumpend;i++)
-   CA_CacheGrChunk(i);
-}
-
-
-void UnCacheLump(s16int lumpstart,s16int lumpend)
-{
- s16int i;
-
- for (i=lumpstart;i<=lumpend;i++)
-	if (grsegs[i])
-		UNCACHEGRCHUNK(i);
-}
-
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -2677,12 +2332,6 @@ void SetupControlPanel(void)
 	//
 	// CACHE GRAPHICS & SOUNDS
 	//
-	CA_CacheGrChunk(STARTFONT+1);
-#ifndef SPEAR
-	CacheLump(CONTROLS_LUMP_START,CONTROLS_LUMP_END);
-#else
-	CacheLump(BACKDROP_LUMP_START,BACKDROP_LUMP_END);
-#endif
 
 	SETFONTCOLOR(TEXTCOLOR,BKGDCOLOR);
 	fontnumber=1;
@@ -2729,12 +2378,6 @@ void SetupControlPanel(void)
 ////////////////////////////////////////////////////////////////////
 void CleanupControlPanel(void)
 {
-#ifndef SPEAR
-	UnCacheLump(CONTROLS_LUMP_START,CONTROLS_LUMP_END);
-#else
-	UnCacheLump (BACKDROP_LUMP_START,BACKDROP_LUMP_END);
-#endif
-
 	fontnumber = 0;
 }
 
@@ -2757,7 +2400,7 @@ s16int HandleMenu(CP_iteminfo *item_i,CP_itemtype far *items,void (*routine)(s16
 	basey=item_i->y-2;
 	y=basey+which*13;
 
-	VWB_DrawPic(x,y,C_CURSOR1PIC);
+	VWB_DrawPic(x,y,Pcur1);
 	SetTextColor(items+which,1);
 	if (redrawitem)
 	{
@@ -2772,7 +2415,7 @@ s16int HandleMenu(CP_iteminfo *item_i,CP_itemtype far *items,void (*routine)(s16
 		routine(which);
 	VW_UpdateScreen();
 
-	shape=C_CURSOR1PIC;
+	shape=Pcur1;
 	timer=8;
 	exit=0;
 	TimeCount=0;
@@ -2787,14 +2430,14 @@ s16int HandleMenu(CP_iteminfo *item_i,CP_itemtype far *items,void (*routine)(s16
 		if (TimeCount>timer)
 		{
 			TimeCount=0;
-			if (shape==C_CURSOR1PIC)
+			if (shape==Pcur1)
 			{
-				shape=C_CURSOR2PIC;
+				shape=Pcur2;
 				timer=8;
 			}
 			else
 			{
-				shape=C_CURSOR1PIC;
+				shape=Pcur1;
 				timer=70;
 			}
 			VWB_DrawPic(x,y,shape);
@@ -2812,17 +2455,6 @@ s16int HandleMenu(CP_iteminfo *item_i,CP_itemtype far *items,void (*routine)(s16
 		if (key)
 		{
 			s16int ok=0;
-
-			//
-			// CHECK FOR SCREEN CAPTURE
-			//
-			#ifndef SPEAR
-			if (Keyboard[sc_Tab] && Keyboard[sc_P] && MS_CheckParm("goobers"))
-			#else
-			if (Keyboard[sc_Tab] && Keyboard[sc_P] && MS_CheckParm("debugmode"))
-			#endif
-				PicturePause();
-
 
 			if (key>='a')
 				key-='a'-'A';
@@ -2979,7 +2611,7 @@ s16int HandleMenu(CP_iteminfo *item_i,CP_itemtype far *items,void (*routine)(s16
 			return which;
 
 		case 2:
-			SD_PlaySound(ESCPRESSEDSND);
+			SD_PlaySound(Sesc);
 			return -1;
 	}
 
@@ -3007,9 +2639,9 @@ void EraseGun(CP_iteminfo *item_i,CP_itemtype far *items,s16int x,s16int y,s16in
 //
 void DrawHalfStep(s16int x,s16int y)
 {
-	VWB_DrawPic(x,y,C_CURSOR1PIC);
+	VWB_DrawPic(x,y,Pcur1);
 	VW_UpdateScreen();
-	SD_PlaySound(MOVEGUN1SND);
+	SD_PlaySound(Sdrawgun1);
 	TimeCount=0;
 	while(TimeCount<8);
 }
@@ -3022,7 +2654,7 @@ void DrawGun(CP_iteminfo *item_i,CP_itemtype far *items,s16int x,s16int *y,s16in
 {
 	VWB_Bar(x-1,*y,25,16,BKGDCOLOR);
 	*y=basey+which*13;
-	VWB_DrawPic(x,*y,C_CURSOR1PIC);
+	VWB_DrawPic(x,*y,Pcur1);
 	SetTextColor(items+which,1);
 
 	PrintX=item_i->x+item_i->indent;
@@ -3035,7 +2667,7 @@ void DrawGun(CP_iteminfo *item_i,CP_itemtype far *items,s16int x,s16int *y,s16in
 	if (routine)
 		routine(which);
 	VW_UpdateScreen();
-	SD_PlaySound(MOVEGUN2SND);
+	SD_PlaySound(Sdrawgun2);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -3189,39 +2821,6 @@ void ReadAnyControl(ControlInfo *ci)
 			mouseactive=1;
 		}
 	}
-
-	if (joystickenabled && !mouseactive)
-	{
-		s16int jx,jy,jb;
-
-
-		INL_GetJoyDelta(joystickport,&jx,&jy);
-		if (jy<-SENSITIVE)
-			ci->dir=dir_North;
-		else
-		if (jy>SENSITIVE)
-			ci->dir=dir_South;
-
-		if (jx<-SENSITIVE)
-			ci->dir=dir_West;
-		else
-		if (jx>SENSITIVE)
-			ci->dir=dir_East;
-
-		jb=IN_JoyButtons();
-		if (jb)
-		{
-			ci->button0=jb&1;
-			ci->button1=jb&2;
-			if (joypadenabled)
-			{
-				ci->button2=jb&4;
-				ci->button3=jb&8;
-			}
-			else
-				ci->button2=ci->button3=false;
-		}
-	}
 }
 
 
@@ -3232,7 +2831,7 @@ void ReadAnyControl(ControlInfo *ci)
 ////////////////////////////////////////////////////////////////////
 s16int Confirm(char far *string)
 {
-	s16int xit=0,i,x,y,tick=0,time,whichsnd[2]={ESCPRESSEDSND,SHOOTSND};
+	s16int xit=0,i,x,y,tick=0,time,whichsnd[2]={Sesc,Sshoot};
 
 
 	Message(string);
@@ -3263,11 +2862,6 @@ s16int Confirm(char far *string)
 			tick^=1;
 			TimeCount=0;
 		}
-
-		#ifndef SPEAR
-		if (Keyboard[sc_Tab] && Keyboard[sc_P] && MS_CheckParm("goobers"))
-			PicturePause();
-		#endif
 	} while(!Keyboard[sc_Y] && !Keyboard[sc_N] && !Keyboard[sc_Escape]);
 
 	if (Keyboard[sc_Y])
@@ -3322,43 +2916,11 @@ void Message(char far *string)
 	VW_UpdateScreen();
 }
 
-
-////////////////////////////////////////////////////////////////////
-//
-// THIS MAY BE FIXED A LITTLE LATER...
-//
-////////////////////////////////////////////////////////////////////
-static	s16int	lastmusic;
-
 void StartCPMusic(s16int song)
 {
-	musicnames	chunk;
-
-	if (audiosegs[STARTMUSIC + lastmusic])	// JDC
-		MM_FreePtr ((uchar **)&audiosegs[STARTMUSIC + lastmusic]);
-	lastmusic = song;
-
 	SD_MusicOff();
-	chunk =	song;
-
-	MM_BombOnError (false);
-	CA_CacheAudioChunk(STARTMUSIC + chunk);
-	MM_BombOnError (true);
-	if (mmerror)
-		mmerror = false;
-	else
-	{
-		MM_SetLock(&((uchar *)audiosegs[STARTMUSIC + chunk]),true);
-		SD_StartMusic((MusicGroup far *)audiosegs[STARTMUSIC + chunk]);
-	}
+	SD_StartMusic((MusicGroup far *)audiosegs[STARTMUSIC + song]);
 }
-
-void FreeMusic (void)
-{
-	if (audiosegs[STARTMUSIC + lastmusic])	// JDC
-		MM_FreePtr ((uchar **)&audiosegs[STARTMUSIC + lastmusic]);
-}
-
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -3415,7 +2977,7 @@ void DrawMenuGun(CP_iteminfo *iteminfo)
 
 	x=iteminfo->x;
 	y=iteminfo->y+iteminfo->curpos*13-2;
-	VWB_DrawPic(x,y,C_CURSOR1PIC);
+	VWB_DrawPic(x,y,Pcur1);
 }
 
 
@@ -3437,81 +2999,5 @@ void DrawStripes(s16int y)
 
 void ShootSnd(void)
 {
-	SD_PlaySound(SHOOTSND);
-}
-
-
-///////////////////////////////////////////////////////////////////////////
-//
-// CHECK FOR EPISODES
-//
-///////////////////////////////////////////////////////////////////////////
-void CheckForEpisodes(void)
-{
-	struct ffblk f;
-//
-// ENGLISH
-//
-#ifndef UPLOAD
-#ifndef SPEAR
-	if (!findfirst("*.WL6",&f,FA_ARCH))
-	{
-		strcpy(extension,"WL6");
-		NewEmenu[2].active =
-		NewEmenu[4].active =
-		NewEmenu[6].active =
-		NewEmenu[8].active =
-		NewEmenu[10].active =
-		EpisodeSelect[1] =
-		EpisodeSelect[2] =
-		EpisodeSelect[3] =
-		EpisodeSelect[4] =
-		EpisodeSelect[5] = 1;
-	}
-	else
-	if (!findfirst("*.WL3",&f,FA_ARCH))
-	{
-		strcpy(extension,"WL3");
-		NewEmenu[2].active =
-		NewEmenu[4].active =
-		EpisodeSelect[1] =
-		EpisodeSelect[2] = 1;
-	}
-	else
-#endif
-#endif
-
-
-
-#ifdef SPEAR
-#ifndef SPEARDEMO
-	if (!findfirst("*.SOD",&f,FA_ARCH))
-	{
-		strcpy(extension,"SOD");
-	}
-	else
-		Quit("NO SPEAR OF DESTINY DATA FILES TO BE FOUND!");
-#else
-	if (!findfirst("*.SDM",&f,FA_ARCH))
-	{
-		strcpy(extension,"SDM");
-	}
-	else
-		Quit("NO SPEAR OF DESTINY DEMO DATA FILES TO BE FOUND!");
-#endif
-
-#else
-	if (!findfirst("*.WL1",&f,FA_ARCH))
-	{
-		strcpy(extension,"WL1");
-	}
-	else
-		Quit("NO WOLFENSTEIN 3-D DATA FILES to be found!");
-#endif
-
-	strcat(configname,extension);
-	strcat(SaveName,extension);
-	strcat(PageFileName,extension);
-	strcat(audioname,extension);
-	strcat(demoname,extension);
+	SD_PlaySound(Sshoot);
 }

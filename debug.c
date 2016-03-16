@@ -56,7 +56,6 @@ void DebugMemory (void)
 	s16int	i;
 	char    scratch[80],str[10];
 	s32int	mem;
-	spritetype _seg	*block;
 
 	CenterWindow (16,7);
 
@@ -124,96 +123,6 @@ void CountObjects (void)
 	IN_Ack ();
 }
 
-//===========================================================================
-
-/*
-================
-=
-= PicturePause
-=
-================
-*/
-
-void PicturePause (void)
-{
-	s16int			i;
-	u8int		p;
-	u16int	x;
-	u8int		far	*dest,far *src;
-	uchar *buffer;
-
-	VW_ColorBorder (15);
-	FinishPaletteShifts ();
-
-	LastScan = 0;
-	while (!LastScan)
-	;
-	if (LastScan != sc_Enter)
-	{
-		VW_ColorBorder (0);
-		return;
-	}
-
-	VW_ColorBorder (1);
-	VW_SetScreen (0,0);
-//
-// vga stuff...
-//
-
-	ClearMemory ();
-	CA_SetAllPurge();
-	MM_GetPtr (&buffer,64000);
-	for (p=0;p<4;p++)
-	{
-	   src = MK_FP(0xa000,displayofs);
-	   dest = (u8int far *)buffer+p;
-	   VGAREADMAP(p);
-	   for (x=0;x<16000;x++,dest+=4)
-		   *dest = *src++;
-	}
-
-
-#if 0
-	for (p=0;p<4;p++)
-	{
-		src = MK_FP(0xa000,0);
-		dest = (u8int far *)buffer+51200+p;
-		VGAREADMAP(p);
-		for (x=0;x<3200;x++,dest+=4)
-			*dest = *src++;
-	}
-#endif
-
-	asm	mov	ax,0x13
-	asm	int	0x10
-
-	dest = MK_FP(0xa000,0);
-	_fmemcpy (dest,buffer,64000);
-
-	VL_SetPalette (&gamepal);
-
-
-	IN_Shutdown ();
-
-	VW_WaitVBL(70);
-	bioskey(0);
-	VW_WaitVBL(70);
-	Quit (NULL);
-}
-
-
-//===========================================================================
-
-
-/*
-================
-=
-= ShapeTest
-=
-================
-*/
-
-#pragma warn -pia
 void ShapeTest (void)
 {
 extern	u16int	NumDigi;
@@ -520,11 +429,6 @@ s16int DebugKeys (void)
 		return 1;
 	}
 #endif
-	else if (Keyboard[sc_P])			// P = pause with no screen disruptioon
-	{
-		PicturePause ();
-		return 1;
-	}
 	else if (Keyboard[sc_Q])			// Q = fast quit
 		Quit (NULL);
 	else if (Keyboard[sc_S])			// S = slow motion

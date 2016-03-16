@@ -1,17 +1,3 @@
-// ID_VL.C
-
-#include <dos.h>
-#include <alloc.h>
-#include <mem.h>
-#include <string.h>
-#include "ID_HEADS.H"
-#include "ID_VL.H"
-#pragma hdrstop
-
-//
-// SC_INDEX is expected to stay at SC_MAPMASK for proper operation
-//
-
 u16int	bufferofs;
 u16int	displayofs,pelpan;
 
@@ -30,79 +16,7 @@ u8int		far	palette1[256][3],far palette2[256][3];
 //===========================================================================
 
 // asm
-
-s16int	 VL_VideoID (void);
 void VL_SetCRTC (s16int crtc);
-void VL_SetScreen (s16int crtc, s16int pelpan);
-void VL_WaitVBL (s16int vbls);
-
-//===========================================================================
-
-
-/*
-=======================
-=
-= VL_Startup
-=
-=======================
-*/
-
-#if 0
-void	VL_Startup (void)
-{
-	if ( !MS_CheckParm ("HIDDENCARD") && VL_VideoID () != 5)
-		MS_Quit ("You need a VGA graphics card to run this!");
-
-	asm	cld;				// all string instructions assume forward
-}
-
-#endif
-
-/*
-=======================
-=
-= VL_Startup	// WOLFENSTEIN HACK
-=
-=======================
-*/
-
-static	char *ParmStrings[] = {"HIDDENCARD",""};
-
-void	VL_Startup (void)
-{
-	s16int i,videocard;
-
-	asm	cld;
-
-	videocard = VL_VideoID ();
-	for (i = 1;i < _argc;i++)
-		if (US_CheckParm(_argv[i],ParmStrings) == 0)
-		{
-			videocard = 5;
-			break;
-		}
-
-	if (videocard != 5)
-Quit ("Improper video card!  If you really have a VGA card that I am not \n"
-	  "detecting, use the -HIDDENCARD command line parameter!");
-
-}
-
-
-
-/*
-=======================
-=
-= VL_Shutdown
-=
-=======================
-*/
-
-void	VL_Shutdown (void)
-{
-	VL_SetTextMode ();
-}
-
 
 /*
 =======================
@@ -119,21 +33,6 @@ asm	int	0x10
 	VL_DePlaneVGA ();
 	VGAMAPMASK(15);
 	VL_SetLineWidth (40);
-}
-
-
-/*
-=======================
-=
-= VL_SetTextMode
-=
-=======================
-*/
-
-void	VL_SetTextMode (void)
-{
-asm	mov	ax,3
-asm	int	0x10
 }
 
 //===========================================================================

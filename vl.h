@@ -1,14 +1,3 @@
-// ID_VL.H
-
-// wolf compatability
-
-#define MS_Quit	Quit
-
-void Quit (char *error);
-
-//===========================================================================
-
-
 #define SC_INDEX			0x3C4
 #define SC_RESET			0
 #define SC_CLOCK			1
@@ -76,7 +65,6 @@ void Quit (char *error);
 #define SCREENWIDTH		80			// default screen width in bytes
 #define MAXSCANLINES	200			// size of ylookup table
 
-#define CHARWIDTH		2
 #define TILEWIDTH		4
 
 //===========================================================================
@@ -113,12 +101,7 @@ sti;}
 #define VGAMAPMASK(x) asm{cli;mov dx,SC_INDEX;mov al,SC_MAPMASK;mov ah,x;out dx,ax;sti;}
 #define VGAREADMAP(x) asm{cli;mov dx,GC_INDEX;mov al,GC_READMAP;mov ah,x;out dx,ax;sti;}
 
-
-void VL_Startup (void);
-void VL_Shutdown (void);
-
 void VL_SetVGAPlane (void);
-void VL_SetTextMode (void);
 void VL_DePlaneVGA (void);
 void VL_SetVGAPlaneMode (void);
 void VL_ClearVideo (u8int color);

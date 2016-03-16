@@ -110,92 +110,92 @@ s16int songs[]=
  //
  // Episode One
  //
- GETTHEM_MUS,
- SEARCHN_MUS,
- POW_MUS,
- SUSPENSE_MUS,
- GETTHEM_MUS,
- SEARCHN_MUS,
- POW_MUS,
- SUSPENSE_MUS,
+ 3,
+ 11,
+ 9,
+ 12,
+ 3,
+ 11,
+ 9,
+ 12,
 
- WARMARCH_MUS,	// Boss level
- CORNER_MUS,	// Secret level
+ 2,	// Boss level
+ 0,	// Secret level
 
  //
  // Episode Two
  //
- NAZI_OMI_MUS,
- PREGNANT_MUS,
- GOINGAFT_MUS,
- HEADACHE_MUS,
- NAZI_OMI_MUS,
- PREGNANT_MUS,
- HEADACHE_MUS,
- GOINGAFT_MUS,
+ 8,
+ 18,
+ 17,
+ 4,
+ 8,
+ 18,
+ 4,
+ 17,
 
- WARMARCH_MUS,	// Boss level
- DUNGEON_MUS,	// Secret level
+ 2,	// Boss level
+ 1,	// Secret level
 
  //
  // Episode Three
  //
- INTROCW3_MUS,
- NAZI_RAP_MUS,
- TWELFTH_MUS,
- ZEROHOUR_MUS,
- INTROCW3_MUS,
- NAZI_RAP_MUS,
- TWELFTH_MUS,
- ZEROHOUR_MUS,
+ 6,
+ 20,
+ 22,
+ 21,
+ 6,
+ 20,
+ 22,
+ 21,
 
- ULTIMATE_MUS,	// Boss level
- PACMAN_MUS,	// Secret level
+ 19,	// Boss level
+ 26,	// Secret level
 
  //
  // Episode Four
  //
- GETTHEM_MUS,
- SEARCHN_MUS,
- POW_MUS,
- SUSPENSE_MUS,
- GETTHEM_MUS,
- SEARCHN_MUS,
- POW_MUS,
- SUSPENSE_MUS,
+ 3,
+ 11,
+ 9,
+ 12,
+ 3,
+ 11,
+ 9,
+ 12,
 
- WARMARCH_MUS,	// Boss level
- CORNER_MUS,	// Secret level
+ 2,	// Boss level
+ 0,	// Secret level
 
  //
  // Episode Five
  //
- NAZI_OMI_MUS,
- PREGNANT_MUS,
- GOINGAFT_MUS,
- HEADACHE_MUS,
- NAZI_OMI_MUS,
- PREGNANT_MUS,
- HEADACHE_MUS,
- GOINGAFT_MUS,
+ 8,
+ 18,
+ 17,
+ 4,
+ 8,
+ 18,
+ 4,
+ 17,
 
- WARMARCH_MUS,	// Boss level
- DUNGEON_MUS,	// Secret level
+ 2,	// Boss level
+ 1,	// Secret level
 
  //
  // Episode Six
  //
- INTROCW3_MUS,
- NAZI_RAP_MUS,
- TWELFTH_MUS,
- ZEROHOUR_MUS,
- INTROCW3_MUS,
- NAZI_RAP_MUS,
- TWELFTH_MUS,
- ZEROHOUR_MUS,
+ 6,
+ 20,
+ 22,
+ 21,
+ 6,
+ 20,
+ 22,
+ 21,
 
- ULTIMATE_MUS,	// Boss level
- FUNKYOU_MUS		// Secret level
+ 19,	// Boss level
+ 15		// Secret level
 #else
 
  //////////////////////////////////////////////////////////////
@@ -203,32 +203,32 @@ s16int songs[]=
  // SPEAR OF DESTINY TRACKS
  //
  //////////////////////////////////////////////////////////////
- XTIPTOE_MUS,
- XFUNKIE_MUS,
- XDEATH_MUS,
- XGETYOU_MUS,		// DON'T KNOW
- ULTIMATE_MUS,	// Trans Gr�sse
+ 4,
+ 0,
+ 2,
+ 22,		// DON'T KNOW
+ 15,	// Trans Gr�sse
 
- DUNGEON_MUS,
- GOINGAFT_MUS,
- POW_MUS,
- TWELFTH_MUS,
- ULTIMATE_MUS,	// Barnacle Wilhelm BOSS
+ 1,
+ HITLWLTZ_MUS,
+ 9,
+ 10,
+ 15,	// Barnacle Wilhelm BOSS
 
- NAZI_OMI_MUS,
- GETTHEM_MUS,
- SUSPENSE_MUS,
- SEARCHN_MUS,
- ZEROHOUR_MUS,
- ULTIMATE_MUS,	// Super Mutant BOSS
+ 8,
+ 3,
+ 12,
+ 11,
+ 13,
+ 15,	// Super Mutant BOSS
 
- XPUTIT_MUS,
- ULTIMATE_MUS,	// Death Knight BOSS
+ 21,
+ 15,	// Death Knight BOSS
 
- XJAZNAZI_MUS,	// Secret level
- XFUNKIE_MUS,	// Secret level (DON'T KNOW)
+ 18,	// Secret level
+ 0,	// Secret level (DON'T KNOW)
 
- XEVIL_MUS		// Angel of Death BOSS
+ 17		// Angel of Death BOSS
 
 #endif
 };
@@ -290,46 +290,6 @@ void PollMouseButtons (void)
 		buttonstate[buttonmouse[2]] = true;
 }
 
-
-
-/*
-===================
-=
-= PollJoystickButtons
-=
-===================
-*/
-
-void PollJoystickButtons (void)
-{
-	s16int	buttons;
-
-	buttons = IN_JoyButtons ();
-
-	if (joystickport && !joypadenabled)
-	{
-		if (buttons&4)
-			buttonstate[buttonjoy[0]] = true;
-		if (buttons&8)
-			buttonstate[buttonjoy[1]] = true;
-	}
-	else
-	{
-		if (buttons&1)
-			buttonstate[buttonjoy[0]] = true;
-		if (buttons&2)
-			buttonstate[buttonjoy[1]] = true;
-		if (joypadenabled)
-		{
-			if (buttons&4)
-				buttonstate[buttonjoy[2]] = true;
-			if (buttons&8)
-				buttonstate[buttonjoy[3]] = true;
-		}
-	}
-}
-
-
 /*
 ===================
 =
@@ -384,58 +344,6 @@ void PollMouseMove (void)
 	controlx += mousexmove*10/(13-mouseadjustment);
 	controly += mouseymove*20/(13-mouseadjustment);
 }
-
-
-
-/*
-===================
-=
-= PollJoystickMove
-=
-===================
-*/
-
-void PollJoystickMove (void)
-{
-	s16int	joyx,joyy;
-
-	INL_GetJoyDelta(joystickport,&joyx,&joyy);
-
-	if (joystickprogressive)
-	{
-		if (joyx > 64)
-			controlx += (joyx-64)*JOYSCALE*tics;
-		else if (joyx < -64)
-			controlx -= (-joyx-64)*JOYSCALE*tics;
-		if (joyy > 64)
-			controlx += (joyy-64)*JOYSCALE*tics;
-		else if (joyy < -64)
-			controly -= (-joyy-64)*JOYSCALE*tics;
-	}
-	else if (buttonstate[bt_run])
-	{
-		if (joyx > 64)
-			controlx += RUNMOVE*tics;
-		else if (joyx < -64)
-			controlx -= RUNMOVE*tics;
-		if (joyy > 64)
-			controly += RUNMOVE*tics;
-		else if (joyy < -64)
-			controly -= RUNMOVE*tics;
-	}
-	else
-	{
-		if (joyx > 64)
-			controlx += BASEMOVE*tics;
-		else if (joyx < -64)
-			controlx -= BASEMOVE*tics;
-		if (joyy > 64)
-			controly += BASEMOVE*tics;
-		else if (joyy < -64)
-			controly -= BASEMOVE*tics;
-	}
-}
-
 
 /*
 ===================
@@ -520,9 +428,6 @@ void PollControls (void)
 	if (mouseenabled)
 		PollMouseButtons ();
 
-	if (joystickenabled)
-		PollJoystickButtons ();
-
 //
 // get movements
 //
@@ -530,9 +435,6 @@ void PollControls (void)
 
 	if (mouseenabled)
 		PollMouseMove ();
-
-	if (joystickenabled)
-		PollJoystickMove ();
 
 //
 // bound movement to a maximum
@@ -636,12 +538,12 @@ void CheckKeys (void)
 		if (godmode)
 		{
 			Message ("God mode OFF");
-			SD_PlaySound (NOBONUSSND);
+			SD_PlaySound (Snobonus);
 		}
 		else
 		{
 			Message ("God mode ON");
-			SD_PlaySound (ENDBONUS2SND);
+			SD_PlaySound (Sendb2);
 		}
 
 		IN_Ack();
@@ -674,7 +576,6 @@ void CheckKeys (void)
 		DrawScore();
 
 		ClearMemory ();
-		CA_CacheGrChunk (STARTFONT+1);
 		ClearSplitVWB ();
 		VW_ScreenToScreen (displayofs,bufferofs,80,160);
 
@@ -683,8 +584,6 @@ void CheckKeys (void)
 				STR_CHEATER3"\n"
 				STR_CHEATER4"\n"
 				STR_CHEATER5);
-
-		UNCACHEGRCHUNK(STARTFONT+1);
 		PM_CheckMainMem ();
 		IN_ClearKeysDown();
 		IN_Ack();
@@ -695,25 +594,16 @@ void CheckKeys (void)
 	//
 	// OPEN UP DEBUG KEYS
 	//
-#ifndef SPEAR
 	if (Keyboard[sc_BackSpace] &&
 		Keyboard[sc_LShift] &&
 		Keyboard[sc_Alt] &&
-		MS_CheckParm("goobers"))
-#else
-	if (Keyboard[sc_BackSpace] &&
-		Keyboard[sc_LShift] &&
-		Keyboard[sc_Alt] &&
-		MS_CheckParm("debugmode"))
-#endif
+		debug)
 	{
 	 ClearMemory ();
-	 CA_CacheGrChunk (STARTFONT+1);
 	 ClearSplitVWB ();
 	 VW_ScreenToScreen (displayofs,bufferofs,80,160);
 
 	 Message("Debugging keys are\nnow available!");
-	 UNCACHEGRCHUNK(STARTFONT+1);
 	 PM_CheckMainMem ();
 	 IN_ClearKeysDown();
 	 IN_Ack();
@@ -730,7 +620,6 @@ void CheckKeys (void)
 		Keyboard[sc_T])
 	{
 	 ClearMemory ();
-	 CA_CacheGrChunk (STARTFONT+1);
 	 ClearSplitVWB ();
 	 VW_ScreenToScreen (displayofs,bufferofs,80,160);
 
@@ -739,7 +628,6 @@ void CheckKeys (void)
 			 "then, you already know\n"
 			 "that - right, Cheatmeister?!");
 
-	 UNCACHEGRCHUNK(STARTFONT+1);
 	 PM_CheckMainMem ();
 	 IN_ClearKeysDown();
 	 IN_Ack();
@@ -753,7 +641,7 @@ void CheckKeys (void)
 	if (Paused)
 	{
 		bufferofs = displayofs;
-		LatchDrawPic (20-4,80-2*8,PAUSEDPIC);
+		LatchDrawPic (20-4,80-2*8,Ppause);
 		SD_MusicOff();
 		IN_Ack();
 		IN_ClearKeysDown ();
@@ -1385,15 +1273,6 @@ void PlayLoop (void)
 
 	do
 	{
-		if (virtualreality)
-		{
-			helmetangle = peek (0x40,0xf0);
-			player->angle += helmetangle;
-			if (player->angle >= ANGLES)
-				player->angle -= ANGLES;
-		}
-
-
 		PollControls();
 
 //
@@ -1419,7 +1298,7 @@ void PlayLoop (void)
 		if (funnyticount > 30l*70)
 		{
 			funnyticount = 0;
-			StatusDrawPic (17,4,BJWAITING1PIC+(US_RndT()&1));
+			StatusDrawPic (17,4,Pwait+(US_RndT()&1));
 			facecount = 0;
 		}
 		#endif
@@ -1453,15 +1332,6 @@ void PlayLoop (void)
 				playstate = ex_abort;
 			}
 		}
-
-
-		if (virtualreality)
-		{
-			player->angle -= helmetangle;
-			if (player->angle < 0)
-				player->angle += ANGLES;
-		}
-
 	}while (!playstate && !startgame);
 
 	if (playstate != ex_died)
