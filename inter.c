@@ -58,8 +58,8 @@ void EndSpear(void)
 	WindowW = 320;
 	PrintX = 0;
 	PrintY = 180;
-	US_CPrint (STR_ENDGAME1"\n");
-	US_CPrint (STR_ENDGAME2);
+	US_CPrint ("We owe you a great debt, Mr. Blazkowicz.\n");
+	US_CPrint ("You have served your country well.");
 	VW_UpdateScreen ();
 	IN_StartAck ();
 	TimeCount = 0;
@@ -68,8 +68,8 @@ void EndSpear(void)
 	PrintX = 0;
 	PrintY = 180;
 	VWB_Bar(0,180,320,20,0);
-	US_CPrint (STR_ENDGAME3"\n");
-	US_CPrint (STR_ENDGAME4);
+	US_CPrint ("With the spear gone, the Allies will finally\n");
+	US_CPrint ("be able to destroy Hitler...");
 	VW_UpdateScreen ();
 	IN_StartAck ();
 	TimeCount = 0;
@@ -142,15 +142,15 @@ void Victory (void)
 	ClearSplitVWB ();
 
 	VWB_Bar (0,0,320,200-STATUSLINES,127);
-	Write(18,2,STR_YOUWIN);
+	Write(18,2,"you win!");
 
-	Write(TIMEX,TIMEY-2,STR_TOTALTIME);
+	Write(TIMEX,TIMEY-2,"total time");
 
 	Write(12,RATIOY-2,"averages");
 
-	Write(RATIOX+8,RATIOY,      STR_RATKILL);
-	Write(RATIOX+4,RATIOY+2,  STR_RATSECRET);
-	Write(RATIOX,  RATIOY+4,STR_RATTREASURE);
+	Write(RATIOX+8,RATIOY,"kill    %");
+	Write(RATIOX+4,RATIOY+2,"secret    %");
+	Write(RATIOX,  RATIOY+4,"treasure    %");
 
 	VWB_DrawPic (8,4,Pwin);
 
@@ -524,13 +524,13 @@ void LevelCompleted (void)
 	{
 	 Write(14,2,"floor\ncompleted");
 
-	 Write(14,7,STR_BONUS"     0");
-	 Write(16,10,STR_TIME);
-	 Write(16,12,STR_PAR);
+	 Write(14,7,"bonus     0");
+	 Write(16,10,"time");
+	 Write(16,12," par");
 
-	 Write(9,14,    STR_RAT2KILL);
-	 Write(5,16,  STR_RAT2SECRET);
-	 Write(1,18,STR_RAT2TREASURE);
+	 Write(9,14,"kill ratio    %");
+	 Write(5,16,"secret ratio    %");
+	 Write(1,18,"treasure ratio    %");
 
 	 Write(26,2,itoa(gamestate.mapon+1,tempstr,10));
 
@@ -776,23 +776,12 @@ void LevelCompleted (void)
 #ifndef SPEARDEMO
 	  switch(mapon)
 	  {
-	   case 4: Write(14,4," trans\n"
-						  " grosse\n"
-						  STR_DEFEATED); break;
-	   case 9: Write(14,4,"barnacle\n"
-						  "wilhelm\n"
-						  STR_DEFEATED); break;
-	   case 15: Write(14,4,"ubermutant\n"
-						   STR_DEFEATED); break;
-	   case 17: Write(14,4," death\n"
-						   " knight\n"
-						   STR_DEFEATED); break;
-	   case 18: Write(13,4,"secret tunnel\n"
-						   "    area\n"
-						   "  completed!"); break;
-	   case 19: Write(13,4,"secret castle\n"
-						   "    area\n"
-						   "  completed!"); break;
+	   case 4: Write(14,4," trans\n grosse\ndefeated!"); break;
+	   case 9: Write(14,4,"barnacle\nwilhelm\ndefeated!"); break;
+	   case 15: Write(14,4,"ubermutant\ndefeated!"); break;
+	   case 17: Write(14,4," death\n knight\ndefeated!"); break;
+	   case 18: Write(13,4,"secret tunnel\n    area\n  completed!"); break;
+	   case 19: Write(13,4,"secret castle\n    area\n  completed!"); break;
 	  }
 #endif
 #else

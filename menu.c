@@ -1,18 +1,10 @@
-////////////////////////////////////////////////////////////////////
-//
-// WL_MENU.C
-// by John Romero (C) 1992 Id Software, Inc.
-//
-////////////////////////////////////////////////////////////////////
-#include "wl_def.h"
-#pragma hdrstop
-
-//
-// PRIVATE PROTOTYPES
-//
 void CP_ReadThis(void);
 
 #define STARTITEM	newgame
+
+#define ENDGAMESTR	"Are you sure you want\nto end the game you\nare playing? (Y or N):"
+#define GAMESVD	"There's already a game\nsaved at this position.\n      Overwrite?"
+#define CURGAME	"You are currently in\na game. Continuing will\nerase old game. Ok?"
 
 char far endStrings[9][80]=
 {
@@ -27,15 +19,16 @@ char far endStrings[9][80]=
 	{"You are at an intersection.\nA sign says, 'Press Y to quit.'\n>"},
 	{"For guns and glory, press N.\nFor work and worry, press Y."}
 #else
-	ENDSTR1,
-	ENDSTR2,
-	ENDSTR3,
-	ENDSTR4,
-	ENDSTR5,
-	ENDSTR6,
-	ENDSTR7,
-	ENDSTR8,
-	ENDSTR9
+	"Heroes don't quit, but\ngo ahead and press Y\nif you aren't one.",
+	"Press Y to quit,\nor press N to enjoy\nmore violent diversion.",
+	"Depressing the Y key means\nyou must return to the\nhumdrum workday world.",
+	"Hey, quit or play,\nY or N:\nit's your choice.",
+	"Sure you don't want to\nwaste a few more\nproductive hours?",
+	"I think you had better\nplay some more. Please\npress N...please?",
+	"If you are tough, press N.\nIf not, press Y daintily.",
+	"I'm thinkin' that\nyou might wanna press N\nto play more. You do it.",
+	"Sure. Fine. Quit.\nSee if we care.\nGet it over with.\nPress Y."
+
 #endif
 };
 
@@ -52,44 +45,44 @@ CP_iteminfo
 CP_itemtype far
 MainMenu[]=
 {
-	{1,STR_NG,CP_NewGame},
-	{1,STR_SD,CP_Sound},
-	{1,STR_CL,CP_Control},
-	{1,STR_LG,CP_LoadGame},
-	{0,STR_SG,CP_SaveGame},
-	{1,STR_CV,CP_ChangeView},
+	{1,"New Game",CP_NewGame},
+	{1,"Sound",CP_Sound},
+	{1,"Control",CP_Control},
+	{1,"Load Game",CP_LoadGame},
+	{0,"Save Game",CP_SaveGame},
+	{1,"Change View",CP_ChangeView},
 #ifndef SPEAR
 	{2,"Read This!",CP_ReadThis},
 #endif
-	{1,STR_VS,CP_ViewScores},
-	{1,STR_BD,0},
-	{1,STR_QT,0}
+	{1,"View Scores",CP_ViewScores},
+	{1,"Back to Demo",0},
+	{1,"Quit",0}
 },
 
 far SndMenu[]=
 {
-	{1,STR_NONE,0},
-	{1,STR_PC,0},
-	{1,STR_ALSB,0},
+	{1,"None",0},
+	{1,"PC Speaker",0},
+	{1,"AdLib/Sound Blaster",0},
 	{0,"",0},
 	{0,"",0},
-	{1,STR_NONE,0},
-	{1,STR_DISNEY,0},
-	{1,STR_SB,0},
+	{1,"None",0},
+	{1,"Disney Sound Source",0},
+	{1,"Sound Blaster",0},
 	{0,"",0},
 	{0,"",0},
-	{1,STR_NONE,0},
-	{1,STR_ALSB,0}
+	{1,"None",0},
+	{1,"AdLib/Sound Blaster",0}
 },
 
 far CtlMenu[]=
 {
-	{0,STR_MOUSEEN,0},
-	{0,STR_JOYEN,0},
-	{0,STR_PORT2,0},
-	{0,STR_GAMEPAD,0},
-	{0,STR_SENS,MouseSensitivity},
-	{1,STR_CUSTOM,CustomControls}
+	{0,"Mouse Enabled",0},
+	{0,"Joystick Enabled",0},
+	{0,"Use joystick port 2",0},
+	{0,"Gravis GamePad Enabled",0},
+	{0,"Mouse Sensitivity",MouseSensitivity},
+	{1,"Customize controls",CustomControls}
 },
 
 #pragma warn +sus
@@ -120,10 +113,10 @@ far NewEmenu[]=
 
 far NewMenu[]=
 {
-	{1,STR_DADDY,0},
-	{1,STR_HURTME,0},
-	{1,STR_BRINGEM,0},
-	{1,STR_DEATH,0}
+	{1,"Can I play, Daddy?",0},
+	{1,"Don't hurt me.",0},
+	{1,"Bring 'em on!",0},
+	{1,"I am Death incarnate!",0}
 },
 
 far LSMenu[]=
@@ -354,7 +347,7 @@ void US_ControlPanel(u8int scancode)
 	{
 		#pragma warn -sus
 		MainMenu[viewscores].routine = NULL;
-		_fstrcpy(MainMenu[viewscores].string,STR_EG);
+		_fstrcpy(MainMenu[viewscores].string,"End Game");
 		#pragma warn +sus
 	}
 }
@@ -379,12 +372,12 @@ void DrawMainMenu(void)
 	//
 	if (ingame)
 	{
-		_fstrcpy(&MainMenu[backtodemo].string[8],STR_GAME);
+		_fstrcpy(&MainMenu[backtodemo].string[8],"Game");
 		MainMenu[backtodemo].active=2;
 	}
 	else
 	{
-		_fstrcpy(&MainMenu[backtodemo].string[8],STR_DEMO);
+		_fstrcpy(&MainMenu[backtodemo].string[8],"Demo");
 		MainMenu[backtodemo].active=1;
 	}
 
@@ -440,7 +433,7 @@ s16int CP_CheckQuick(u16int scancode)
 			{
 				CA_CacheGrChunk(STARTFONT+1);
 				fontnumber = 1;
-				Message(STR_SAVING"...");
+				Message("Saving...");
 				CP_SaveGame(1);
 				fontnumber=0;
 			}
@@ -478,7 +471,7 @@ s16int CP_CheckQuick(u16int scancode)
 		case sc_F9:
 			if (SaveGamesAvail[LSItems.curpos] && pickquick)
 			{
-				char string[100]=STR_LGC;
+				char string[100]="Load Game called\n\"";
 
 
 				CA_CacheGrChunk(STARTFONT+1);
@@ -574,7 +567,7 @@ s16int CP_EndGame(void)
 	#pragma warn -sus
 	MainMenu[savegame].active = 0;
 	MainMenu[viewscores].routine=CP_ViewScores;
-	_fstrcpy(MainMenu[viewscores].string,STR_VS);
+	_fstrcpy(MainMenu[viewscores].string,"View Scores");
 	#pragma warn +sus
 
 	return 1;
@@ -988,9 +981,9 @@ void DrawLSAction(s16int which)
 	PrintY=LSA_Y+13;
 
 	if (!which)
-		US_Print(STR_LOADING"...");
+		US_Print("Loading...");
 	else
-		US_Print(STR_SAVING"...");
+		US_Print("Saving...");
 
 	VW_UpdateScreen();
 }
@@ -1141,7 +1134,7 @@ void PrintLSEntry(s16int w,s16int color)
 	if (SaveGamesAvail[w])
 		US_Print(SaveGameNames[w]);
 	else
-		US_Print("      - "STR_EMPTY" -");
+		US_Print("      - empty -");
 
 	fontnumber=1;
 }
@@ -1331,14 +1324,14 @@ void DrawMouseSens(void)
 	WindowW=320;
 	PrintY=82;
 	SETFONTCOLOR(READCOLOR,BKGDCOLOR);
-	US_CPrint(STR_MOUSEADJ);
+	US_CPrint("Adjust Mouse Sensitivity");
 
 	SETFONTCOLOR(TEXTCOLOR,BKGDCOLOR);
 	PrintX=14;
 	PrintY=95;
-	US_Print(STR_SLOW);
+	US_Print("Slow");
 	PrintX=269;
-	US_Print(STR_FAST);
+	US_Print("Fast");
 
 	VWB_Bar(60,97,200,10,TEXTCOLOR);
 	DrawOutline(60,97,200,10,0,HIGHLIGHT);
@@ -1901,13 +1894,13 @@ void DrawCustomScreen(void)
 
 	SETFONTCOLOR(TEXTCOLOR,BKGDCOLOR);
 	PrintX=CST_START;
-	US_Print(STR_CRUN);
+	US_Print("Run");
 	PrintX=CST_START+CST_SPC*1;
-	US_Print(STR_COPEN);
+	US_Print("Open");
 	PrintX=CST_START+CST_SPC*2;
-	US_Print(STR_CFIRE);
+	US_Print("Fire");
 	PrintX=CST_START+CST_SPC*3;
-	US_Print(STR_CSTRAFE"\n");
+	US_Print("Strafe\n");
 
 	DrawWindow(5,PrintY-1,310,13,BKGDCOLOR);
 	DrawCustMouse(0);
@@ -1931,13 +1924,13 @@ void DrawCustomScreen(void)
 
 	SETFONTCOLOR(TEXTCOLOR,BKGDCOLOR);
 	PrintX=CST_START;
-	US_Print(STR_CRUN);
+	US_Print("Run");
 	PrintX=CST_START+CST_SPC*1;
-	US_Print(STR_COPEN);
+	US_Print("Open");
 	PrintX=CST_START+CST_SPC*2;
-	US_Print(STR_CFIRE);
+	US_Print("Fire");
 	PrintX=CST_START+CST_SPC*3;
-	US_Print(STR_CSTRAFE"\n");
+	US_Print("Strafe\n");
 	DrawWindow(5,PrintY-1,310,13,BKGDCOLOR);
 	//DrawCustJoy(0);
 	US_Print("\n");
@@ -1954,13 +1947,13 @@ void DrawCustomScreen(void)
 #endif
 	SETFONTCOLOR(TEXTCOLOR,BKGDCOLOR);
 	PrintX=CST_START;
-	US_Print(STR_CRUN);
+	US_Print("Run");
 	PrintX=CST_START+CST_SPC*1;
-	US_Print(STR_COPEN);
+	US_Print("Open");
 	PrintX=CST_START+CST_SPC*2;
-	US_Print(STR_CFIRE);
+	US_Print("Fire");
 	PrintX=CST_START+CST_SPC*3;
-	US_Print(STR_CSTRAFE"\n");
+	US_Print("Strafe\n");
 	DrawWindow(5,PrintY-1,310,13,BKGDCOLOR);
 	DrawCustKeybd(0);
 	US_Print("\n");
@@ -1971,13 +1964,13 @@ void DrawCustomScreen(void)
 	//
 	SETFONTCOLOR(TEXTCOLOR,BKGDCOLOR);
 	PrintX=CST_START;
-	US_Print(STR_LEFT);
+	US_Print("Left");
 	PrintX=CST_START+CST_SPC*1;
-	US_Print(STR_RIGHT);
+	US_Print("Right");
 	PrintX=CST_START+CST_SPC*2;
-	US_Print(STR_FRWD);
+	US_Print("Frwd");
 	PrintX=CST_START+CST_SPC*3;
-	US_Print(STR_BKWD"\n");
+	US_Print("Bkwrd\n");
 	DrawWindow(5,PrintY-1,310,13,BKGDCOLOR);
 	DrawCustKeys(0);
 	//
@@ -2139,7 +2132,7 @@ void CP_ChangeView(void)
 	if (oldview!=newview)
 	{
 		SD_PlaySound (Sshoot);
-		Message(STR_THINK"...");
+		Message("Thinking...");
 		NewViewSize(newview);
 	}
 
@@ -2162,9 +2155,9 @@ void DrawChangeView(s16int view)
 	WindowY=320;
 	SETFONTCOLOR(HIGHLIGHT,BKGDCOLOR);
 
-	US_CPrint(STR_SIZE1"\n");
-	US_CPrint(STR_SIZE2"\n");
-	US_CPrint(STR_SIZE3);
+	US_CPrint("Use arrows to size\n");
+	US_CPrint("ENTER to accept\n");
+	US_CPrint("ESC to cancel");
 	VW_UpdateScreen();
 
 	MenuFadeIn();

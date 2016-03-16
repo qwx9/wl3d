@@ -302,8 +302,8 @@ int SaveTheGame(s16int file,s16int x,s16int y)
 
 	if (avail < size)
 	{
-	 Message(STR_NOSPACE1"\n"
-			 STR_NOSPACE2);
+	 Message("There is not enough space\n"
+		"on your disk to Save Game!");
 	 return false;
 	}
 
@@ -471,10 +471,10 @@ int LoadTheGame(s16int file,s16int x,s16int y)
 
 	if (oldchecksum != checksum)
 	{
-	 Message(STR_SAVECHT1"\n"
-			 STR_SAVECHT2"\n"
-			 STR_SAVECHT3"\n"
-			 STR_SAVECHT4);
+	 Message("Your Save Game file is,\n"
+		"shall we say, \"corrupted\".\n"
+		"But I'll let you go on and\n"
+		"play anyway....");
 
 	 IN_ClearKeysDown();
 	 IN_Ack();

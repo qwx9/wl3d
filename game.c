@@ -1315,7 +1315,7 @@ startplayloop:
 				CheckHighScore (gamestate.score,gamestate.mapon+1);
 
 				#pragma warn -sus
-				_fstrcpy(MainMenu[viewscores].string,STR_VS);
+				_fstrcpy(MainMenu[viewscores].string,"View Scores");
 				MainMenu[viewscores].routine = CP_ViewScores;
 				#pragma warn +sus
 
@@ -1385,7 +1385,7 @@ startplayloop:
 			CheckHighScore (gamestate.score,gamestate.mapon+1);
 
 			#pragma warn -sus
-			_fstrcpy(MainMenu[viewscores].string,STR_VS);
+			_fstrcpy(MainMenu[viewscores].string,"View Scores");
 			MainMenu[viewscores].routine = CP_ViewScores;
 			#pragma warn +sus
 
@@ -1407,7 +1407,7 @@ startplayloop:
 			CheckHighScore (gamestate.score,gamestate.mapon+1);
 
 			#pragma warn -sus
-			_fstrcpy(MainMenu[viewscores].string,STR_VS);
+			_fstrcpy(MainMenu[viewscores].string,"View Scores");
 			MainMenu[viewscores].routine = CP_ViewScores;
 			#pragma warn +sus
 

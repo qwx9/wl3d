@@ -3786,7 +3786,7 @@ void	A_StartDeathCam (objtype *ob)
 
 	PM_UnlockMainMem ();
 	CA_UpLevel ();
-	Write(0,7,STR_SEEAGAIN);
+	Write(0,7,"Let's see that again!");
 	CA_DownLevel ();
 	PM_CheckMainMem ();
 

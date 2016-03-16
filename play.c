@@ -579,11 +579,11 @@ void CheckKeys (void)
 		ClearSplitVWB ();
 		VW_ScreenToScreen (displayofs,bufferofs,80,160);
 
-		Message(STR_CHEATER1"\n"
-				STR_CHEATER2"\n\n"
-				STR_CHEATER3"\n"
-				STR_CHEATER4"\n"
-				STR_CHEATER5);
+		Message("You now have 100% Health,\n"
+			"99 Ammo and both Keys!\n\n"
+			"Note that you have basically\n"
+			"eliminated your chances of\n"
+			"getting a high score!");
 		PM_CheckMainMem ();
 		IN_ClearKeysDown();
 		IN_Ack();
