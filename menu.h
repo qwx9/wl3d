@@ -7,7 +7,6 @@
 #define BORD2COLOR	0x93
 #define DEACTIVE	0x9b
 #define BKGDCOLOR	0x9d
-//#define STRIPE		0x9c
 
 #define MenuFadeOut()	VL_FadeOut(0,255,0,0,51,10)
 
@@ -17,7 +16,6 @@
 #define BORD2COLOR	0x23
 #define DEACTIVE	0x2b
 #define BKGDCOLOR	0x2d
-#define STRIPE		0x2c
 
 #define MenuFadeOut()	VL_FadeOut(0,255,43,0,0,10)
 
@@ -218,7 +216,3 @@ typedef struct {
 extern LRstruct LevelRatios[];
 
 void Write (s16int x,s16int y,char *string);
-void NonShareware(void);
-s16int GetYorN(s16int x,s16int y,s16int pic);
-
-

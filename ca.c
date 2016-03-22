@@ -80,7 +80,6 @@ notscreen:;
 
 void CA_Startup (void)
 {
-	mapon = -1;
 	ca_levelbit = 1;
 	ca_levelnum = 0;
 }

@@ -72,7 +72,6 @@ extern	HighScore	Scores[];
 extern	void	US_Startup(void),
 				US_Setup(void),
 				US_Shutdown(void),
-				US_InitRndT(int randomize),
 				US_SetLoadSaveHooks(int (*load)(s16int),
 									int (*save)(s16int),
 									void (*reset)(void)),
@@ -99,7 +98,6 @@ extern	void	US_Startup(void),
 extern	int	US_UpdateCursor(void),
 				US_LineInput(s16int x,s16int y,char *buf,char *def,int escok,
 								s16int maxchars,s16int maxwidth);
-extern	s16int		US_RndT(void);
 
 		void	USL_PrintInCenter(char far *s,Rct r);
 		char 	*USL_GiveSaveName(u16int game);

@@ -1,9 +1,36 @@
 typedef short s16int;
 typedef int s32int;
 
+enum{
+	WL6,
+	WL1,
+	SDM,
+	SOD
+};
+extern int ver;
 extern char *ext;
-extern int debug;
-extern int skipintro;
+extern int debug, nointro;
+
+enum{
+	Vw = 320,
+	Vh = 200,
+	Va = Vw * Vh,
+	Vbp = 24/8,
+	Vt = Va * Vbp,
+	Tb = 70
+};
+extern uchar *px;
+extern int npx, scale;
+
+enum{
+	C0,
+	Cred,
+	Cwht = Cred+6,
+	Caux = Cwht+3,
+	Csod,
+	Cend
+};
+extern u32int *pal, pals[][256];
 
 typedef struct Dat Dat;
 typedef struct Pic Pic;
@@ -42,9 +69,6 @@ struct Sfx{
 	Dat *pcm;
 };
 extern Sfx *sfxs, *sfxe;
-
-extern u32int pal[];
-extern u8int intro[];
 
 enum{
 	Shitwall,
@@ -169,42 +193,8 @@ enum{
 	Pguy,
 	Pcolon,
 	P0,
-	P1,
-	P2,
-	P3,
-	P4,
-	P5,
-	P6,
-	P7,
-	P8,
-	P9,
 	Ppercent,
 	Pa,
-	Pb,
-	Pc,
-	Pd,
-	Pe,
-	Pf,
-	Pg,
-	Ph,
-	Pi,
-	Pj,
-	Pk,
-	Pl,
-	Pm,
-	Pn,
-	Po,
-	Pp,
-	Pq,
-	Pr,
-	Ps,
-	Pt,
-	Pu,
-	Pv,
-	Pw,
-	Px,
-	Py,
-	Pz,
 	Pexcl,
 	Papo,
 	Pguy2,

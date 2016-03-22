@@ -278,6 +278,7 @@ void PG13 (void)
 
 void Write(s16int x,s16int y,char *string)
 {
+FIXME: use P0+n, Pa+n
  s16int alpha[]={P0,P1,P2,P3,P4,P5,
 	P6,P7,P8,P9,Pcolon,0,0,0,0,0,0,Pa,Pb,
 	Pc,Pd,Pe,Pf,Pg,Ph,Pi,Pj,Pk,
@@ -908,27 +909,9 @@ void	DrawHighScores(void)
 				x,y;
 	HighScore	*s;
 
-
-	MM_SortMem ();
-
 #ifndef SPEAR
-	ClearMScreen();
-	DrawStripes(10);
-
-	VWB_DrawPic(48,0,Pscores);
-
-	VWB_DrawPic(4*8,68,Pname);
-	VWB_DrawPic(20*8,68,Plvl);
-	VWB_DrawPic(28*8,68,C_SCOREPIC);
 	fontnumber=0;
-
 #else
-	ClearMScreen();
-	DrawStripes(10);
-
-	CA_CacheGrChunk (STARTFONT+1);
-	VWB_DrawPic (0,0,Pscores);
-
 	fontnumber = 1;
 #endif
 
@@ -998,37 +981,6 @@ void	DrawHighScores(void)
 		PrintX = 292 - w;
 #endif
 		US_Print(buffer);
-
-		#if 0
-#ifndef UPLOAD
-#ifndef SPEAR
-		//
-		// verification #
-		//
-		if (!i)
-		{
-		 temp=(((s->score >> 28)& 0xf)^
-			  ((s->score >> 24)& 0xf))+'A';
-		 temp1=(((s->score >> 20)& 0xf)^
-			   ((s->score >> 16)& 0xf))+'A';
-		 temp2=(((s->score >> 12)& 0xf)^
-			   ((s->score >> 8)& 0xf))+'A';
-		 temp3=(((s->score >> 4)& 0xf)^
-			   ((s->score >> 0)& 0xf))+'A';
-
-		 SETFONTCOLOR(0x49,0x29);
-		 PrintX = 35*8;
-		 buffer[0]=temp;
-		 buffer[1]=temp1;
-		 buffer[2]=temp2;
-		 buffer[3]=temp3;
-		 buffer[4]=0;
-		 US_Print(buffer);
-		 SETFONTCOLOR(15,0x29);
-		}
-#endif
-#endif
-		#endif
 	}
 
 	VW_UpdateScreen ();

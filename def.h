@@ -858,7 +858,6 @@ extern	statobj_t	statobjlist[MAXSTATS],*laststatobj;
 extern	doorobj_t	doorobjlist[MAXDOORS],*lastdoorobj;
 
 extern	u16int	farmapylookup[MAPSIZE];
-extern	u8int		*nearmapylookup[MAPSIZE];
 
 extern	u8int		tilemap[MAPSIZE][MAPSIZE];	// wall values only
 extern	u8int		spotvis[MAPSIZE][MAPSIZE];
@@ -918,7 +917,6 @@ void StartBonusFlash (void);
 =============================================================================
 */
 
-void IntroScreen (void);
 void PreloadGraphics(void);
 void LevelCompleted (void);
 void	CheckHighScore (s32int score,u16int other);

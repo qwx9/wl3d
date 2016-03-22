@@ -2190,105 +2190,6 @@ void CP_Quit(void)
 	DrawMainMenu();
 }
 
-
-////////////////////////////////////////////////////////////////////
-//
-// HANDLE INTRO SCREEN (SYSTEM CONFIG)
-//
-////////////////////////////////////////////////////////////////////
-void IntroScreen(void)
-{
-#ifdef SPEAR
-
-#define MAINCOLOR	0x4f
-#define EMSCOLOR	0x4f
-#define XMSCOLOR	0x4f
-
-#else
-
-#define MAINCOLOR	0x6c
-#define EMSCOLOR	0x6c
-#define XMSCOLOR	0x6c
-
-#endif
-#define FILLCOLOR	14
-
-	s32int memory,emshere,xmshere;
-	s16int i,num,ems[10]={100,200,300,400,500,600,700,800,900,1000},
-		xms[10]={100,200,300,400,500,600,700,800,900,1000},
-		main[10]={32,64,96,128,160,192,224,256,288,320};
-
-
-	//
-	// DRAW MAIN MEMORY
-	//
-	memory=(1023l+mminfo.nearheap+mminfo.farheap)/1024l;
-	for (i=0;i<10;i++)
-		if (memory>=main[i])
-			VWB_Bar(49,163-8*i,6,5,MAINCOLOR-i);
-
-
-	//
-	// DRAW EMS MEMORY
-	//
-	if (EMSPresent)
-	{
-		emshere=4l*EMSPagesAvail;
-		for (i=0;i<10;i++)
-			if (emshere>=ems[i])
-				VWB_Bar(89,163-8*i,6,5,EMSCOLOR-i);
-	}
-
-	//
-	// DRAW XMS MEMORY
-	//
-	if (XMSPresent)
-	{
-		xmshere=4l*XMSPagesAvail;
-		for (i=0;i<10;i++)
-			if (xmshere>=xms[i])
-				VWB_Bar(129,163-8*i,6,5,XMSCOLOR-i);
-	}
-
-	//
-	// FILL BOXES
-	//
-	if (MousePresent)
-		VWB_Bar(164,82,12,2,FILLCOLOR);
-
-	if (AdLibPresent && !SoundBlasterPresent)
-		VWB_Bar(164,128,12,2,FILLCOLOR);
-
-	if (SoundBlasterPresent)
-		VWB_Bar(164,151,12,2,FILLCOLOR);
-
-	if (SoundSourcePresent)
-		VWB_Bar(164,174,12,2,FILLCOLOR);
-}
-
-
-////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-//
-// SUPPORT ROUTINES
-//
-////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////
-//
-// Clear Menu screens to dark red
-//
-////////////////////////////////////////////////////////////////////
-void ClearMScreen(void)
-{
-#ifndef SPEAR
-	VWB_Bar(0,0,320,200,BORDCOLOR);
-#else
-	VWB_DrawPic(0,0,Pbackdrop);
-#endif
-}
-
 ////////////////////////////////////////////////////////////////////
 //
 // Draw a window for a menu
@@ -2979,16 +2880,6 @@ void DrawMenuGun(CP_iteminfo *iteminfo)
 // DRAW SCREEN TITLE STRIPES
 //
 ///////////////////////////////////////////////////////////////////////////
-void DrawStripes(s16int y)
-{
-#ifndef SPEAR
-	VWB_Bar(0,y,320,24,0);
-	VWB_Hlin(0,319,y+22,STRIPE);
-#else
-	VWB_Bar(0,y,320,22,0);
-	VWB_Hlin(0,319,y+23,0);
-#endif
-}
 
 void ShootSnd(void)
 {

@@ -3,8 +3,6 @@
 		u16int		PrintX,PrintY;
 		u16int		WindowX,WindowY,WindowW,WindowH;
 
-static	int		US_Started;
-
 		int		Button0,Button1,
 					CursorBad;
 		s16int			CursorX,CursorY;
@@ -23,35 +21,6 @@ static	int		US_Started;
 						{"John Romero",10000,1},
 						{"Jay Wilbur",10000,1},
 					};
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	US_Startup() - Starts the User Mgr
-//
-///////////////////////////////////////////////////////////////////////////
-void
-US_Startup(void)
-{
-	if (US_Started)
-		return;
-	US_InitRndT(true);		// Initialize the random number generator
-	US_Started = true;
-}
-
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	US_Shutdown() - Shuts down the User Mgr
-//
-///////////////////////////////////////////////////////////////////////////
-void
-US_Shutdown(void)
-{
-	if (!US_Started)
-		return;
-
-	US_Started = false;
-}
 
 //	Window/Printing routines
 

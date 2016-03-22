@@ -75,7 +75,6 @@ static	u8int        far ASCIINames[] =		// Unshifted ASCII for scan codes
 					};
 
 
-static	int		IN_Started;
 static	int		CapsLock;
 static	u8int	CurCode,LastCode;
 
@@ -213,74 +212,13 @@ INL_StartKbd(void)
 
 ///////////////////////////////////////////////////////////////////////////
 //
-//	INL_ShutKbd() - Restores keyboard control to the BIOS
-//
-///////////////////////////////////////////////////////////////////////////
-static void
-INL_ShutKbd(void)
-{
-	poke(0x40,0x17,peek(0x40,0x17) & 0xfaf0);	// Clear ctrl/alt/shift flags
-
-	setvect(KeyInt,OldKeyVect);
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	INL_StartMouse() - Detects and sets up the mouse
-//
-///////////////////////////////////////////////////////////////////////////
-static int
-INL_StartMouse(void)
-{
-#if 0
-	if (getvect(MouseInt))
-	{
-		Mouse(MReset);
-		if (_AX == 0xffff)
-			return(true);
-	}
-	return(false);
-#endif
- union REGS regs;
- uchar far *vector;
-
-
- if ((vector=MK_FP(peek(0,0x33*4+2),peek(0,0x33*4)))==NULL)
-   return false;
-
- if (*vector == 207)
-   return false;
-
- Mouse(MReset);
- return true;
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	INL_ShutMouse() - Cleans up after the mouse
-//
-///////////////////////////////////////////////////////////////////////////
-static void
-INL_ShutMouse(void)
-{
-}
-
-
-///////////////////////////////////////////////////////////////////////////
-//
 //	IN_Startup() - Starts up the Input Mgr
 //
 ///////////////////////////////////////////////////////////////////////////
 void
 IN_Startup(void)
 {
-	if (IN_Started)
-		return;
-
 	INL_StartKbd();
-	INL_StartMouse();
-
-	IN_Started = true;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -308,15 +246,6 @@ IN_Default(int gotit,ControlType in)
 void
 IN_Shutdown(void)
 {
-	u16int	i;
-
-	if (!IN_Started)
-		return;
-
-	INL_ShutMouse();
-	INL_ShutKbd();
-
-	IN_Started = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////

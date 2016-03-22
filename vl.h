@@ -102,22 +102,13 @@ sti;}
 #define VGAREADMAP(x) asm{cli;mov dx,GC_INDEX;mov al,GC_READMAP;mov ah,x;out dx,ax;sti;}
 
 void VL_SetVGAPlane (void);
-void VL_DePlaneVGA (void);
-void VL_SetVGAPlaneMode (void);
-void VL_ClearVideo (u8int color);
-
-void VL_SetLineWidth (u16int width);
-void VL_SetSplitScreen (s16int linenum);
 
 void VL_WaitVBL (s16int vbls);
 void VL_CrtcStart (s16int crtc);
-void VL_SetScreen (s16int crtc, s16int pelpan);
 
 void VL_FillPalette (s16int red, s16int green, s16int blue);
 void VL_SetColor	(s16int color, s16int red, s16int green, s16int blue);
 void VL_GetColor	(s16int color, s16int *red, s16int *green, s16int *blue);
-void VL_SetPalette (u8int far *palette);
-void VL_GetPalette (u8int far *palette);
 void VL_FadeOut (s16int start, s16int end, s16int red, s16int green, s16int blue, s16int steps);
 void VL_FadeIn (s16int start, s16int end, u8int far *palette, s16int steps);
 void VL_ColorBorder (s16int color);
@@ -127,7 +118,6 @@ void VL_Hlin (u16int x, u16int y, u16int width, u16int color);
 void VL_Vlin (s16int x, s16int y, s16int height, s16int color);
 void VL_Bar (s16int x, s16int y, s16int width, s16int height, s16int color);
 
-void VL_MungePic (u8int far *source, u16int width, u16int height);
 void VL_DrawPicBare (s16int x, s16int y, u8int far *pic, s16int width, s16int height);
 void VL_MemToLatch (u8int far *source, s16int width, s16int height, u16int dest);
 void VL_ScreenToScreen (u16int source, u16int dest,s16int width, s16int height);

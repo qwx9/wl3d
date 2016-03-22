@@ -1,13 +1,18 @@
 #include <u.h>
 #include <libc.h>
 #include <thread.h>
+#include <draw.h>
+#include <mouse.h>
+#include <keyboard.h>
 #include "dat.h"
 #include "fns.h"
 
 mainstacksize = 16*1024;
 char *ext = "wl6";
-int debug;
-int skipintro;
+int debug, nointro;
+
+static Rectangle fbr;
+static Image *fb;
 
 void *
 emalloc(ulong n)
@@ -30,6 +35,53 @@ erealloc(void *p, ulong n)
 	return p;
 }
 
+void
+flush(void)
+{
+	Rectangle r;
+	uchar *p;
+
+	if(scale == 1){
+		loadimage(fb, fb->r, px, npx);
+		draw(screen, fbr, fb, nil, ZP);
+	}else{
+		p = px;
+		r = fbr;
+		while(r.min.y < fbr.max.y){
+			r.max.y = r.min.y + scale;
+			p += loadimage(fb, fb->r, p, npx/Vh);
+			draw(screen, r, fb, nil, ZP);
+			r.min.y = r.max.y;
+		}
+	}
+	flushimage(display, 1);
+}
+
+static void
+resetfb(void)
+{
+	Point p, d;
+
+	scale = Dx(screen->r) / Vw;
+	if(scale <= 0)
+		scale = 1;
+	else if(scale > 10)
+		scale = 10;
+	p = divpt(addpt(screen->r.min, screen->r.max), 2);
+	d = Pt(Vw/2 * scale, Vh/2 * scale);
+	fbr = Rpt(subpt(p, d), addpt(p, d));
+
+	freeimage(fb);
+	free(px);
+	npx = Vt * scale;
+	px = emalloc(npx);
+	fb = allocimage(display, Rect(0,0,Vw*scale,scale==1 ? Vh : 1), RGB24, 1, 0);
+	if(fb == nil)
+		sysfatal("resetfb: %r");
+
+	draw(screen, screen->r, display->black, nil, ZP);
+}
+
 static void
 usage(void)
 {
@@ -47,7 +99,7 @@ threadmain(int argc, char **argv)
 	case '3': ext = "sd3"; break;
 	case 'D': debug++; break;
 	case 'd': ext = "wl1"; break;
-	case 'i': skipintro++; break;
+	case 'i': nointro++; break;
 	case 'm': datdir = EARGF(usage()); break;
 	case 'o': ext = "sdm"; break;
 	case 's': ext = "sod"; break;
@@ -57,6 +109,13 @@ threadmain(int argc, char **argv)
 		usage();
 	}ARGEND;
 	dat(datdir);
+
+	if(initdraw(nil, nil, "wl3d") < 0)
+		sysfatal("initdraw: %r");
+	resetfb();
+
+	init();
+	demos();
 
 	threadexitsall(nil);
 }

@@ -504,9 +504,7 @@ int LoadTheGame(s16int file,s16int x,s16int y)
 
 void ShutdownId (void)
 {
-	US_Shutdown ();
 	SD_Shutdown ();
-	IN_Shutdown ();
 }
 
 
@@ -658,79 +656,6 @@ void SetupWalls (void)
 	}
 }
 
-//===========================================================================
-
-/*
-==========================
-=
-= SignonScreen
-=
-==========================
-*/
-
-void SignonScreen (void)                        // VGA version
-{
-	u16int        segstart,seglength;
-
-	VL_SetVGAPlaneMode ();
-	VL_TestPaletteSet ();
-	VL_SetPalette (&gamepal);
-
-	VW_SetScreen(0x8000,0);
-	VL_MungePic (&introscn,320,200);
-	VL_MemToScreen (&introscn,320,200,0,0);
-	VW_SetScreen(0,0);
-
-//
-// reclaim the memory from the linked in signon screen
-//
-	segstart = FP_SEG(&introscn);
-	seglength = 64000/16;
-	if (FP_OFF(&introscn))
-	{
-		segstart++;
-		seglength--;
-	}
-	MML_UseSpace (segstart,seglength);
-}
-
-
-/*
-==========================
-=
-= FinishSignon
-=
-==========================
-*/
-
-void FinishSignon (void)
-{
-
-#ifndef SPEAR
-	VW_Bar (0,189,300,11,peekb(0xa000,0));
-	WindowX = 0;
-	WindowW = 320;
-	PrintY = 190;
-
-	SETFONTCOLOR(14,4);
-	US_CPrint ("Press a key");
-
-	if (!NoWait)
-		IN_Ack ();
-
-	VW_Bar (0,189,300,11,peekb(0xa000,0));
-
-	PrintY = 190;
-	SETFONTCOLOR(10,4);
-	US_CPrint ("Working...");
-
-	SETFONTCOLOR(0,15);
-#else
-	if (!NoWait)
-		VW_WaitVBL(3*70);
-#endif
-}
-
 /*
 ==========================
 =
@@ -746,12 +671,8 @@ void InitGame (void)
 	s16int                     i,x,y;
 	u16int        *blockstart;
 
-	SignonScreen ();
-
-	IN_Startup ();
 	SD_Startup ();
-	CA_Startup ();
-	US_Startup ();
+	mapon = -1;
 
 //
 // build some tables
@@ -759,7 +680,6 @@ void InitGame (void)
 
 	for (i=0;i<MAPSIZE;i++)
 	{
-		nearmapylookup[i] = &tilemap[0][0]+MAPSIZE*i;
 		farmapylookup[i] = i*64;
 	}
 
@@ -783,9 +703,6 @@ void InitGame (void)
 // load in and lock down some basic chunks
 //
 
-	CA_CacheGrChunk(STARTFONT);
-	MM_SetLock (&grsegs[STARTFONT],true);
-
 	LoadLatchMem ();
 	BuildTables ();          // trig tables
 	SetupWalls ();
@@ -797,7 +714,6 @@ void InitGame (void)
 // initialize variables
 //
 	InitRedShifts ();
-	FinishSignon();
 
 	displayofs = PAGE1START;
 	bufferofs = PAGE2START;
@@ -829,17 +745,7 @@ int SetViewSize (u16int width, u16int height)
 //
 // build all needed compiled scalers
 //
-//	MM_BombOnError (false);
 	SetupScaling (viewwidth*1.5);
-#if 0
-	MM_BombOnError (true);
-	if (mmerror)
-	{
-		Quit ("Can't build scalers!");
-		mmerror = false;
-		return false;
-	}
-#endif
 	return true;
 }
 
@@ -1081,7 +987,5 @@ void main (void)
 	InitGame ();
 
 	DemoLoop();
-
-	Quit("Demo loop exited???");
 }
 

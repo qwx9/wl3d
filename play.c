@@ -32,7 +32,6 @@ objtype 	objlist[MAXACTORS],*new,*obj,*player,*lastobj,
 			*objfreelist,*killerobj;
 
 u16int	farmapylookup[MAPSIZE];
-u8int		*nearmapylookup[MAPSIZE];
 
 int		singlestep,godmode,noclip;
 s16int			extravbls;
@@ -912,20 +911,7 @@ void StartMusic(void)
 
 	SD_MusicOff();
 	chunk = songs[gamestate.mapon+gamestate.episode*10];
-
-//	if ((chunk == -1) || (MusicMode != smm_AdLib))
-//DEBUG control panel		return;
-
-	MM_BombOnError (false);
-	CA_CacheAudioChunk(STARTMUSIC + chunk);
-	MM_BombOnError (true);
-	if (mmerror)
-		mmerror = false;
-	else
-	{
-		MM_SetLock(&((uchar *)audiosegs[STARTMUSIC + chunk]),true);
-		SD_StartMusic((MusicGroup far *)audiosegs[STARTMUSIC + chunk]);
-	}
+	SD_StartMusic((MusicGroup far *)audiosegs[STARTMUSIC + chunk]);
 }
 
 

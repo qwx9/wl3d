@@ -75,8 +75,6 @@ void VH_SetDefaultColors (void);
 #define VW_Hlin(x,z,y,c)	VL_Hlin(x,y,(z)-(x)+1,c)
 #define VW_Vlin(y,z,x,c)	VL_Vlin(x,y,(z)-(y)+1,c)
 #define VW_DrawPic		VH_DrawPic
-#define VW_SetSplitScreen	VL_SetSplitScreen
-#define VW_SetLineWidth		VL_SetLineWidth
 #define VW_ColorBorder	VL_ColorBorder
 #define VW_WaitVBL		VL_WaitVBL
 #define VW_FadeIn()		VL_FadeIn(0,255,&gamepal,30);
