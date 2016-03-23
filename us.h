@@ -94,7 +94,6 @@ extern	void	US_Startup(void),
 				US_StartCursor(void),
 				US_ShutCursor(void),
 				US_CheckHighScore(s32int score,u16int other),
-				US_DisplayHighScores(s16int which);
 extern	int	US_UpdateCursor(void),
 				US_LineInput(s16int x,s16int y,char *buf,char *def,int escok,
 								s16int maxchars,s16int maxwidth);

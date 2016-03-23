@@ -56,12 +56,12 @@ extern Pic *pics, *pice;
 extern uchar *pict;
 
 struct Fnt{
-	s16int h;
-	s16int ofs[256];
+	int h;
+	int ofs[256];
 	char w[256];
 	Dat;
 };
-extern Fnt fnts[];
+extern Fnt fnts[], *fnt;
 
 struct Sfx{
 	Dat pc;

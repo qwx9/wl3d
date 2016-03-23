@@ -841,7 +841,7 @@ getpics(Biobuf *dat, Biobuf *aux, u16int hf[])
 static void
 getfnts(Biobuf *dat, Biobuf *aux, u16int hf[])
 {
-	s16int *o;
+	int *o;
 	u32int v, n;
 	uchar *u, *p;
 	char *w;
@@ -855,7 +855,7 @@ getfnts(Biobuf *dat, Biobuf *aux, u16int hf[])
 		unhuff(dat, hf, u, n);
 		f->h = GBIT16(p), p+=2;
 		for(o=f->ofs; o < f->ofs+nelem(f->ofs); o++)
-			*o = GBIT16(p), p+=2;
+			*o = GBIT16(p) - (2+256*3), p+=2;
 		for(w=f->w; w < f->w+nelem(f->w); w++)
 			*w = *p++;
 		n -= p-u;

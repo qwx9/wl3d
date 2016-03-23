@@ -3,7 +3,7 @@
 #include "dat.h"
 #include "fns.h"
 
-Fnt fnts[2];
+Fnt fnts[2], *fnt;
 Pic *pics, *pice;
 Dat *exts, *exte;
 Dat *dems, *deme, *epis;
@@ -132,6 +132,65 @@ put(int x, int y, int dx, int dy, uchar *s, int c)
 			memset(d, c, dx);
 			d += Vw;
 		}	
+}
+
+int
+txt(int x, int y, char *t, int col)
+{
+	int h, w;
+	uchar c, *d, *s, *p, *e, *q;
+
+	h = fnt->h;
+	p = fnt->p;
+	c = *t++;
+	d = pxb + x + y*Vw;
+	x = 0;
+	while(c != 0){
+		w = fnt->w[c];
+		s = p + fnt->ofs[c];
+		e = s + w*h;
+		while(s < e){
+			q = s + w;
+			while(s < q){
+				c = *s++;
+				if(c != 0)
+					*d = col;
+				d++;
+			}
+			d += Vw-w;
+		}
+		d -= Vw*h - w;
+		x += w;
+		c = *t++;
+	}
+	return x;
+}
+
+int
+txtnl(int x, int y, char *t, int col)
+{
+	int n;
+	char *s;
+
+	n = 0;
+	s = strtok(t, "\n");
+	while(s != nil){
+		n += txt(x, y, s, col);
+		s = strtok(nil, "\n");
+		y += fnt->h;
+	}
+	return n;
+}
+
+int
+txtw(char *t)
+{
+	int n;
+
+	n = 0;
+	while(*t != 0)
+		n += fnt->w[(uchar)*t++];
+	return n;
 }
 
 void

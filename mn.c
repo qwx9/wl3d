@@ -3,6 +3,23 @@
 #include "dat.h"
 #include "fns.h"
 
+typedef struct Score Score;
+struct Score{
+	char name[58];
+	int n;
+	int lvl;
+	int ep;
+};
+static Score score[] = {
+	{"id software-'92", 10000, 1},
+	{"Adrian Carmack", 10000, 1},
+	{"John Carmack", 10000, 1},
+	{"Kevin Cloud", 10000, 1},
+	{"Tom Hall", 10000, 1},
+	{"John Romero", 10000, 1},
+	{"Jay Wilbur", 10000, 1},
+};
+
 static void (*clear)(void);
 static void (*stripe)(int);
 static void (*scores)(void);
@@ -49,20 +66,70 @@ pants(void)
 }
 
 static void
+fixedw(char *s)
+{
+	char c;
+
+	while(c = *s, c != 0)
+		*s++ = c - '0' + 129;
+}
+
+static void
 wlscores(void)
 {
+	int x, y;
+	char a[16], b[16];
+	Score *s;
+
 	clear();
 	stripe(10);
 	pic(48, 0, pict[Pscores]);
-	pic(4*8, 68, pict[Pname]);
-	pic(20*8, 68, pict[Plvl]);
-	pic(28*8, 68, pict[Phigh]);
+	pic(32, 68, pict[Pname]);
+	pic(160, 68, pict[Plvl]);
+	pic(224, 68, pict[Phigh]);
+
+	fnt = fnts;
+	for(s=score, y=76; s<score+nelem(score); s++, y+=16){
+		txt(32, y, s->name, 0xf);
+
+		sprint(a, "%d", s->lvl);
+		fixedw(a);
+		x = 176 - txtw(a);
+		if(ver < WL1){
+			sprint(b, "E%d/L", s->ep+1);
+			x += txt(x-6, y, b, 0xf) - 6;
+		}
+		txt(x, y, a, 0xf);
+
+		sprint(a, "%d", s->n);
+		fixedw(a);
+		txt(264 - txtw(a), y, a, 0xf);
+	}
 }
 static void
 sdscores(void)
 {
+	int y;
+	char a[16];
+	Score *s;
+
 	clear();
 	pic(0, 0, pict[Pscores]);
+
+	fnt = fnts+1;
+	for(s=score, y=76; s<score+nelem(score); s++, y+=16){
+		txt(16, y, s->name, 0x13);
+
+		if(s->lvl == 21)
+			pic(176, y-1, pict[Pspear]);
+		else{
+			sprint(a, "%d", s->lvl);
+			txt(194 - txtw(a), y, a, 0xf);
+		}
+
+		sprint(a, "%d", s->n);
+		txt(292 - txtw(a), y, a, 0xf);
+	}
 }
 
 static void
