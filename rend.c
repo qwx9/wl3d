@@ -12,27 +12,72 @@ Dat *wals, *sprs, *spre;
 int scale, npx;
 uchar *px;
 static uchar pxb[Va];
+static void (*ffp)(void);
+static int fi, fdt, fr, fg, fb;
+static u32int *fref;
 
 static void
-modpal(u32int *d, u32int *s, u32int c, int n, int steps)
+fadeout(void)
 {
-	int r, g, b, u, v, w;
-	u32int p, *e;
+	int u, v, w;
+	u32int p, *s, *d, *e;
 
-	b = (c&0xff) * 255 / 63;
-	g = (c>>8&0xff) * 255 / 63;
-	r = (c>>16&0xff) * 255 / 63;
+	s = fref;
+	d = pal;
 	e = d+nelem(pals[0]);
 	while(d < e){
 		p = *s++;
 		u = p & 0xff;
 		v = p>>8 & 0xff;
 		w = p>>16 & 0xff;
-		u = u + (b-u) * n/steps;
-		v = v + (g-v) * n/steps;
-		w = w + (r-w) * n/steps;
+		u = u + (fb-u) * fi/fdt;
+		v = v + (fg-v) * fi/fdt;
+		w = w + (fr-w) * fi/fdt;
 		*d++ = w<<16 | v<<8 | u;
 	}
+}
+
+static void
+fadein(void)
+{
+	int u, v, w;
+	u32int p, *s, *d, *e;
+
+	s = fref;
+	d = pal;
+	e = d+nelem(pals[0]);
+	while(d < e){
+		p = *s++;
+		u = (p & 0xff) * fi/fdt;
+		v = (p>>8 & 0xff) * fi/fdt;
+		w = (p>>16 & 0xff) * fi/fdt;
+		*d++ = w<<16 | v<<8 | u;
+	}
+}
+
+void
+fade(void)
+{
+	ffp();
+	out();
+	if(fi == fdt && ffp == fadein){
+		ffp = fadeout;
+		fi = 0;
+	}
+	fi++;
+}
+
+void
+fadeop(int dt, u32int c, int noin)
+{
+	fdt = dt;
+	fb = (c & 0xff) * 255 / 63;
+	fg = (c>>8 & 0xff) * 255 / 63;
+	fr = (c>>16 & 0xff) * 255 / 63;
+	fref = pal;
+	pal = pals[Cfad];
+	fi = 1;
+	ffp = noin ? fadeout : fadein;
 }
 
 void
@@ -40,56 +85,12 @@ palpic(uchar *s)
 {
 	u32int *p, *e;
 
-	p = pals[Csod];
-	e = p + nelem(pals[Csod]);
+	p = pal = pals[Csod];
+	e = p + nelem(pals[0]);
 	while(p < e){
 		*p++ = s[0]*255/63<<16 | s[1]*255/63<<8 | s[2]*255/63;
 		s += 3;
 	}
-	pal = pals[Csod];
-}
-
-void
-fadeout(int steps)
-{
-	int i;
-	u32int *o;
-
-	o = pal;
-	pal = pals[Caux];
-	vbl(1);
-	for(i=0; i<steps; i++){
-		modpal(pals[Caux], pal, 0, i, steps);
-		vbl(1);
-		out();
-	}
-	pal = o;
-}
-
-void
-fadein(int steps)
-{
-	int i, u, v, w;
-	u32int *o, p, *s, *d, *e;
-
-	o = pal;
-	pal = pals[Caux];
-	vbl(1);
-	for(i=0; i<steps; i++){
-		s = o;
-		d = pal;
-		e = d+nelem(pals[Caux]);
-		while(d < e){
-			p = *s++;
-			u = (p & 0xff) * i/steps;
-			v = (p>>8 & 0xff) * i/steps;
-			w = (p>>16 & 0xff) * i/steps;
-			*d++ = w<<16 | v<<8 | u;
-		}
-		vbl(1);
-		out();
-	}
-	pal = o;
 }
 
 void

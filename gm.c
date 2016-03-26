@@ -1,7 +1,25 @@
 #include <u.h>
 #include <libc.h>
+#include <thread.h>
+#include <draw.h>
+#include <mouse.h>
+#include <keyboard.h>
 #include "dat.h"
 #include "fns.h"
+
+extern Channel *kbc, *msc;
+
+Rune keys[Ke] = {
+	[K↑] Kup,
+	[K↓] Kdown,
+	[K←] Kleft,
+	[K→] Kright,
+	[Krun] Kshift,
+	[Kfire] Kctl,
+	[Kopen] ' ',
+	[Kstrafe] Kalt,
+	[Kmenu] Kesc
+};
 
 static int rndi, rndt[] = {
   0, 8, 109, 220, 222, 241, 149, 107, 75, 248, 254, 140, 16, 66, 74, 21,
@@ -29,20 +47,25 @@ rnd(void)
 	return rndt[rndi];
 }
 
-void
-vbl(int n)
+int
+gstep(void)
 {
-	sleep(1000/70 * n);
+	return 0;
 }
 
-void
-delay(int n)
+int
+dstep(void)
 {
-	vbl(Tb * n);
+	step = mstep;
+	return 0;
 }
 
 void
 initg(int r)
 {
 	rndi = r ? time(nil) & 0xff : 0;
+	cson = 0;
+	toss();
+	kbon++;
+	grab(1);
 }

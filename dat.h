@@ -9,7 +9,22 @@ enum{
 };
 extern int ver;
 extern char *ext;
-extern int debug, nointro;
+extern int grabon;
+enum{
+	K↑,
+	K↓,
+	K←,
+	K→,
+	Krun,
+	Kfire,
+	Kopen,
+	Kstrafe,
+	Kmenu,
+	Ke
+};
+extern int cson, kbon, mson;
+extern Rune keys[];
+extern int (*step)(void);
 
 enum{
 	Vw = 320,
@@ -26,7 +41,7 @@ enum{
 	C0,
 	Cred,
 	Cwht = Cred+6,
-	Caux = Cwht+3,
+	Cfad = Cwht+3,
 	Csod,
 	Cend
 };
@@ -166,6 +181,11 @@ enum{
 	Spear = Sottodeath,
 	Sangeltired = Sotto,
 	Ssend = Sfett,
+
+	Mintro = 7,
+	Mmenu = 14,
+	Mnazjazz = 18,
+	Mtower = 23,
 
 	Pbackdrop = 0,
 	Pmouselback,
