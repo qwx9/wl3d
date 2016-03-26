@@ -4,7 +4,6 @@
 #include "dat.h"
 #include "fns.h"
 
-int ver;
 u32int *pal, pals[Cend][256]={ {
 	0x000000, 0x0000aa, 0x00aa00, 0x00aaaa, 0xaa0000, 0xaa00aa, 0xaa5500,
 	0xaaaaaa, 0x555555, 0x5555ff, 0x55ff55, 0x55ffff, 0xff5555, 0xff55ff,
@@ -911,26 +910,12 @@ gfx(void)
 	Bterm(dat);
 }
 
-static void
-version(void)
-{
-	if(strcmp(ext, "wl6") == 0)
-		ver = WL6;
-	else if(strcmp(ext, "wl1") == 0)
-		ver = WL1;
-	else if(strcmp(ext, "sdm") == 0)
-		ver = SDM;
-	else
-		ver = SOD;
-}
-
 void
 dat(char *dir)
 {
 	rfork(RFNAMEG);
 	if(bind(".", dir, MBEFORE|MCREATE) < 0 || chdir(dir) < 0)
 		fprint(2, "dat: %r\n");
-	version();
 	vswap();
 	gamemaps();
 	if(ver == SOD)

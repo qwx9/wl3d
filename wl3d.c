@@ -9,6 +9,7 @@
 
 mainstacksize = 16*1024;
 char *ext = "wl6";
+int ver;
 int grabon;
 int cson, kbon, mson;
 int (*step)(void);
@@ -224,13 +225,13 @@ threadmain(int argc, char **argv)
 	n = 0;
 	step = mstep;
 	ARGBEGIN{
-	case '2': ext = "sd2"; break;
-	case '3': ext = "sd3"; break;
-	case 'd': ext = "wl1"; break;
+	case '2': ext = "sd2"; ver = SOD; break;
+	case '3': ext = "sd3"; ver = SOD; break;
+	case 'd': ext = "wl1"; ver = WL1; break;
 	case 'i': n++; break;
 	case 'm': datdir = EARGF(usage()); break;
-	case 'o': ext = "sdm"; break;
-	case 's': ext = "sod"; break;
+	case 'o': ext = "sdm"; ver = SDM; break;
+	case 's': ext = "sod"; ver = SOD; break;
 	case 'w': /* TODO: warp to ep, level */ break;
 	case 'x': /* TODO: set difficulty for warp */ break;
 	default:
