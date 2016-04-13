@@ -387,6 +387,19 @@ u32int *pal, pals[Cend][256]={ {
 	}
 };
 
+static u32int sodpal[] = {
+	0x003800, 0x002800,
+	0x203400, 0x202400,
+	0x402c00, 0x402000,
+	0x612400, 0x611c00,
+	0x811c00, 0x811400,
+	0xa11800, 0xa11000,
+	0xc21000, 0xc20c00,
+	0x0c4000, 0x0c3000,
+	0x184800, 0x183c00,
+	0x245500, 0x244400
+};
+
 /* what bullshit. */
 uchar *pict;
 static uchar picts[4][Pend]={ {
@@ -913,6 +926,20 @@ gfx(void)
 }
 
 void
+fixpal(void)
+{
+	u32int *p, *s;
+
+	p = pals[C0] + 166;
+	s = sodpal;
+	while(p < pals[Cfad]){
+		p[0] = *s++;
+		p[1] = *s++;
+		p += nelem(pals[C0]);
+	}
+}
+
+void
 dat(char *dir)
 {
 	rfork(RFNAMEG);
@@ -925,9 +952,7 @@ dat(char *dir)
 	audiot();
 	gfx();
 
+	if(ver >= SDM)
+		fixpal();
 	pal = pals[C0];
-	if(ver >= SDM){
-		pal[166] = 0x003800;
-		pal[167] = 0x002800;
-	}
 }
