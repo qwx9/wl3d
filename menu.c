@@ -2615,12 +2615,6 @@ void DrawMenu(CP_iteminfo *item_i,CP_itemtype far *items)
 	}
 }
 
-
-////////////////////////////////////////////////////////////////////
-//
-// SET TEXT COLOR (HIGHLIGHT OR NO)
-//
-////////////////////////////////////////////////////////////////////
 void SetTextColor(CP_itemtype far *items,s16int hlight)
 {
 	if (hlight)
@@ -2781,10 +2775,7 @@ void Message(char far *string)
 	s16int h=0,w=0,mw=0,i,x,y,time;
 	fontstruct _seg *font;
 
-
-	CA_CacheGrChunk (STARTFONT+1);
 	fontnumber=1;
-	font=grsegs[STARTFONT+fontnumber];
 	h=font->height;
 	for (i=0;i<_fstrlen(string);i++)
 		if (string[i]=='\n')

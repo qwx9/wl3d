@@ -24,7 +24,7 @@ enum{
 };
 extern int cson, kbon, mson;
 extern Rune keys[];
-extern int (*step)(void);
+extern void (*step)(void);
 
 enum{
 	Vw = 320,
@@ -37,6 +37,7 @@ enum{
 extern uchar *px;
 extern int npx, scale;
 
+typedef struct Col Col;
 enum{
 	C0,
 	Cred,
@@ -46,6 +47,11 @@ enum{
 	Cend
 };
 extern u32int *pal, pals[][256];
+struct Col{
+	int r;
+	int g;
+	int b;
+};
 
 typedef struct Dat Dat;
 typedef struct Pic Pic;
@@ -185,12 +191,13 @@ enum{
 	Mintro = 7,
 	Mmenu = 14,
 	Mnazjazz = 18,
+	Maward = 20,
+	Mroster = 23,
 	Mtower = 23,
 
 	Pbackdrop = 0,
 	Pmouselback,
 	Pcur1,
-	Pcur2,
 	Punsel,
 	Psel,
 	Pcustom,

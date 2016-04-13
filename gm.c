@@ -47,17 +47,15 @@ rnd(void)
 	return rndt[rndi];
 }
 
-int
+void
 gstep(void)
 {
-	return 0;
 }
 
-int
+void
 dstep(void)
 {
 	step = mstep;
-	return 0;
 }
 
 void

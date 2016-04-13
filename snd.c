@@ -7,14 +7,26 @@
 Dat *imfs, *imfe;
 Sfx *sfxs, *sfxe;
 
+static int mi;
+
+void
+sfx(int n)
+{
+	Sfx *s;
+
+	s = sfxs+n;
+	USED(s);
+}
+
 void
 stopmus(void)
 {
 }
 
 void
-playmus(int n)
+mus(int n)
 {
+	if(n == mi)
+		return;
 	stopmus();
-	USED(n);
 }

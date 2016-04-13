@@ -12,16 +12,20 @@ Dat *wals, *sprs, *spre;
 int scale, npx;
 uchar *px;
 static uchar pxb[Va];
-static void (*ffp)(void);
-static int fi, fdt, fr, fg, fb;
+static Col *fcol;
 static u32int *fref;
+static int fi, fo, fdt;
 
-static void
+void
 fadeout(void)
 {
-	int u, v, w;
+	int i, t, u, v, w;
 	u32int p, *s, *d, *e;
+	Col *c;
 
+	i = fo++;
+	t = fdt;
+	c = fcol;
 	s = fref;
 	d = pal;
 	e = d+nelem(pals[0]);
@@ -30,54 +34,49 @@ fadeout(void)
 		u = p & 0xff;
 		v = p>>8 & 0xff;
 		w = p>>16 & 0xff;
-		u = u + (fb-u) * fi/fdt;
-		v = v + (fg-v) * fi/fdt;
-		w = w + (fr-w) * fi/fdt;
+		u = u + (c->b-u) * i/t;
+		v = v + (c->g-v) * i/t;
+		w = w + (c->r-w) * i/t;
 		*d++ = w<<16 | v<<8 | u;
 	}
+	out();
 }
 
-static void
+void
 fadein(void)
 {
-	int u, v, w;
+	int i, t, u, v, w;
 	u32int p, *s, *d, *e;
+	Col *c;
 
+	i = fi++;
+	t = fdt;
+	c = fcol;
 	s = fref;
 	d = pal;
 	e = d+nelem(pals[0]);
 	while(d < e){
 		p = *s++;
-		u = (p & 0xff) * fi/fdt;
-		v = (p>>8 & 0xff) * fi/fdt;
-		w = (p>>16 & 0xff) * fi/fdt;
+		u = p & 0xff;
+		v = p>>8 & 0xff;
+		w = p>>16 & 0xff;
+		u = c->b + (u-c->b) * i/t;
+		v = c->g + (v-c->g) * i/t;
+		w = c->r + (w-c->r) * i/t;
 		*d++ = w<<16 | v<<8 | u;
 	}
-}
-
-void
-fade(void)
-{
-	ffp();
 	out();
-	if(fi == fdt && ffp == fadein){
-		ffp = fadeout;
-		fi = 0;
-	}
-	fi++;
 }
 
 void
-fadeop(int dt, u32int c, int noin)
+fadeop(Col *c, int dt)
 {
+	fi = 0;
+	fo = 1;
 	fdt = dt;
-	fb = (c & 0xff) * 255 / 63;
-	fg = (c>>8 & 0xff) * 255 / 63;
-	fr = (c>>16 & 0xff) * 255 / 63;
+	fcol = c;
 	fref = pal;
 	pal = pals[Cfad];
-	fi = 1;
-	ffp = noin ? fadeout : fadein;
 }
 
 void
@@ -171,27 +170,51 @@ int
 txtnl(int x, int y, char *t, int col)
 {
 	int n;
-	char *s;
+	char *s, *m;
 
 	n = 0;
-	s = strtok(t, "\n");
+	m = strdup(t);
+	if(m == nil)
+		sysfatal("txtnl: %r");
+	s = strtok(m, "\n");
 	while(s != nil){
 		n += txt(x, y, s, col);
 		s = strtok(nil, "\n");
 		y += fnt->h;
 	}
+	free(m);
+	return n;
+}
+
+int
+txth(char *t)
+{
+	int h, n;
+
+	h = fnt->h;
+	n = h;
+	while(*t != 0)
+		if(*t++ == '\n')
+			n += h;
 	return n;
 }
 
 int
 txtw(char *t)
 {
-	int n;
+	int n, m;
 
-	n = 0;
-	while(*t != 0)
-		n += fnt->w[(uchar)*t++];
-	return n;
+	n = m = 0;
+	while(*t != 0){
+		if(*t == '\n'){
+			if(n > m)
+				m = n;
+			n = 0;
+		}else
+			n += fnt->w[(uchar)*t];
+		t++;
+	}
+	return n > m ? n : m;
 }
 
 void

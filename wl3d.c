@@ -12,7 +12,7 @@ char *ext = "wl6";
 int ver;
 int grabon;
 int cson, kbon, mson;
-int (*step)(void);
+void (*step)(void);
 Channel *csc, *kbc, *msc;
 
 enum{
@@ -83,9 +83,17 @@ kproc(void *)
 		sysfatal("kproc: %r");
 	memset(buf, 0, sizeof buf);
 	for(;;){
-		n = read(fd, buf, sizeof(buf)-1);
-		if(n <= 0)
-			break;
+		if(buf[0] != 0){
+			n = strlen(buf)+1;
+			memmove(buf, buf+n, sizeof(buf)-n);
+		}
+		if(buf[0] == 0){
+			n = read(fd, buf, sizeof(buf)-1);
+			if(n <= 0)
+				break;
+			buf[n-1] = 0;
+			buf[n] = 0;
+		}
 		c = *buf;
 		if(c == 'c' && cson){
 			chartorune(&r, buf+1);
@@ -137,9 +145,17 @@ resetfb(void)
 }
 
 static void
+croak(void *, char *s)
+{
+	if(strncmp(s, "sys:", 4) == 0)
+		mson = 0;
+	noted(NDFLT);
+}
+
+static void
 usage(void)
 {
-	fprint(2, "usage: %s [-23dios] [-m dir] [-w map] [-x difficulty]\n", argv0);
+	fprint(2, "usage: %s [-23dos] [-m dir] [-w map] [-x difficulty]\n", argv0);
 	threadexits("usage");
 }
 
@@ -218,17 +234,14 @@ flush(void)
 void
 threadmain(int argc, char **argv)
 {
-	int n;
 	vlong t0, t, dt, Δ;
 	char *datdir = "/sys/games/lib/wl3d/";
 
-	n = 0;
 	step = mstep;
 	ARGBEGIN{
 	case '2': ext = "sd2"; ver = SOD; break;
 	case '3': ext = "sd3"; ver = SOD; break;
 	case 'd': ext = "wl1"; ver = WL1; break;
-	case 'i': n++; break;
 	case 'm': datdir = EARGF(usage()); break;
 	case 'o': ext = "sdm"; ver = SDM; break;
 	case 's': ext = "sod"; ver = SOD; break;
@@ -239,6 +252,7 @@ threadmain(int argc, char **argv)
 	}ARGEND;
 	dat(datdir);
 
+	notify(croak);
 	if(initdraw(nil, nil, "wl3d") < 0)
 		sysfatal("initdraw: %r");
 	resetfb();
@@ -251,7 +265,7 @@ threadmain(int argc, char **argv)
 	if(proccreate(kproc, nil, 8192) < 0 || proccreate(mproc, nil, 8192) < 0)
 		sysfatal("proccreate: %r");
 
-	init(n);
+	init();
 	t0 = Δ = 0;
 	for(;;){
 		if(nbrecv(reszc, nil) != 0){
@@ -259,8 +273,7 @@ threadmain(int argc, char **argv)
 				sysfatal("resize failed: %r");
 			resetfb();
 		}
-		if(step() < 0)
-			break;
+		step();
 		t = nsec();
 		dt = 0;
 		if(t0 != 0){
@@ -274,5 +287,4 @@ threadmain(int argc, char **argv)
 			Δ += (dt - Δ) / 100;
 		}
 	}
-	threadexitsall(nil);
 }

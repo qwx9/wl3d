@@ -11,8 +11,6 @@ u16int	bordercolor;
 
 int		fastpalette;				// if true, use outsb to set
 
-u8int		far	palette1[256][3],far palette2[256][3];
-
 //===========================================================================
 
 // asm
@@ -28,28 +26,6 @@ void VL_SetCRTC (s16int crtc);
 
 =============================================================================
 */
-
-
-/*
-=================
-=
-= VL_FillPalette
-=
-=================
-*/
-
-void VL_FillPalette (s16int red, s16int green, s16int blue)
-{
-	s16int	i;
-
-	outportb (PEL_WRITE_ADR,0);
-	for (i=0;i<256;i++)
-	{
-		outportb (PEL_DATA,red);
-		outportb (PEL_DATA,green);
-		outportb (PEL_DATA,blue);
-	}
-}
 
 /*
 ==================

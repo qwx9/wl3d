@@ -29,8 +29,6 @@
 #define MenuFadeIn()	VL_FadeIn(0,255,&gamepal,10)
 
 
-#define MENUSONG	14
-
 #ifndef SPEAR
 #define INTROSONG	7
 #else
