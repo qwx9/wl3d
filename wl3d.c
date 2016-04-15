@@ -16,8 +16,9 @@ void (*step)(void);
 Channel *csc, *kbc, *msc;
 
 enum{
-	BILLION = 1000000000,
-	MILLION = 1000000
+	Te9 = 1000000000,
+	Te6 = 1000000,
+	Td = Te9/Tb
 };
 static Point p0;
 static Rectangle fbr, grabr;
@@ -170,7 +171,6 @@ emalloc(ulong n)
 	return p;
 }
 
-/* use only for shortening buffers, no zeroing done */
 void *
 erealloc(void *p, ulong n)
 {
@@ -234,7 +234,7 @@ flush(void)
 void
 threadmain(int argc, char **argv)
 {
-	vlong t0, t, dt, Δ;
+	vlong t0, t, dt;
 	char *datdir = "/sys/games/lib/wl3d/";
 
 	step = mstep;
@@ -266,7 +266,7 @@ threadmain(int argc, char **argv)
 		sysfatal("proccreate: %r");
 
 	init();
-	t0 = Δ = 0;
+	t0 = nsec();
 	for(;;){
 		if(nbrecv(reszc, nil) != 0){
 			if(getwindow(display, Refnone) < 0)
@@ -274,17 +274,12 @@ threadmain(int argc, char **argv)
 			resetfb();
 		}
 		step();
+		t0 += Td;
 		t = nsec();
-		dt = 0;
-		if(t0 != 0){
-			dt = BILLION/Tb - (t - t0) - Δ;
-			if(dt >= MILLION)
-				sleep(dt/MILLION);
-		}
-		t0 = nsec();
-		if(dt != 0){
-			dt = (t0 - t) - (dt / MILLION) * MILLION;
-			Δ += (dt - Δ) / 100;
-		}
+		dt = (t0 - t) / Te6;
+		if(dt > 0)
+			sleep(dt);
+		else
+			t0 = t;
 	}
 }
