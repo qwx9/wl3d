@@ -9,8 +9,7 @@ uchar **exts, **dems, **epis;
 Dat *wals, *sprs;
 
 int scale, npx;
-uchar *px;
-static uchar pxb[Va];
+uchar *px, pxb[Va];
 static Col *fcol;
 static u32int *fref;
 static int fi, fo, fdt;

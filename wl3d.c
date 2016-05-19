@@ -250,13 +250,13 @@ threadmain(int argc, char **argv)
 	default:
 		usage();
 	}ARGEND;
-	dat(datdir);
-
 	notify(croak);
-	initsnd();
 	if(initdraw(nil, nil, "wl3d") < 0)
 		sysfatal("initdraw: %r");
+	pal = pals[C0];
 	resetfb();
+	dat(datdir);
+	initsnd();
 	kbc = chancreate(sizeof(int), 20);
 	csc = chancreate(sizeof(Rune), 20);
 	reszc = chancreate(sizeof(int), 2);

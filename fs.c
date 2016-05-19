@@ -943,7 +943,19 @@ gfx(void)
 	Bterm(dat);
 }
 
-void
+static void
+loadscr(void)
+{
+	Biobuf *bf;
+
+	ext = ver < SDM ? "wl6" : "sod";
+	bf = bopen("intro.", OREAD);
+	eread(bf, pxb, Va);
+	out();
+	Bterm(bf);
+}
+
+static void
 fixpal(void)
 {
 	u32int *p, *s;
@@ -965,15 +977,17 @@ dat(char *dir)
 	rfork(RFNAMEG);
 	if(bind(".", dir, MBEFORE|MCREATE) < 0 || chdir(dir) < 0)
 		fprint(2, "dat: %r\n");
+
+	if(ver >= SDM)
+		fixpal();
+	e = ext;
+	loadscr();
+	ext = e;
 	vswap();
 	gamemaps();
-	e = ext;
 	if(ver == SOD)
 		ext = "sod";
 	audiot();
 	gfx();
 	ext = e;
-	if(ver >= SDM)
-		fixpal();
-	pal = pals[C0];
 }

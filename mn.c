@@ -31,6 +31,7 @@ static Score sc[] = {
 };
 
 enum{
+	Lload,
 	Lintro,
 	Ltitle,
 	Lcreds,
@@ -509,6 +510,7 @@ static Seq *mqp,
 	dieq[] = {{10, fadeout}, {1, die}};
 
 static Menu *mp, ml[] = {
+	[Lload] {nil, decq, decq+nelem(decq), ml+Lintro, &fblk},
 	[Lintro] {intro, introq, introq+nelem(introq), ml+Ltitle, &fblk},
 	[Ltitle] {title, titleq, titleq+nelem(titleq), ml+Lcreds, &fblk},
 	[Lcreds] {creds, loopq, loopq+nelem(loopq), ml+Lscore, &fblk},
@@ -568,7 +570,7 @@ init(void)
 	mcol[Doff] = mcol[Dbg] ^ 6;
 	mcol[Dbrd] = mcol[Dbg] ^ 4;
 	mcol[Dbrd2] = mcol[Dbg] ^ 14;
-	reset(ml+Lintro);
+	reset(ml+Lload);
 	cson++;
 	mus(ver<SDM ? Mintro : Mtower);
 }

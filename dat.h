@@ -35,7 +35,7 @@ enum{
 	Vt = Va * Vbp,
 	Tb = 70
 };
-extern uchar *px;
+extern uchar *px, pxb[];
 extern int npx, scale;
 
 typedef struct Col Col;
