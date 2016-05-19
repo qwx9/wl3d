@@ -1,0 +1,170 @@
+.TH WL3D 1
+.SH NAME
+wl3d \- Wolfenstein 3-D engine port
+.SH SYNOPSIS
+.B wl3d
+[
+.B -23dos
+] [
+.B -m
+.I datadir
+] [
+.B -w
+.I map
+] [
+.B -x
+.I 1-4
+]
+.SH DESCRIPTION
+.I Wl3d
+is a port of id Software's Wolfenstein 3-D engine.
+In short, Wolfenstein 3-D is...
+.PP
+.RS
+"a masterpiece of wild action and unbelievable graphics, bringing you virtual reality at its best, as you move
+.RI though (sic)
+a sensationally realistic 3-D world of amazing detail.
+It's World War II, and you are B.J. Blazkowicz - the Allies' bad boy of espionage, a terminal action seeker built for abuse with an attitude to match.
+There's just one small problem: you've been captured by the Nazis, tortured, and imprisoned beneath the Castle Wolfenstein where you await execution.
+Bummer.
+Now, you must do anything to escape from the belly of a Nazi dungeon - or die trying."
+.RE
+.PP
+.I Wl3d
+requires several data files to operate, containing sound effects, music, and several types of graphics.
+These are detailed in
+.IR wl3d (6) .
+Two additional files contain the initial loading screens,
+.L intro.wl6
+and
+.LR intro.sod .
+The first is used in Wolfenstein 3-D related game versions, the second in Spear of Destiny related game versions.
+.PP
+At startup, the current working directory is bound over
+.I datadir
+(default
+.BR /sys/games/lib/wl3d )
+with the
+.B MBEFORE
+and
+.B MCREATE
+flags.
+Data files can thus be contained in a system directory while the config and save files' location, which are user-specific, can be left at the user's discretion.
+If these user-specific files exist and
+.I wl3d
+fails to parse them, they are not overwritten.
+.PP
+Several options modify the program's behavior on startup.
+If the
+.B -w
+parameter is used, the game starts immediately at map number
+.IR map ,
+and
+.B -x
+optionally sets the game difficulty.
+.PD
+.SS Game versions
+The engine supports several game versions, each requiring different data files.
+These also control parts of the program's behavior, such as level ordering and interface drawing.
+Each corresponds to a specific data file extension.
+.PD
+The default game version is Wolfenstein 3-D 1.4 retail, and the data files use the
+.L wl6
+extension.
+Others are set by the following options:
+.TF -2
+.TP
+.B -d
+Wolfenstein 3-D 1.4 shareware
+.TP
+.B -s
+Spear of Destiny
+.TP
+.B -o
+Spear of Destiny demo
+.TP
+.B -2
+Spear of Destiny Mission 2: Return to Danger
+.TP
+.B -3
+Spear of Destiny Mission 3: The Ultimate Challenge
+.PD
+.PP
+The respective data file extensions are
+.LR wl1 ,
+.LR sod ,
+.LR sdm ,
+.LR sd2 ,
+.LR sd3 .
+.PD
+Other game versions are unsupported.
+.PD
+.SS Sound and music
+.I Wl3d
+uses
+.SM OPL2
+chip emulation based on fmopl.c from the
+.SM MAME
+project for music and sound effects.
+Digital sound effects are resampled prior to playback.
+PC speaker sound effects are unimplemented and ignored.
+In case
+.L /dev/audio
+(see
+.IR audio (3))
+is inaccessible, audio is ignored.
+.PD
+.SS Differences
+Most of
+.I wl3d
+has been rewritten from scratch, and some parts have been implemented differently from the reference.
+Most importantly, individual data lumps are no longer read and cached as needed, but rather all loaded into memory, uncompressed, and in some cases converted, at startup.
+This bumps the required amount of free memory up to around 4 megabytes, depending on the game version and architecture.
+In addition, a single executable handles all supported game versions.
+.PP
+Intro screens are now additional data files to be loaded on start up, rather than being compiled in, and must therefore be installed in the
+.IR datadir .
+Also unlike the reference implementation, these are displayed during data file loading, and are immediately faded out of afterwards.
+.PP
+Copy protection code and the Spear of Destiny Jukebox have been excised.
+.PP
+Menus are implemented differently, and some have been altered in functionality.
+.PP
+Game keys are no longer set in the options menu, but rather in the config file.
+A single global configuration file is used, rather than a version dependent one.
+In addition, while savegames are in a compatible format, config files are not.
+.SH FILES
+.TF /sys/games/lib/wl3d/*
+.TP
+.B /sys/games/lib/wl3d/*
+wl3d data files
+.SH "SEE ALSO"
+.IR doom (1) ,
+.IR opl2 (1) ,
+.IR bind (2) ,
+.IR pipe (2) ,
+.IR audio (3) ,
+.IR wl3d (6)
+.SH BUGS
+Timing code may be off, but it's difficult to tell because of other implementation differences with the original engine.
+.PP
+Because of limitations in fmopl.c-based
+.SM OPL2
+emulation, Adlib sound effects crack too much during playback.
+.PP
+With sound effects enabled, the
+.SM OPL2
+emulation runs on every frame and
+.L /dev/audio
+is written to, even when no sound is playing.
+.PP
+The upsampling implementation for digital sound effects is overkill given the number of constraints.
+.PP
+No special handling is done if the program is unable to run at a framerate of 70 Hz.
+.SH HISTORY
+id Software's Wolfenstein 3-D was released for
+.SM MS-DOS
+on May 5, 1992.
+.br
+.I Wl3d
+appeared first for 9front (May, 2016), based on the source code release of Wolfenstein 3-D's engine from July 21, 1995.

@@ -1,0 +1,526 @@
+.TH WL3D 6
+.SH NAME
+wl3d \- Wolfenstein 3-D data formats
+.SH DESCRIPTION
+Several different types of data are used in Wolfenstein 3-D, each stored in specific ways.
+In the description of the data files below, version-specific extensions are omitted.
+Those files are:
+.TF gamemaps
+.TP
+.B audiohed
+PC Speaker, Adlib, digital effects and music offsets in
+.B audiot
+.TP
+.B audiot
+uncompressed PC Speaker, Adlib, digital effects and music lumps
+.TP
+.B gamemaps
+maps lump
+.TP
+.B maphead
+map offsets in
+.B gamemaps
+.TP
+.B vgadict
+huffman dictionary for lumps contained in
+.B vgagraph
+.TP
+.B vgagraph
+fonts, pictures, tiles and screens, encoded for
+.SM VGA
+graphics cards
+.TP
+.B vgahead
+graphics offsets in
+.B vgagraph
+.TP
+.B vswap
+wall textures, sprites and raw pcm audio
+.PD
+.PP
+Integers are stored in little-endian byte order.
+In the notation for file and lump formats below, the number of bytes in a field is given in brackets after the field name.
+The notation
+.IR a [ s ]
+denotes an unterminated array of
+.I s
+.SM ASCII
+characters.
+Empty brackets denote a variable-length field.
+Single-field n-dimensional arrays are defined using n sets of brackets containing the number of array elements, then the size of an element in bytes also between brackets.
+Curly braces surrounding multiple fields denote arrays of multiple fields.
+These are adjoined by the number of elements in brackets.
+In the interest of clarity, complex fields are usually denoted as two-dimensional arrays of variable-length element size, and defined subsequently.
+.PP
+In addition, game versions are denoted as
+.B wl1
+for Wolfenstein 3-D 1.4 shareware,
+.B wl6
+for Wolfenstein 3-D 1.4 retail,
+.B sdm
+for Spear of Destiny 1.0 demo and
+.B sod
+for Spear of Destiny 1.0 retail (including mission packs).
+.SH SOUND EFFECTS AND MUSIC
+.SS Audiohed
+.RS
+.IR start [4]
+{
+.IR end [4]
+.IR starts [4]
+.RI }[ nsfx*3-1 ]
+.IR end [4]
+.RE
+.PP
+.B Audiohed
+contains
+.I start
+and
+.I end
+offsets into
+.B audiot
+for sound effects.
+Sound effects are stored contiguously, and the
+.I end
+offset of one lump is the
+.I start
+offset of the following, such as the last offset is the
+.I end
+offset of the last lump.
+.PP
+The order and number of offsets is significant.
+The offsets reference an identical number of PC Speaker, then of Adlib, then of digital sound lumps.
+Any following offsets reference music lumps.
+.PP
+The number of sound effects and music lumps, as well as their references, are hardcoded per-version in the engine:
+.TF wl1/wl6
+.TP
+.B wl1/wl6
+87 sound effects, 27 music lumps
+.TP
+.B sdm/sod
+81 sound effects, 24 music lumps
+.PD
+.PP
+No checking of their correct order or number is done, and any extra offsets are ignored.
+Zero-sized lumps are valid and are simply never read.
+Digital sound effect offsets are always ignored, but must exist.
+Some sound effects and music music tracks are never used.
+.SS Audiot
+.RS
+.IR pc [ nsfx ][]
+.IR al [ nsfx ][]
+.IR dig [ nsfx ][]
+.IR imf [ nimf ][]
+.RE
+.PP
+.B Audiot
+contains
+.I nsfx
+uncompressed sound effects, and
+.I nimf
+music lumps in
+.SM IMF
+format.
+Each sound effect has a PC Speaker, Adlib and digital version.
+.PP
+Each types of lump is stored in a specific format detailed below.
+No digital sounds are ever stored in
+.BR audiot ,
+having raw pcm lumps in
+.B vswap
+instead.
+.SS PC sound effect
+.RS
+.IR size [4]
+.IR priority [2]
+.IR freq [ size ]
+.IR ignored [1]
+.RE
+.PP
+Undocumented here.
+.SS Adlib sound effect
+.RS
+.IR size [4]
+.IR priority [2]
+.IR cfg [10]
+.IR ignored [6]
+.IR octave [1]
+.IR pitch [ size ]
+.IR tag []
+.RE
+.PP
+The sampling rate is 140 Hz.
+.I Pitch
+is an array of 1-byte values to be written to an
+.SM OPL2
+chip's first channel registers, of size
+.IR size .
+A value of zero corresponds to writing a zero to
+.SM OPL2
+register
+.LR 0xb0 .
+Any different value is written to register
+.L 0xa0
+before writing
+.I octave
+to its corresponding 3 bit field in register
+.LR 0xb0 .
+The key is enabled simultaneously.
+.PP
+.I Cfg
+is a byte array of values to be written to a list of registers, configuring the first channel's operators.
+These registers are, in order:
+.LR 0x20 ,
+.LR 0x23 ,
+.LR 0x40 ,
+.LR 0x43 ,
+.LR 0x60 ,
+.LR 0x63 ,
+.LR 0x80 ,
+.LR 0x83 ,
+.LR 0xe0 ,
+.LR 0xe3 .
+.PP
+Since only one Adlib sound effect can play at any one time, if an effect is already being played and its
+.I priority
+is lower than the new one, it is interrupted, then substituted.
+.PP
+At the end of playback, the engine resets the values of the instrument registers and writes a zero to registers
+.L 0xb0
+and
+.LR 0xc0 .
+.PP
+.I Ignored
+contains 6 fields only used by Muse.
+.I Tag
+is a variable-length field suffixed by Muse and is also ignored.
+.SS Digital sound effect
+No such lump is ever stored in
+.BR audiot .
+Regardless, the appropriate number of references in
+.B audiohed
+must exist (as zero-sized lumps).
+.PP
+Instead, sound effects are stored as raw pcm in
+.BR vswap ,
+in a format detailed elsewhere.
+.SS Music
+.RS
+.IR size [2]
+{
+.IR register [1]
+.IR value [1]
+.IR delay [2]
+.RI }[ size ]
+.IR tag []
+.RE
+.PP
+Music is stored in the
+.SM "id software Music Format",
+or
+.SM IMF
+for short.
+.PP
+.I Size
+is the total length of actual music data and must be a multiple of 4.
+The data is a series of commands to be written to an
+.SM OPL2
+compatible chip.
+Each associates a
+.I register
+and
+.I value
+pair with a
+.IR delay ,
+expressed in multiples of 1/700 seconds.
+A zero delay means to execute the next command immediately.
+.I Tag
+is a variable length field suffixed by Muse, and is ignored.
+.SH MAPS
+.SS Maphead
+.RS
+.IR tag [2]
+.IR off [60][4]
+.RE
+.PP
+.B Maphead
+is an array of file offsets into
+.BR gamemaps .
+.I Tag
+is a special value used during
+.SM RLEW
+decompression, usually
+.LR 0xabcd ,
+and thus also contained in the decompressed map lump.
+.PP
+While the number of offsets is constant, the number of maps actually contained in
+.B gamemaps
+is version dependent:
+.TF wl1
+.TP
+.B wl1
+10 maps
+.TP
+.B wl6
+60 maps
+.TP
+.B sdm
+2 maps
+.TP
+.B sod
+20 maps
+.PD
+.PP
+Missing maps have an offset of zero.
+As zero offsets are not handled specially, references of these maps will point to the first map.
+.PP
+An offset of 0xffffffff marks the map lump as sparse.
+In this case, the engine will not initialize the map's reference, resulting in a crash if it should be accessed.
+.IR wl3d (1)
+exits if it reads such an offset.
+.SS Gamemaps
+.RS
+{
+.IR pls [3][4]
+.IR pll [3][2]
+.IR dx [2]
+.IR dy [2]
+.IR name [ s ]
+.RI }[60]
+.IR planes [3][ dx * dy ]
+.RE
+.PP
+Maps are decomposed into three planes.
+.B Gamemaps
+holds an array of map headers, followed by doubly-compressed plane data.
+.IR Pls and pll
+are respectively arrays of offsets and lengths for each plane.
+Only the first two planes are ever used.
+.IR dx and dy
+are the planes' dimensions, and must both be 64.
+.I Name
+is an unused unterminated
+.SM ASCII
+string.
+.I Planes
+stores contiguously each plane's data.
+.SS Compression
+Each map plane is first compressed using
+.SM RLEW,
+then further using what is eponymously refered to as
+.MS Carmack compression.
+.SH GRAPHICS
+Graphics are either static data loaded in the executable, or huffman-compressed lumps contained in
+.BR vgagraph .
+.B Vgahead
+is used in conjunction with
+.B vgadict
+to read and uncompress each lump upon retrieval.
+.SS Vgahead
+.RS
+.IR off [ np ][3]
+.RE
+.PP
+.I Vgahead
+is an array of 3 byte offsets into
+.I vgagraph
+for all lumps contained therein.
+.SS Vgadict
+.RS
+{
+.IR a [2]
+.IR b [2]
+.RI }[256]
+.RE
+.PP
+This file contains a dictionary used for decompression of Huffman-encoded lumps in
+.IR vgagraph .
+.SS Vgagraph
+.RS
+.IR pt [ np ][]
+.IR fnt [2][]
+.IR pic [ np ][]
+.IR t8 []
+.IR scr [ n ][]
+.RE
+.PP
+.I Vgagraph contains a series of Huffman-encoded graphics lumps of various types.
+Each lump is prefixed by its uncompressed size.
+The first lump,
+.IR pt ,
+contains a the sizes for
+.I np
+pictures, retrieved from
+.IR pic .
+.I Np can be obtained from
+.IR pt 's
+uncompressed size.
+The following sections detail each lump type.
+.SS Fonts
+.RS
+.IR dy [2]
+.IR off [256][2]
+.IR dx [256]
+.RE
+.PP
+Fonts are a collection of 256 variable-width
+.SM ASCII
+characters.
+.I Dy
+is the global height in pixels of each one.
+Every character, indexed 0-255, also has a corresponding width in pixels in
+.I dx
+and a byte offset into the lump in
+.I off
+containing its pixel data.
+The data is an array of bytes of size
+.I dy
+.L *
+.IR dx [ n ],
+to be translated to the character's location on the screen.
+A pixel's color is overwritten with the engine's current foreground color when a non-zero byte in the character's pixel data occurs.
+.PP
+Exactly two fonts are always defined.
+.SM ASCII
+characters within the printable range have valid definitions at the same locations.
+Some characters for special use are defined beyond, such as fixed-width numerals.
+.SS Pictures
+.RS
+.BR pt :
+.IR dx [2]
+.IR dy [2]
+.br
+.BR pic :
+.IR p [dy][dx]
+.RE
+.PP
+.I Pt
+is a separate lump containing an array of paired integers, specifying the width and height in pixels of each picture.
+The number of records in that lump corresponds to the number of picture lumps in
+.IR pic .
+Each picture is then a Huffman-encoded 
+.I dx
+by
+.I dy
+graphic in
+.SM VGA
+format, that is, with pixels stored in 4
+.SM VGA
+color planes rather than contiguously.
+.SS Tiles
+Tiles used in Wolfenstein 3-D are exclusively of size 8x8, and thus stored as arrays of 64 bytes.
+All tiles are stored contiguously in a single lump following the last pic lump.
+Their number is version dependent, but only the first 8 tiles are ever used.
+.PP
+The tile lumps in Wolfenstein 3-D and Spear of Destiny versions all decode incorrectly and result in reads past the allocated buffer (or past the end of the lump).
+.IR Wl3d (1)
+skips this lump entirely.
+.SS Screens and demos
+.RS
+.IR misc [ ns ][]
+.IR demo [ nd ][]
+.IR end [ ne ][]
+.RE
+.PP
+.I Misc
+contains fullscreen graphics and additional palettes used in specific hardcoded and version dependent instances.
+.I Demo
+is an array of 4 demos (1 for
+.BR sdm ).
+Finally,
+.I end
+contains other fullscreen graphics for specific uses, notably in epilogue sequences.
+.SS Static data
+Some of the graphics data is stored in the executable and thus cannot be altered.
+These are the base color palette and intro screen.
+The intro screen is a static screen displayed on startup while verifying available memory and hardware, changed depending on the results.
+Both have a
+.B wl1/wl6
+and a
+.B sdm/sod
+version, but only one is present.
+.SS Palettes
+.RS
+{
+.IR r [1]
+.IR g [1]
+.IR b [1]
+.RI }[256]
+.RE
+.PP
+Palettes in Wolfenstein 3-D are arrays of 768 bytes arranged in triplets of red, green and blue values.
+Besides the palette contained in the executable and other generated ones, pic lumps may be palettes used in specific, hard-coded instances.
+.SH VSWAP
+.RS
+.IR nch [2]
+.IR so [2]
+.IR po [2]
+.IR off [ nch ][4]
+.IR sz [ nch ][2]
+.IR wl [ so ][]
+.IR sp [ po-so ][]
+.IR pcm [ nch-po ][]
+.RE
+.PP
+.B Vswap
+is divided into three sections, each subdivided into lumps, and then again into chunks.
+.I Nch
+is the total number of chunks in the file.
+.I So
+and
+.I po
+are then the chunk indices denoting the start of respectively the sprite and pcm sections.
+Immediately following are two arrays describing each chunk,
+.IR off
+for file offsets, and
+.IR sz ,
+for lengths in bytes.
+.PP
+The rest of the file contains section data.
+.SS Wall textures
+[words]
+.SS Sprites
+[words]
+.SS Raw pcm
+.RS
+{
+.IR chunk [ size/4096 ][]
+.RI }[ npcm ]
+{
+.IR index [2]
+.IR size [2]
+.RI }[ npcm ]
+.RE
+.PP
+Each sample is a 8 bit unsigned integer to be played back at a sampling rate of 7 kHz.
+Pcm lumps are segmented into chunks of 4096 bytes or less.
+.PP
+The very last chunk in
+.B vswap
+is a table of two 16 bit integers per pcm lump.
+.I Index
+is the zero-based index of the lump's first chunk relative to the first pcm chunk.
+.I Size
+is the sum of lengths of the lump's chunks.
+.PP
+The references for each pcm sound effect (different than those for regular sound effects), as well as their number, are hardcoded in the engine:
+.TF wl1
+.TP
+.B wl1
+21 pcms
+.TP
+.B wl6
+46 pcms
+.TP
+.B sdm
+26 pcms
+.TP
+.B sod
+40 pcms
+.SH "SEE ALSO"
+.IR opl2 (1) ,
+.IR pcmconv (1) ,
+.IR wl3d (1)
+.PP
+The YMF262 (OPL3) programming manual.

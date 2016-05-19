@@ -4,7 +4,7 @@
 #include "fns.h"
 
 Fnt fnts[2], *fnt;
-Pic *pics, *pice;
+Pic *pics;
 uchar **exts, **dems, **epis;
 Dat *wals, *sprs;
 

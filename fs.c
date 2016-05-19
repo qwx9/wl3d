@@ -828,11 +828,12 @@ audiot(void)
 	mungesfx();
 }
 
-static void
+static int
 piched(Biobuf *dat, Biobuf *aux, u16int hf[])
 {
 	u32int v, n;
 	uchar *u, *p;
+	Pic *d, *e;
 
 	v = get24(aux);
 	Bseek(dat, v, 0);
@@ -840,31 +841,35 @@ piched(Biobuf *dat, Biobuf *aux, u16int hf[])
 	p = u = emalloc(n);
 	unhuff(dat, hf, u, n);
 	n /= 4;
-	pics = emalloc(n * sizeof *pics);
-	for(pice=pics; pice<pics+n; pice++){
-		pice->x = GBIT16(p), p+=2;
-		pice->y = GBIT16(p), p+=2;
+	d = pics = emalloc(n * sizeof *pics);
+	e = d + n;
+	while(d < e){
+		d->x = GBIT16(p), p+=2;
+		d++->y = GBIT16(p), p+=2;
 	}
 	free(u);
+	return n;
 }
 
 static void
-getpics(Biobuf *dat, Biobuf *aux, u16int hf[])
+getpics(Biobuf *dat, Biobuf *aux, u16int hf[], int n)
 {
-	u32int v, n;
+	u32int v, m;
 	uchar *u, *p;
-	Pic *s;
+	Pic *s, *e;
 
-	for(s=pics; s<pice; s++){
+	s = pics;
+	e = s + n;
+	while(s < e){
 		v = get24(aux);
 		Bseek(dat, v, 0);
-		n = get32(dat);
-		u = emalloc(n);
-		unhuff(dat, hf, u, n);
-		p = emalloc(n);
+		m = get32(dat);
+		u = emalloc(m);
+		unhuff(dat, hf, u, m);
+		p = emalloc(m);
 		deplane(p, u, s->x*s->y/4);
 		free(u);
-		s->p = p;
+		s++->p = p;
 	}
 	pict = picts[ver];
 }
@@ -924,6 +929,7 @@ getexts(Biobuf *dat, Biobuf *aux, u16int hf[])
 static void
 gfx(void)
 {
+	int n;
 	u16int hf[512], *h;
 	Biobuf *dat, *aux;
 
@@ -934,9 +940,9 @@ gfx(void)
 
 	aux = bopen("vgahead.", OREAD);
 	dat = bopen("vgagraph.", OREAD);
-	piched(dat, aux, hf);
+	n = piched(dat, aux, hf);
 	getfnts(dat, aux, hf);
-	getpics(dat, aux, hf);
+	getpics(dat, aux, hf, n);
 	get24(aux);	/* ignore bullshit tile lump full of lies */
 	getexts(dat, aux, hf);
 	Bterm(aux);

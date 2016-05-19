@@ -74,7 +74,7 @@ struct Pic{
 	int y;
 	uchar *p;
 };
-extern Pic *pics, *pice;
+extern Pic *pics;
 extern uchar *pict;
 
 struct Fnt{
