@@ -446,8 +446,8 @@ enum{
 	Planesz = Mapdxy * Mapdxy * Nplane,
 	Mapsz = Planesz * Nplane
 };
-static Dat *snds;
-static uchar *swpb, *sndb, *mapb;
+static Dat *pcms;
+static uchar *swpb, *mapb;
 static int alofs;
 static u16int rlewtag;
 
@@ -642,18 +642,18 @@ packpcm(Biobuf *bf, Dat *e, u16int so, u16int po)
 	while(++p < e){
 		Bseek(bf, 2, 1);
 		n = get16(bf);
-		while(s->sz < n)
-			s->sz += p++->sz;
-		while(p->sz == 0 && p < e-1)
+		while(s->e < s->p + n)
+			s->e = p++->e;
+		while(p->p == nil && p < e-1)
 			p++;
 		s++;
-		s->sz = p->sz;
 		s->p = p->p;
+		s->e = p->e;
 	}
 	n = s-wals;
 	wals = erealloc(wals, n * sizeof *wals);
 	sprs = wals + so;
-	spre = wals + po;
+	pcms = wals + po;
 }
 
 static void
@@ -667,24 +667,26 @@ vswap(void)
 
 	bf = bopen("vswap.", OREAD);
 	n = get16(bf);
-	wals = emalloc((n-1) * sizeof *wals);
-	e = wals + n-1;
+	s = wals = emalloc((n-1) * sizeof *wals);
+	e = s + n-1;
 	v = get16(bf);
 	w = get16(bf);
 	p = o = emalloc(n * sizeof *o);
 
 	while(p < o+n)
 		*p++ = get32(bf);
-	for(s=wals; s<wals+n-1; s++)
-		s->sz = get16(bf);
+	while(s < e)
+		s++->e = (uchar*)(uintptr)get16(bf);
 	u = swpb = emalloc(bsize(bf) - Bseek(bf, 0, 1));
 	Bseek(bf, 2, 1);
 	for(p=o, s=wals; s<e; s++, p++){
-		if(s->sz == 0)
+		n = (uintptr)s->e;
+		if(n == 0)
 			continue;
 		Bseek(bf, *p, 0);
 		s->p = u;
-		u += eread(bf, u, s->sz);
+		s->e = u + n;
+		u += eread(bf, u, n);
 	}
 	Bseek(bf, *p, 0);
 	free(o);
@@ -699,30 +701,29 @@ gamemaps(void)
 {
 	int n;
 	u32int v, p0, p1;
-	uchar *u;
+	uchar *u, **d, **e;
 	Biobuf *hed, *dat;
 
 	hed = bopen("maphead.", OREAD);
 	dat = bopen("gamemaps.", OREAD);
 	n = ver==WL6 ? 60 : ver==WL1 ? 10 : ver==SDM ? 2 : 20;
 	rlewtag = get16(hed);
-	maps = emalloc(n * sizeof *maps);
-	mapb = emalloc(n * Mapsz);
-
-	for(mape=maps, u=mapb; mape<maps+n; mape++){
+	d = maps = emalloc(n * sizeof *maps);
+	e = d + n;
+	u = mapb = emalloc(n * Mapsz);
+	while(d < e){
 		v = get32(hed);
 		if(v == 0xffffffff)
-			sysfatal("sparse map %zud", mape-maps);
+			sysfatal("sparse map %zud", d-maps);
 		Bseek(dat, v, 0);
 		p0 = get32(dat);
 		p1 = get32(dat);
 		Bseek(dat, 10, 1);
 		if(get16(dat) != Mapdxy || get16(dat) != Mapdxy)
 			sysfatal("invalid map size");
-		mape->p = u;
+		*d++ = u;
 		u += uncarmack(dat, (u16int*)u, p0);
 		u += uncarmack(dat, (u16int*)u, p1);
-		mape->sz = u - mape->p;
 	}
 	Bterm(hed);
 	Bterm(dat);
@@ -754,56 +755,73 @@ mungesfx(void)
 	}
 	p = pcmt[ver<SDM ? 0 : 1];
 	e = p + (ver==WL6 ? 46 : ver==WL1 ? 21 : ver==SDM ? 26 : 40);
-	for(pcm=spre; p<e; p++, pcm++)
+	for(pcm=pcms; p<e; p++, pcm++)
 		if(*p != Send)
 			sfxs[*p].pcm = pcm;
 	sfxs[Sscream3].pcm = sfxs[ver<SDM ? Sscream2 : Sscream4].pcm;	/* why */
 }
 
 static void
+al(Biobuf *dat, Biobuf *aux, int n)
+{
+	int m;
+	u32int v;
+	uchar *p;
+	Sfx *s, *e;
+
+	s = sfxs = emalloc(n * sizeof *sfxs);
+	e = s + n;
+	while(s < e){
+		v = get32(aux);
+		Bseek(dat, v, 0);
+		m = get32(dat);
+		s->pri = get16(dat);
+		eread(dat, s->inst, sizeof s->inst);
+		Bseek(dat, 6, 1);
+		s->blk = (get8(dat) & 7) << 2 | 1<<5;
+		p = emalloc(m);
+		eread(dat, p, m);
+		s->p = p;
+		s->e = p + m;
+		s++;
+	}
+}
+
+static void
+imf(Biobuf *dat, Biobuf *aux)
+{
+	int n;
+	uchar *p;
+	u32int v;
+	Dat *d, *e;
+
+	n = ver < SDM ? 27 : 24;
+	d = imfs = emalloc(n * sizeof *imfs);
+	e = d + n;
+	while(d < e){
+		v = get32(aux);
+		Bseek(dat, v, 0);
+		n = get16(dat);
+		d->p = p = emalloc(n);
+		d->e = p + n;
+		eread(dat, p, n);
+		d++;
+	}
+}
+
+static void
 audiot(void)
 {
-	int n, c;
-	u32int v, w;
-	uchar *u;
-	Sfx *s;
+	int n;
 	Biobuf *hed, *dat;
 
 	hed = bopen("audiohed.", OREAD);
 	dat = bopen("audiot.", OREAD);
 	n = ver < SDM ? Send : Ssend;
-	sfxs = emalloc(n * sizeof *sfxs);
-	sfxe = sfxs + n;
-	u = sndb = emalloc(bsize(dat));
-	v = get32(hed);
-	for(c=0, s=sfxs; s<sfxe; s++){
-		w = get32(hed);
-		Bseek(dat, v, 0);
-		if(c++ < n){
-			s->pc.sz = w-v;
-			s->pc.p = u;
-		}else{
-			s->al.sz = w-v;
-			s->al.p = u;
-		}
-		u += eread(dat, u, w-v);
-		v = w;
-		if(c == n)
-			s = sfxs-1;
-	}
-
-	Bseek(hed, (n-1)*4, 1);
-	n = ver < SDM ? 27 : 24;
-	imfs = emalloc(n * sizeof *imfs);
-	v = get32(hed);
-	for(imfe=imfs; imfe<imfs+n; imfe++){
-		w = get32(hed);
-		Bseek(dat, v, 0);
-		imfe->sz = w-v;
-		imfe->p = u;
-		u += eread(dat, u, w-v);
-		v = w;
-	}
+	Bseek(hed, n*4, 0);
+	al(dat, hed, n);
+	Bseek(hed, n*4, 1);
+	imf(dat, hed);
 	Bterm(hed);
 	Bterm(dat);
 
@@ -847,7 +865,6 @@ getpics(Biobuf *dat, Biobuf *aux, u16int hf[])
 		deplane(p, u, s->x*s->y/4);
 		free(u);
 		s->p = p;
-		s->sz = n;
 	}
 	pict = picts[ver];
 }
@@ -859,9 +876,11 @@ getfnts(Biobuf *dat, Biobuf *aux, u16int hf[])
 	u32int v, n;
 	uchar *u, *p;
 	char *w;
-	Fnt *f;
+	Fnt *f, *e;
 
-	for(f=fnts; f<fnts+2; f++){
+	f = fnts;
+	e = f + 2;
+	while(f < e){
 		v = get24(aux);
 		Bseek(dat, v, 0);
 		n = get32(dat);
@@ -874,9 +893,9 @@ getfnts(Biobuf *dat, Biobuf *aux, u16int hf[])
 			*w = *p++;
 		n -= p-u;
 		f->p = emalloc(n);
-		f->sz = n;
 		memcpy(f->p, p, n);
 		free(u);
+		f++;
 	}
 }
 
@@ -884,23 +903,22 @@ static void
 getexts(Biobuf *dat, Biobuf *aux, u16int hf[])
 {
 	int n, m;
-	uchar *u;
+	uchar *u, **d, **e;
 	u32int v;
 
 	n = (bsize(aux) - Bseek(aux, 0, 1)) / 3 - 1;
-	exts = emalloc(n * sizeof *exts);
-	for(exte=exts; exte<exts+n; exte++){
+	d = exts = emalloc(n * sizeof *exts);
+	e = d + n;
+	while(d < e){
 		v = get24(aux);
 		Bseek(dat, v, 0);
 		m = get32(dat);
 		u = emalloc(m);
 		unhuff(dat, hf, u, m);
-		exte->p = u;
-		exte->sz = m;
+		*d++ = u;
 	}
-	dems = exts + (ver==WL6 || ver==SDM ? 3 : ver==SOD ? 13 : 0);
-	deme = dems + (ver==WL6 || ver==SOD ? 4 : ver==SDM ? 1 : 0);
-	epis = exts + (ver==WL6 ? 7 : 17);
+	dems = exts + (ver < SOD ? 3 : 13);
+	epis = dems + (ver == SDM ? 1 : 4);
 }
 
 static void
@@ -942,16 +960,19 @@ fixpal(void)
 void
 dat(char *dir)
 {
+	char *e;
+
 	rfork(RFNAMEG);
 	if(bind(".", dir, MBEFORE|MCREATE) < 0 || chdir(dir) < 0)
 		fprint(2, "dat: %r\n");
 	vswap();
 	gamemaps();
+	e = ext;
 	if(ver == SOD)
 		ext = "sod";
 	audiot();
 	gfx();
-
+	ext = e;
 	if(ver >= SDM)
 		fixpal();
 	pal = pals[C0];

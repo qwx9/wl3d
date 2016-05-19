@@ -490,26 +490,6 @@ int LoadTheGame(s16int file,s16int x,s16int y)
 	return true;
 }
 
-//===========================================================================
-
-/*
-==========================
-=
-= ShutdownId
-=
-= Shuts down all ID_?? managers
-=
-==========================
-*/
-
-void ShutdownId (void)
-{
-	SD_Shutdown ();
-}
-
-
-//===========================================================================
-
 /*
 ==================
 =
@@ -671,7 +651,6 @@ void InitGame (void)
 	s16int                     i,x,y;
 	u16int        *blockstart;
 
-	SD_Startup ();
 	mapon = -1;
 
 //
@@ -803,8 +782,6 @@ void Quit (char *error)
 	 screen = Eerror;
 	}
 
-	ShutdownId ();
-
 	if (error && *error)
 	{
 	  movedata ((u16int)screen,7,0xb800,0,7*160);
@@ -887,6 +864,7 @@ void    DemoLoop (void)
 
 	while (1)
 	{
+		uchar *p = dems;
 		while (!NoWait)
 		{
 //
@@ -928,12 +906,9 @@ void    DemoLoop (void)
 //
 // demo
 //
-
-			#ifndef SPEARDEMO
-			PlayDemo (LastDemo++%4);
-			#else
-			PlayDemo (0);
-			#endif
+			PlayDemo(p++);
+			if(p >= epis)
+				p = dems;
 
 			if (playstate == ex_abort)
 				break;

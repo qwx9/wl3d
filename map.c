@@ -3,4 +3,4 @@
 #include "dat.h"
 #include "fns.h"
 
-Dat *maps, *mape, *map;
+uchar **maps, *map;

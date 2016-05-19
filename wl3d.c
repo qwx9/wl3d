@@ -253,6 +253,7 @@ threadmain(int argc, char **argv)
 	dat(datdir);
 
 	notify(croak);
+	initsnd();
 	if(initdraw(nil, nil, "wl3d") < 0)
 		sysfatal("initdraw: %r");
 	resetfb();
@@ -274,6 +275,7 @@ threadmain(int argc, char **argv)
 			resetfb();
 		}
 		step();
+		sndstep();
 		t0 += Td;
 		t = nsec();
 		dt = (t0 - t) / Te6;

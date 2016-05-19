@@ -5,9 +5,8 @@
 
 Fnt fnts[2], *fnt;
 Pic *pics, *pice;
-Dat *exts, *exte;
-Dat *dems, *deme, *epis;
-Dat *wals, *sprs, *spre;
+uchar **exts, **dems, **epis;
+Dat *wals, *sprs;
 
 int scale, npx;
 uchar *px;

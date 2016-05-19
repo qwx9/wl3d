@@ -117,16 +117,10 @@ SetSoundLoc(s32int gx,s32int gy)
 	gx -= viewx;
 	gy -= viewy;
 
-//
-// calculate newx
-//
 	xt = FixedByFrac(gx,viewcos);
 	yt = FixedByFrac(gy,viewsin);
 	x = (xt - yt) >> TILESHIFT;
 
-//
-// calculate newy
-//
 	xt = FixedByFrac(gx,viewsin);
 	yt = FixedByFrac(gy,viewcos);
 	y = (yt + xt) >> TILESHIFT;
@@ -141,14 +135,6 @@ SetSoundLoc(s32int gx,s32int gy)
 		x = ATABLEMAX - 1;
 	leftchannel  =  lefttable[x][y + ATABLEMAX];
 	rightchannel = righttable[x][y + ATABLEMAX];
-
-#if 0
-	CenterWindow(8,1);
-	US_PrintSigned(leftchannel);
-	US_Print(",");
-	US_PrintSigned(rightchannel);
-	VW_UpdateScreen();
-#endif
 }
 
 /*
@@ -1033,12 +1019,11 @@ void RecordDemo (void)
 ==================
 */
 
-void PlayDemo (s16int demonumber)
+void PlayDemo (uchar *p)
 {
 	s16int length;
 
-	/* deme==dems → no demos, etc. */
-	demoptr = dems+demonumber;
+	demoptr = p;
 
 	NewGame (1,0);
 	gamestate.mapon = *demoptr++;

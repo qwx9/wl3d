@@ -325,7 +325,8 @@ cwalk(void)
 		m = i->m;
 		if(m == nil)
 			break;
-		sfx(Sshoot);
+		if(m != ml+Lquit && m != ml+Lesc)
+			sfx(Sshoot);
 		reset(m);
 	}
 	if(r != 'i')
@@ -368,7 +369,7 @@ pants(void)
 {
 	pic(0, 0, pict[Pid1]);
 	pic(0, 80, pict[Pid2]);
-	palpic(exts[Eid].p);
+	palpic(exts[Eid]);
 	fadeop(mp->c, mp->qs->dt);
 	mus(Mnazjazz);
 }
@@ -458,7 +459,7 @@ sdtitle(void)
 {
 	pic(0, 0, pict[Ptitle1]);
 	pic(0, 80, pict[Ptitle2]);
-	palpic(exts[Etitpal].p);
+	palpic(exts[Etitpal]);
 	mus(Mtower);
 }
 

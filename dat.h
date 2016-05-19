@@ -23,6 +23,7 @@ enum{
 	Ke
 };
 extern int cson, kbon, mson;
+extern int sfxon, muson, pcmon;
 extern Rune keys[];
 extern void (*step)(void);
 
@@ -57,21 +58,21 @@ typedef struct Dat Dat;
 typedef struct Pic Pic;
 typedef struct Fnt Fnt;
 typedef struct Sfx Sfx;
+typedef struct Al Al;
 
 struct Dat{
 	u16int sz;
 	uchar *p;
+	uchar *e;
 };
-extern Dat *wals, *sprs, *spre;
-extern Dat *imfs, *imfe;
-extern Dat *maps, *mape, *map;
-extern Dat *exts, *exte;
-extern Dat *dems, *deme, *epis;
+extern Dat *wals, *sprs, *imfs;
+extern uchar **exts, **dems, **epis;
+extern uchar **maps, *map;
 
 struct Pic{
 	int x;
 	int y;
-	Dat;
+	uchar *p;
 };
 extern Pic *pics, *pice;
 extern uchar *pict;
@@ -80,16 +81,21 @@ struct Fnt{
 	int h;
 	int ofs[256];
 	char w[256];
-	Dat;
+	uchar *p;
 };
 extern Fnt fnts[], *fnt;
 
+struct Al{
+	int pri;
+	uchar inst[10];
+	int blk;
+	Dat;
+};
 struct Sfx{
-	Dat pc;
-	Dat al;
+	Al;
 	Dat *pcm;
 };
-extern Sfx *sfxs, *sfxe;
+extern Sfx *sfxs;
 
 enum{
 	Shitwall,
