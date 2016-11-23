@@ -5,9 +5,9 @@
 #include "dat.h"
 #include "fns.h"
 
-/* FIXME: non-trivial */
-
 extern Channel *csc;
+
+int mtc;
 
 typedef struct Score Score;
 typedef struct Seq Seq;
@@ -37,6 +37,9 @@ enum{
 	Lcreds,
 	Lscore,
 	Ldemo,
+	Lcam,
+	Linter,
+	Lwin,
 	Ldecay,
 	Linctl,
 	Lctl,
@@ -44,6 +47,7 @@ enum{
 	Lesc,
 	Lback,
 	Lwait,
+	Lsfxwait,
 	Lack,
 	Lmscore,
 	Lpants,
@@ -107,49 +111,77 @@ enum{
 };
 static int mcol[Dend] = {[Dbg] 0x2d, 0};
 
-static int tc;
+static uchar **demd;
+static char *demf;
 
-static void (*clear)(void);
+static void (*mclear)(void);
 static void (*stripe)(int);
 
 static void
-wlclear(void)
+wlmclear(void)
 {
-	put(0, 0, Vw, Vh, nil, 0x29);
+	put(0, 0, Vw, Vh, 0x29);
 }
 static void
-sdclear(void)
+sdmclear(void)
 {
-	pic(0, 0, Pbackdrop);
+	pic(0, 0, pict[Pbackdrop]);
 }
 
 static void
 wlstripe(int y)
 {
-	put(0, y, Vw, 24, nil, 0);
-	put(0, y+22, 320, 1, nil, 0x2c);
+	put(0, y, Vw, 24, 0);
+	put(0, y+22, 320, 1, 0x2c);
 }
 static void
 sdstripe(int y)
 {
-	put(0, y, Vw, 22, nil, 0);
-	put(0, y+23, 320, 1, nil, 0);
+	put(0, y, Vw, 22, 0);
+	put(0, y+23, 320, 1, 0);
 }
 
 static void
 outbox(int x, int y, int dx, int dy, int c1, int c2)
 {
-	put(x, y, dx, 1, nil, c2);
-	put(x, y, 1, dy, nil, c2);
-	put(x, y+dy, dx+1, 1, nil, c1);
-	put(x+dx, y, 1, dy, nil, c1);
+	put(x, y, dx, 1, c2);
+	put(x, y+1, 1, dy-1, c2);
+	put(x, y+dy, dx+1, 1, c1);
+	put(x+dx, y, 1, dy, c1);
 }
 
 static void
 box(int x, int y, int dx, int dy, int col, int out, int out2)
 {
-	put(x+1, y+1, dx-1, dy-1, nil, col);
+	put(x+1, y+1, dx-1, dy-1, col);
 	outbox(x, y, dx, dy, out, out2);
+}
+
+static void
+viewbox(void)
+{
+	int x, y;
+
+	x = Vhud - vw.dx / 2 - 1;
+	y = (Vhud - vw.dy) / 2 - 1;
+	put(0, 0, 320, Vhud, 0x7f);
+	box(x, y, vw.dx+1, vw.dy+1, 0, 0x7d, 0);
+	put(x, y+vw.dy+1, 1, 1, 0x7c);
+}
+
+static void
+view(void)
+{
+	viewbox();
+	pic(0, Vhud, pict[Pstat]);
+	hudf();
+	hudh();
+	hudl();
+	hudm();
+	huda();
+	hudk();
+	hudw();
+	hudp();
 }
 
 static void
@@ -168,8 +200,9 @@ reset(Menu *m)
 
 	q = m->qs;
 	mqp = q;
-	tc = 0;
+	mtc = 0;
 	if(m != mp){
+		toss();
 		if(q->f != fadeout && mp != ml+Lpants)
 			pal = pals[C0];
 		mp = m;
@@ -187,13 +220,13 @@ blink(void)
 
 	m = mp;
 	if(m == ml+Lctl){
-		put(m->cx, m->cy, 24, 16, nil, mcol[Dbg]);
+		put(m->cx, m->cy, 24, 16, mcol[Dbg]);
 		pic(m->cx, m->cy, pict[Pcur1]+m->cur);
 	}else if(m == ml+Lquit){
 		if(m->cur == 0)
 			txt(m->cx, m->cy, "_", 0);
 		else
-			put(m->cx, m->cy, fnt->w['_'], fnt->h, nil, 0x17);
+			put(m->cx, m->cy, fnt->w['_'], fnt->h, 0x17);
 	}
 	out();
 	m->cur ^= 1;
@@ -221,7 +254,6 @@ quit(void)
 {
 	int x, y, w, h, curw;
 	char *s, *nl;
-	Menu *m;
 
 	s = quits[nrand(nelem(ends)/2)];
 	h = txth(s);
@@ -230,13 +262,12 @@ quit(void)
 	curw = txtw(nl != nil ? nl+1 : s);
 	w = w > curw+10 ? w : curw+10;
 	y = 200/2 - h/2;
-	x = 160 - w/2;
-	m = mp;
+	x = Vhud - w/2;
 
 	box(x-5, y-5, w+10, h+10, 0x17, 0, 0x13);
 	txtnl(x, y, s, 0);
-	m->cx = x+curw;
-	m->cy = y + h - fnt->h;
+	mp->cx = x+curw;
+	mp->cy = y + h - fnt->h;
 }
 
 static void
@@ -245,7 +276,7 @@ ctl(void)
 	Menu *m;
 	Item *i, *s, *e;
 
-	clear();
+	mclear();
 	pic(112, 184, pict[Pmouselback]);
 	stripe(10);
 	pic(80, 0, pict[Popt]);
@@ -294,7 +325,7 @@ movcur(Menu *m, Item *p, int dir)
 		ctl();
 		return;
 	}
-	put(m->cx, m->cy, 24, 16, nil, mcol[Dbg]);
+	put(m->cx, m->cy, 24, 16, mcol[Dbg]);
 	m->cy += dir * 6;
 	blink();
 	sfx(Sdrawgun1);
@@ -349,10 +380,20 @@ inctl(void)
 	i[4].c = mcol[Doff];
 	grab(0);
 	ctl();
+	stopsfx();
 }
 
 static void
-skip(void)
+skipstep(void)
+{
+	if(nbrecv(csc, nil) > 0){
+		mqp++;
+		mtc = 0;
+	}
+}
+
+static void
+skiploop(void)
 {
 	if(nbrecv(csc, nil) > 0)
 		reset(ml+Ldecay);
@@ -366,6 +407,15 @@ ack(void)
 }
 
 static void
+swait(void)
+{
+	if(lastsfx() < 0){
+		reset(ml+Linter);
+		step = mstep;
+	}
+}
+
+static void
 pants(void)
 {
 	pic(0, 0, pict[Pid1]);
@@ -376,9 +426,52 @@ pants(void)
 }
 
 static void
-demo(void)
+iwin(void)
 {
-	step = dstep;
+}
+static void
+win(void)
+{
+}
+
+static void
+iscore(void)
+{
+}
+static void
+inter(void)
+{
+}
+
+static void
+gcont(void)
+{
+	step = gstep;
+	gm.end = 0;
+	gm.fizz = 0;
+}
+
+static void
+camtxt2(void)
+{
+	put(0, 56, Vw, 16, 0x7f);
+	viewbox();
+}
+static void
+camtxt(void)
+{
+	fizzop(-1, 0);
+	pictxt(0, 56, "LET\'S SEE THAT AGAIN!");
+	out();
+}
+
+static void
+indem(void)
+{
+	initg(0, *demd++);
+	if(demd >= epis)
+		demd = dems;
+	view();
 }
 
 static void
@@ -388,7 +481,7 @@ score(void)
 	char a[16], b[16];
 	Score *s;
 
-	clear();
+	mclear();
 	stripe(10);
 	pic(48, 0, pict[Pscores]);
 	pic(32, 68, pict[Pname]);
@@ -402,7 +495,7 @@ score(void)
 		sprint(a, "%d", s->lvl);
 		fixedw(a);
 		x = 176 - txtw(a);
-		if(ver < WL1){
+		if(ver == WL6){
 			sprint(b, "E%d/L", s->ep+1);
 			x += txt(x-6, y, b, 0xf) - 6;
 		}
@@ -422,7 +515,7 @@ sdscore(void)
 	char a[16];
 	Score *s;
 
-	clear();
+	mclear();
 	pic(0, 0, pict[Pscores]);
 
 	fnt = fnts+1;
@@ -491,18 +584,22 @@ static Item ictl[] = {
 
 static Col fblk, fmenu = { 0xae, 0, 0 };
 static Seq *mqp,
-	introq[] = {{30, fadein}, {7*Tb, skip}, {30, fadeout}},
-	titleq[] = {{30, fadein}, {15*Tb, skip}, {30, fadeout}},
-	loopq[] = {{30, fadein}, {10*Tb, skip}, {30, fadeout}},
-	scoreq[] = {{30, fadein}, {10*Tb, skip}, {30, fadeout}},
-	demoq[] = {{1, nil}},
-	decq[] = {{30, fadeout}},	/* uses previous fadeop */
+	introq[] = {{30, fadein}, {7*Tb, skiploop}, {30, fadeout}},
+	titleq[] = {{30, fadein}, {15*Tb, skiploop}, {30, fadeout}},
+	loopq[] = {{30, fadein}, {10*Tb, skiploop}, {30, fadeout}},
+	scoreq[] = {{30, fadein}, {10*Tb, skiploop}, {30, fadeout}},
+	demoq[] = {{30, fadein}, {1, demo}, {41, fizz}, {1, gcont}, {30, fadeout}},
+	camq[] = {{100, nil}, {144, fizz}, {0, camtxt}, {300, skipstep}, {0, camtxt2}, {41, fizz}, {1, gcont}, {100, nil}, {30, fadeout}},
+	interq[] = {{30, fadein}, {0, iscore}, {30, fadeout}},
+	winq[] = {{30, fadein}, {0, iwin}, {30, fadeout}},
+	decq[] = {{30, fadeout}},
 	inctlq[] = {{10, fadein}},
 	ctlq[] = {{0, blink}, {70, cwalk}, {0, blink}, {8, cwalk}},
 	curq[] = {{8, nil}, {0, cursfx}},
 	escq[] = {{10, fadeout}},
 	backq[] = {{10, fadeout}, {0, ctl}, {10, fadein}},
-	waitq[] = {{1, skip}},
+	waitq[] = {{1, skiploop}},
+	swaitq[] = {{1, swait}},
 	ackq[] = {{1, ack}},
 	mscoreq[] = {{10, fadeout}, {0, score}, {10, fadein}},
 	pantsq[] = {{30, fadeout}, {0, pants}, {30, fadein}},
@@ -515,7 +612,10 @@ static Menu *mp, ml[] = {
 	[Ltitle] {title, titleq, titleq+nelem(titleq), ml+Lcreds, &fblk},
 	[Lcreds] {creds, loopq, loopq+nelem(loopq), ml+Lscore, &fblk},
 	[Lscore] {score, loopq, loopq+nelem(loopq), ml+Ldemo, &fblk},
-	[Ldemo] {demo, demoq, demoq+nelem(demoq), ml+Ltitle, &fblk},
+	[Ldemo] {indem, demoq, demoq+nelem(demoq), nil, &fblk},
+	[Lcam] {nil, camq, camq+nelem(camq), nil},
+	[Linter] {inter, interq, interq+nelem(interq), nil, &fblk},
+	[Lwin] {win, winq, winq+nelem(winq), nil, &fblk},
 	[Ldecay] {nil, decq, decq+nelem(decq), ml+Linctl},
 	[Linctl] {inctl, inctlq, inctlq+nelem(inctlq), ml+Lctl, &fblk},
 	[Lctl] {ctl, ctlq, ctlq+nelem(ctlq), ml+Lctl, nil, ictl, ictl+nelem(ictl)},
@@ -523,12 +623,71 @@ static Menu *mp, ml[] = {
 	[Lesc] {nil, escq, escq+nelem(escq), ml+Ltitle, &fblk},
 	[Lback] {nil, backq, backq+nelem(backq), ml+Lctl, &fmenu},
 	[Lwait] {nil, waitq, waitq+nelem(waitq), ml+Lwait},
+	[Lsfxwait] {nil, swaitq, swaitq+nelem(swaitq), ml+Lsfxwait},
 	[Lack] {nil, ackq, ackq+nelem(ackq), ml+Lack},
 	[Lmscore] {nil, mscoreq, mscoreq+nelem(mscoreq), ml+Lack, &fmenu},
 	[Lpants] {nil, pantsq, pantsq+nelem(pantsq), ml+Lwait, &fblk},
 	[Lquit] {quit, quitq, quitq+nelem(quitq), ml+Lquit},
 	[Ldie] {nil, dieq, dieq+nelem(dieq), nil, &fmenu}
 };
+
+static void
+dend(void)
+{
+	gm.demo = gm.record = 0;
+	pal = pals[Cfad];
+	if(demf != nil){
+		if(demexit)
+			threadexitsall(nil);
+		free(demf);
+		demf = nil;
+		demd = dems;
+	}
+}
+void
+gend(void)
+{
+	switch(gm.end){
+	case EDfizz:
+		fizzop(-1, 1);
+		put((Vw - vw.dx) / 2, (Vhud - vw.dy) / 2, vw.dx, vw.dy, 0);
+		out();
+		break;
+	enddem:
+	case EDdem:
+		dend();
+		mp->m = ml+Ltitle;
+		break;
+	case EDcam:
+		fizzop(0x7f, 1);
+		reset(ml+Lcam);
+		mp->m = gm.demo || gm.record ? ml+Ltitle : ml+Lwin;
+		gm.fizz++;
+		break;
+	case EDcam2:
+		if(gm.demo || gm.record)
+			dend();
+		else
+			pal = pals[Cfad];
+		break;
+	case EDkey:
+		dend();
+		mp->m = ml+Linctl;
+		break;
+	case EDdie:
+		if(gm.demo || gm.record)
+			goto enddem;
+		break;
+	case EDup:
+	case EDsetec:
+	case EDwon:
+		if(gm.demo || gm.record)
+			goto enddem;
+		mp->m = ml+Lsfxwait;
+		break;
+	}
+	step = mstep;
+}
 
 void
 mstep(void)
@@ -539,26 +698,27 @@ mstep(void)
 rep:
 	m = mp;
 	q = mqp;
-	tc++;
+	mtc += Δtc;
 	if(q->f != nil)
 		q->f();
-	if(tc >= q->dt){
+	if(mtc >= q->dt){
 		if(++mqp == m->qe)
 			reset(m->m);
-		tc = 0;
+		mtc = 0;
 	}
 	if(q->dt == 0)
 		goto rep;
 }
 
 void
-init(void)
+init(char *f)
 {
-	clear = wlclear;
+	tab();
+	mclear = wlmclear;
 	stripe = wlstripe;
 	quits = ends;
 	if(ver >= SDM){
-		clear = sdclear;
+		mclear = sdmclear;
 		stripe = sdstripe;
 		ml[Ltitle].init = sdtitle;
 		ml[Lscore].init = sdscore;
@@ -570,7 +730,13 @@ init(void)
 	mcol[Doff] = mcol[Dbg] ^ 6;
 	mcol[Dbrd] = mcol[Dbg] ^ 4;
 	mcol[Dbrd2] = mcol[Dbg] ^ 14;
+	demd = dems;
 	reset(ml+Lload);
-	cson++;
+	setvw(15);
+	if(f != nil){
+		demf = demof(f);
+		demd = (uchar **)&demf;
+		mp->m = ml+Ldemo;
+	}
 	mus(ver<SDM ? Mintro : Mtower);
 }

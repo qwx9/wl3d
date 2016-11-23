@@ -16,20 +16,6 @@
 
 ///////////////////////////////////////////////////////////////////////////
 //
-//	US_SetPrintRoutines() - Sets the routines used to measure and print
-//		from within the User Mgr. Primarily provided to allow switching
-//		between masked and non-masked fonts
-//
-///////////////////////////////////////////////////////////////////////////
-void
-US_SetPrintRoutines(void (*measure)(char far *,u16int *,u16int *),void (*print)(char far *))
-{
-	USL_MeasureString = measure;
-	USL_DrawString = print;
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
 //	US_Print() - Prints a string in the current window. Newlines are
 //		supported.
 //
@@ -217,54 +203,6 @@ US_DrawWindow(u16int x,u16int y,u16int w,u16int h)
 
 	for (i = sy + 8;i <= sy + sh - 8;i += 8)
 		VWB_DrawTile8(sx,i,3),VWB_DrawTile8(sx + sw,i,4);
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	US_CenterWindow() - Generates a window of a given width & height in the
-//		middle of the screen
-//
-///////////////////////////////////////////////////////////////////////////
-void
-US_CenterWindow(u16int w,u16int h)
-{
-	US_DrawWindow(((MaxX / 8) - w) / 2,((MaxY / 8) - h) / 2,w,h);
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	US_SaveWindow() - Saves the current window parms into a record for
-//		later restoration
-//
-///////////////////////////////////////////////////////////////////////////
-void
-US_SaveWindow(WindowRec *win)
-{
-	win->x = WindowX;
-	win->y = WindowY;
-	win->w = WindowW;
-	win->h = WindowH;
-
-	win->px = PrintX;
-	win->py = PrintY;
-}
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	US_RestoreWindow() - Sets the current window parms to those held in the
-//		record
-//
-///////////////////////////////////////////////////////////////////////////
-void
-US_RestoreWindow(WindowRec *win)
-{
-	WindowX = win->x;
-	WindowY = win->y;
-	WindowW = win->w;
-	WindowH = win->h;
-
-	PrintX = win->px;
-	PrintY = win->py;
 }
 
 //	Input routines

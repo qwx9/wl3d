@@ -240,8 +240,6 @@ static uchar eratesh[Nerates] = {
 	0, 0, 0, 0
 };
 
-void	opl2wr(int, int);
-
 /* 23-bit shift register noise generator. T=2²³-2 samples, sampling rate equal
  * to that of the chip. */
 static void

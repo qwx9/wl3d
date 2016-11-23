@@ -4,7 +4,7 @@ wl3d \- Wolfenstein 3-D data formats
 .SH DESCRIPTION
 Several different types of data are used in Wolfenstein 3-D, each stored in specific ways.
 In the description of the data files below, version-specific extensions are omitted.
-Those files are:
+These files are:
 .TF gamemaps
 .TP
 .B audiohed
@@ -13,6 +13,9 @@ PC Speaker, Adlib, digital effects and music offsets in
 .TP
 .B audiot
 uncompressed PC Speaker, Adlib, digital effects and music lumps
+.TP
+.B config
+saved game settings and highscores
 .TP
 .B gamemaps
 maps lump
@@ -61,6 +64,7 @@ for Wolfenstein 3-D 1.4 retail,
 for Spear of Destiny 1.0 demo and
 .B sod
 for Spear of Destiny 1.0 retail (including mission packs).
+Other versions are outside of the scope of this document.
 .SH SOUND EFFECTS AND MUSIC
 .SS Audiohed
 .RS
@@ -68,7 +72,7 @@ for Spear of Destiny 1.0 retail (including mission packs).
 {
 .IR end [4]
 .IR starts [4]
-.RI }[ nsfx*3-1 ]
+.RI }[ nsfx*3+nimf-1 ]
 .IR end [4]
 .RE
 .PP
@@ -79,8 +83,8 @@ and
 .I end
 offsets into
 .B audiot
-for sound effects.
-Sound effects are stored contiguously, and the
+for sound effects and music.
+These are stored contiguously, and the
 .I end
 offset of one lump is the
 .I start
@@ -139,6 +143,9 @@ instead.
 .RE
 .PP
 Undocumented here.
+Note that
+.I priority
+isn't necessarily the same as that of the Adlib version.
 .SS Adlib sound effect
 .RS
 .IR size [4]
@@ -204,7 +211,7 @@ must exist (as zero-sized lumps).
 .PP
 Instead, sound effects are stored as raw pcm in
 .BR vswap ,
-in a format detailed elsewhere.
+in a format detailed in a different section.
 .SS Music
 .RS
 .IR size [2]
@@ -269,7 +276,7 @@ is version dependent:
 2 maps
 .TP
 .B sod
-20 maps
+21 maps
 .PD
 .PP
 Missing maps have an offset of zero.
@@ -309,7 +316,7 @@ stores contiguously each plane's data.
 Each map plane is first compressed using
 .SM RLEW,
 then further using what is eponymously refered to as
-.MS Carmack compression.
+.SM Carmack compression.
 .SH GRAPHICS
 Graphics are either static data loaded in the executable, or huffman-compressed lumps contained in
 .BR vgagraph .
@@ -345,7 +352,8 @@ This file contains a dictionary used for decompression of Huffman-encoded lumps 
 .IR scr [ n ][]
 .RE
 .PP
-.I Vgagraph contains a series of Huffman-encoded graphics lumps of various types.
+.I Vgagraph
+contains a series of Huffman-encoded graphics lumps of various types.
 Each lump is prefixed by its uncompressed size.
 The first lump,
 .IR pt ,
@@ -384,7 +392,7 @@ A pixel's color is overwritten with the engine's current foreground color when a
 Exactly two fonts are always defined.
 .SM ASCII
 characters within the printable range have valid definitions at the same locations.
-Some characters for special use are defined beyond, such as fixed-width numerals.
+Some characters for special use are defined beyond, such as fixed-width numerals at index 129.
 .SS Pictures
 .RS
 .BR pt :
@@ -431,11 +439,49 @@ is an array of 4 demos (1 for
 Finally,
 .I end
 contains other fullscreen graphics for specific uses, notably in epilogue sequences.
+.PP
+.RS
+.BR demo :
+.IR map [1]
+.IR size [2]
+.IR pad [1]
+{
+.IR bt [1]
+.IR dx [1]
+.IR dy [1]
+.RI }[ size-4 ]
+.RE
+.PP
+The only metadata contained in demo lumps is
+.IR map ,
+the 0-indexed map number.
+Game version is not recorded.
+Game difficulty is always set to the hardest.
+.I Map
+is followed by the total
+.I size
+of the lump and an unused byte.
+The original
+.SM DOS
+binaries do not record demos bigger than 8192 bytes.
+.PP
+Demos are recorded and played back at a fixed rate of 4 tics per frame.
+.IR Bt ,
+.IR dx ,
+and
+.I dy
+contain player input for the duration of the frame
+and correspond respectively to pressed game keys, total horizontal movement (turning) and total vertical movement (forward displacement) deltas.
+.I Bt
+is a 8-bit array of the main game keys, regardless of input method.
+These are, from least to most significant bit:
+fire, strafe, run, open, knife, pistol, machine gun and gatling gun.
+The movement deltas are bounded from -100 to 100.
 .SS Static data
 Some of the graphics data is stored in the executable and thus cannot be altered.
 These are the base color palette and intro screen.
 The intro screen is a static screen displayed on startup while verifying available memory and hardware, changed depending on the results.
-Both have a
+Each have a
 .B wl1/wl6
 and a
 .B sdm/sod
@@ -493,7 +539,8 @@ The rest of the file contains section data.
 .RI }[ npcm ]
 .RE
 .PP
-Each sample is a 8 bit unsigned integer to be played back at a sampling rate of 7 kHz.
+The sampling rate for this data is 7 kHz.
+Each sample is a 8 bit unsigned integer.
 Pcm lumps are segmented into chunks of 4096 bytes or less.
 .PP
 The very last chunk in
@@ -502,7 +549,7 @@ is a table of two 16 bit integers per pcm lump.
 .I Index
 is the zero-based index of the lump's first chunk relative to the first pcm chunk.
 .I Size
-is the sum of lengths of the lump's chunks.
+is the sum in bytes of the lengths of the lump's chunks.
 .PP
 The references for each pcm sound effect (different than those for regular sound effects), as well as their number, are hardcoded in the engine:
 .TF wl1
@@ -518,6 +565,8 @@ The references for each pcm sound effect (different than those for regular sound
 .TP
 .B sod
 40 pcms
+.SH "CONFIGURATION FILE AND HIGHSCORES"
+[words]
 .SH "SEE ALSO"
 .IR opl2 (1) ,
 .IR pcmconv (1) ,

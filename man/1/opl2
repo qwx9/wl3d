@@ -37,7 +37,6 @@ Commands are 4 bytes formatted as follows, where the size of each field is given
 .IR delay [2]
 .RE
 .PP
-All fields are unsigned.
 Each command specifies a
 .I value
 to be written to an
@@ -48,7 +47,9 @@ modifying its internal state.
 The
 .I delay
 field indicates a multiple of the expected sampling period (the inverse of the expected sampling rate) during which the chip should be sampled before processing the next command.
-Output is therefore triggered by a non-zero delay.
+Output is then triggered by a non-zero delay.
+.I Delay
+is stored as a 16-bit unsigned integer in little-endian byte order.
 .SH "SEE ALSO"
 .IR wl3d (1) ,
 .IR audio (3)
@@ -57,5 +58,5 @@ Output is therefore triggered by a non-zero delay.
 first appeared for 9front (May, 2016), based on
 .I fmopl.c
 from the Multiple Arcade Machine Emulator (
-SM MAME
+.SM MAME
 ).

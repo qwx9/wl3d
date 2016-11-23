@@ -343,7 +343,7 @@ void US_ControlPanel(u8int scancode)
 	//
 	// CHANGE MAINMENU ITEM
 	//
-	if (startgame || loadedgame)
+	if (startgame || gm.load)
 	{
 		#pragma warn -sus
 		MainMenu[viewscores].routine = NULL;
@@ -415,7 +415,7 @@ s16int CP_CheckQuick(u16int scancode)
 			WindowH=160;
 			if (Confirm(ENDGAMESTR))
 			{
-				playstate = ex_died;
+				gm.φ = ex_died;
 				pickquick = gamestate.lives = 0;
 			}
 
@@ -446,16 +446,16 @@ s16int CP_CheckQuick(u16int scancode)
 
 				SETFONTCOLOR(0,15);
 				IN_ClearKeysDown();
-				DrawPlayScreen ();
+				view ();
 
-				if (!startgame && !loadedgame)
+				if (!startgame && !gm.load)
 				{
 					VW_FadeIn ();
-					StartMusic ();
+					mapmus ();
 				}
 
-				if (loadedgame)
-					playstate = ex_abort;
+				if (gm.load)
+					gm.φ = ex_abort;
 				lasttimecount = TimeCount;
 
 				if (MousePresent)
@@ -495,16 +495,16 @@ s16int CP_CheckQuick(u16int scancode)
 
 				SETFONTCOLOR(0,15);
 				IN_ClearKeysDown();
-				DrawPlayScreen ();
+				view ();
 
-				if (!startgame && !loadedgame)
+				if (!startgame && !gm.load)
 				{
 					VW_FadeIn ();
-					StartMusic ();
+					mapmus ();
 				}
 
-				if (loadedgame)
-					playstate = ex_abort;
+				if (gm.load)
+					gm.φ = ex_abort;
 
 				lasttimecount = TimeCount;
 
@@ -523,7 +523,7 @@ s16int CP_CheckQuick(u16int scancode)
 			WindowX=WindowY=0;
 			WindowW=320;
 			WindowH=160;
-			if (Confirm(endStrings[US_RndT()&0x7+(US_RndT()&1)]))
+			if (Confirm(endStrings[rnd()&0x7+(rnd()&1)]))
 			{
 				s16int i;
 
@@ -562,7 +562,7 @@ s16int CP_EndGame(void)
 		return 0;
 
 	pickquick = gamestate.lives = 0;
-	playstate = ex_died;
+	gm.φ = ex_died;
 
 	#pragma warn -sus
 	MainMenu[savegame].active = 0;
@@ -626,7 +626,7 @@ firstpart:
 			default:
 				if (!EpisodeSelect[which/2])
 				{
-					SD_PlaySound (Snoway);
+					sfx (Snoway);
 					Message("Please select \"Read This!\"\n"
 							"from the Options menu to\n"
 							"find out how to order this\n"
@@ -1014,19 +1014,19 @@ s16int CP_LoadGame(s16int quick)
 			name[7]=which+'0';
 			handle=open(name,O_BINARY);
 			lseek(handle,32,SEEK_SET);
-			loadedgame=true;
+			gm.load=true;
 			LoadTheGame(handle,0,0);
-			loadedgame=false;
+			gm.load=false;
 			close(handle);
 
-			DrawFace ();
-			DrawHealth ();
-			DrawLives ();
-			DrawLevel ();
-			DrawAmmo ();
-			DrawKeys ();
-			DrawWeapon ();
-			DrawScore ();
+			hudf ();
+			hudh ();
+			hudl ();
+			hudm ();
+			huda ();
+			hudk ();
+			hudw ();
+			hudp ();
 			return 1;
 		}
 	}
@@ -1045,7 +1045,7 @@ s16int CP_LoadGame(s16int quick)
 			lseek(handle,32,SEEK_SET);
 
 			DrawLSAction(0);
-			loadedgame=true;
+			gm.load=true;
 
 			LoadTheGame(handle,LSA_X+8,LSA_Y+5);
 			close(handle);
@@ -1234,7 +1234,7 @@ s16int CP_SaveGame(s16int quick)
 				VWB_Bar(LSM_X+LSItems.indent+1,LSM_Y+which*13+1,LSM_W-LSItems.indent-16,10,BKGDCOLOR);
 				PrintLSEntry(which,HIGHLIGHT);
 				VW_UpdateScreen();
-				SD_PlaySound(Sesc);
+				sfx(Sesc);
 				continue;
 			}
 
@@ -1370,7 +1370,7 @@ void MouseSensitivity(void)
 					DrawOutline(60+20*mouseadjustment,97,20,10,0,READCOLOR);
 					VWB_Bar(61+20*mouseadjustment,98,19,9,READHCOLOR);
 					VW_UpdateScreen();
-					SD_PlaySound(Sdrawgun1);
+					sfx(Sdrawgun1);
 					while(Keyboard[sc_LeftArrow]);
 					WaitKeyUp();
 				}
@@ -1386,7 +1386,7 @@ void MouseSensitivity(void)
 					DrawOutline(60+20*mouseadjustment,97,20,10,0,READCOLOR);
 					VWB_Bar(61+20*mouseadjustment,98,19,9,READHCOLOR);
 					VW_UpdateScreen();
-					SD_PlaySound(Sdrawgun1);
+					sfx(Sdrawgun1);
 					while(Keyboard[sc_RightArrow]);
 					WaitKeyUp();
 				}
@@ -1404,10 +1404,10 @@ void MouseSensitivity(void)
 	if (exit==2)
 	{
 		mouseadjustment=oldMA;
-		SD_PlaySound(Sesc);
+		sfx(Sesc);
 	}
 	else
-		SD_PlaySound(Sshoot);
+		sfx(Sshoot);
 
 	WaitKeyUp();
 	MenuFadeOut();
@@ -1656,7 +1656,7 @@ void EnterCtrlData(s16int index,CustomCtrls *cust,void (*DrawRtn)(s16int),void (
 	  case 1:
 	PrintX=x;
 	US_Print("?");
-	SD_PlaySound(Shitwall);
+	sfx(Shitwall);
 	 }
 	 tick^=1;
 	 TimeCount=0;
@@ -1692,7 +1692,7 @@ void EnterCtrlData(s16int index,CustomCtrls *cust,void (*DrawRtn)(s16int),void (
 
 	buttonmouse[result-1]=order[which];
 	picked=1;
-	SD_PlaySound(Shitdoor);
+	sfx(Shitdoor);
 	   }
 	   break;
 
@@ -1719,7 +1719,7 @@ void EnterCtrlData(s16int index,CustomCtrls *cust,void (*DrawRtn)(s16int),void (
 
 	buttonjoy[result-1]=order[which];
 	picked=1;
-	SD_PlaySound(Shitdoor);
+	sfx(Shitdoor);
 	   }
 	   break;
 
@@ -1777,7 +1777,7 @@ void EnterCtrlData(s16int index,CustomCtrls *cust,void (*DrawRtn)(s16int),void (
 	which=3;
 	 } while(!cust->allowed[which]);
 	 redraw=1;
-	 SD_PlaySound(Sdrawgun1);
+	 sfx(Sdrawgun1);
 	 while(ReadAnyControl(&ci),ci.dir!=dir_None);
 	 IN_ClearKeysDown();
 	 break;
@@ -1790,7 +1790,7 @@ void EnterCtrlData(s16int index,CustomCtrls *cust,void (*DrawRtn)(s16int),void (
 	which=0;
 	 } while(!cust->allowed[which]);
 	 redraw=1;
-	 SD_PlaySound(Sdrawgun1);
+	 sfx(Sdrawgun1);
 	 while(ReadAnyControl(&ci),ci.dir!=dir_None);
 	 IN_ClearKeysDown();
 	 break;
@@ -1800,7 +1800,7 @@ void EnterCtrlData(s16int index,CustomCtrls *cust,void (*DrawRtn)(s16int),void (
   }
  } while(!exit);
 
- SD_PlaySound(Sesc);
+ sfx(Sesc);
  WaitKeyUp();
  DrawWindow(5,PrintY-1,310,13,BKGDCOLOR);
 }
@@ -2083,7 +2083,7 @@ void CP_ChangeView(void)
 	WindowX=WindowY=0;
 	WindowW=320;
 	WindowH=200;
-	newview=oldview=viewwidth/16;
+	newview=oldview=vw.dx/16;
 	DrawChangeView(oldview);
 
 	do
@@ -2099,7 +2099,7 @@ void CP_ChangeView(void)
 				newview=4;
 			ShowViewSize(newview);
 			VW_UpdateScreen();
-			SD_PlaySound(Shitwall);
+			sfx(Shitwall);
 			TicDelay(10);
 			break;
 
@@ -2110,7 +2110,7 @@ void CP_ChangeView(void)
 				newview=19;
 			ShowViewSize(newview);
 			VW_UpdateScreen();
-			SD_PlaySound(Shitwall);
+			sfx(Shitwall);
 			TicDelay(10);
 			break;
 		}
@@ -2120,8 +2120,8 @@ void CP_ChangeView(void)
 		else
 		if (ci.button1 || Keyboard[sc_Escape])
 		{
-			viewwidth=oldview*16;
-			SD_PlaySound(Sesc);
+			vw.dx=oldview*16;
+			sfx(Sesc);
 			MenuFadeOut();
 			return;
 		}
@@ -2131,7 +2131,7 @@ void CP_ChangeView(void)
 
 	if (oldview!=newview)
 	{
-		SD_PlaySound (Sshoot);
+		sfx (Sshoot);
 		Message("Thinking...");
 		NewViewSize(newview);
 	}
@@ -2173,7 +2173,7 @@ void CP_Quit(void)
 {
 	s16int i;
 
-	if (Confirm(endStrings[US_RndT()&0x7+(US_RndT()&1)]))
+	if (Confirm(endStrings[rnd()&0x7+(rnd()&1)]))
 	{
 		VW_UpdateScreen();
 		SD_MusicOff();
@@ -2505,7 +2505,7 @@ s16int HandleMenu(CP_iteminfo *item_i,CP_itemtype far *items,void (*routine)(s16
 			return which;
 
 		case 2:
-			SD_PlaySound(Sesc);
+			sfx(Sesc);
 			return -1;
 	}
 
@@ -2535,7 +2535,7 @@ void DrawHalfStep(s16int x,s16int y)
 {
 	VWB_DrawPic(x,y,Pcur1);
 	VW_UpdateScreen();
-	SD_PlaySound(Sdrawgun1);
+	sfx(Sdrawgun1);
 	TimeCount=0;
 	while(TimeCount<8);
 }
@@ -2561,7 +2561,7 @@ void DrawGun(CP_iteminfo *item_i,CP_itemtype far *items,s16int x,s16int *y,s16in
 	if (routine)
 		routine(which);
 	VW_UpdateScreen();
-	SD_PlaySound(Sdrawgun2);
+	sfx(Sdrawgun2);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -2761,7 +2761,7 @@ s16int Confirm(char far *string)
 	while(Keyboard[sc_Y] || Keyboard[sc_N] || Keyboard[sc_Escape]);
 
 	IN_ClearKeysDown();
-	SD_PlaySound(whichsnd[xit]);
+	sfx(whichsnd[xit]);
 	return xit;
 }
 
@@ -2804,7 +2804,7 @@ void Message(char far *string)
 void StartCPMusic(s16int song)
 {
 	SD_MusicOff();
-	SD_StartMusic((MusicGroup far *)audiosegs[STARTMUSIC + song]);
+	SD_mapmus((MusicGroup far *)audiosegs[STARTMUSIC + song]);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -2874,5 +2874,5 @@ void DrawMenuGun(CP_iteminfo *iteminfo)
 
 void ShootSnd(void)
 {
-	SD_PlaySound(Sshoot);
+	sfx(Sshoot);
 }

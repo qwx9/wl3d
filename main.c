@@ -1,86 +1,16 @@
-// WL_MAIN.C
-
-#include <conio.h>
-#include "WL_DEF.H"
-#pragma hdrstop
-
-
-/*
-=============================================================================
-
-						   WOLFENSTEIN 3-D
-
-					  An Id Software production
-
-						   by John Carmack
-
-=============================================================================
-*/
-
-/*
-=============================================================================
-
-						 LOCAL CONSTANTS
-
-=============================================================================
-*/
-
-
-#define FOCALLENGTH     (0x5700l)               // in global coordinates
-#define VIEWGLOBAL      0x10000                 // globals visable flush to wall
-
-/*
-=============================================================================
-
-						 GLOBAL VARIABLES
-
-=============================================================================
-*/
-
 char            str[80],str2[20];
 s16int				tedlevelnum;
 int         tedlevel;
-s16int                     dirangle[9] = {0,ANGLES/8,2*ANGLES/8,3*ANGLES/8,4*ANGLES/8,
+s16int  dirangle[9] = {0,ANGLES/8,2*ANGLES/8,3*ANGLES/8,4*ANGLES/8,
 	5*ANGLES/8,6*ANGLES/8,7*ANGLES/8,ANGLES};
 
-//
-// proejection variables
-//
-s32int           focallength;
 u16int        screenofs;
-s16int             viewwidth;
-s16int             viewheight;
-s16int             centerx;
-s16int             shootdelta;                     // pixels away from centerx a target can be
-s32int           scale,maxslope;
-s32int            heightnumerator;
-s16int                     minheightdiv;
 
-
-void            Quit (char *error);
-
-int         startgame,loadedgame;
+int         startgame;
 s16int             mouseadjustment;
 
 char	configname[13]="CONFIG.";
 
-
-/*
-=============================================================================
-
-						 LOCAL VARIABLES
-
-=============================================================================
-*/
-
-
-/*
-====================
-=
-= ReadConfig
-=
-====================
-*/
 
 void ReadConfig(void)
 {
@@ -112,7 +42,7 @@ void ReadConfig(void)
 		read(file,&buttonmouse,sizeof(buttonmouse));
 		read(file,&buttonjoy,sizeof(buttonjoy));
 
-		read(file,&viewsize,sizeof(viewsize));
+		read(file,&vw.size,sizeof(vw.size));
 		read(file,&mouseadjustment,sizeof(mouseadjustment));
 
 		close(file);
@@ -159,7 +89,7 @@ void ReadConfig(void)
 		if (MousePresent)
 			mouseenabled = true;
 
-		viewsize = 15;
+		vw.size = 15;
 		mouseadjustment=5;
 	}
 
@@ -168,15 +98,6 @@ void ReadConfig(void)
 	SD_SetDigiDevice (sds);
 
 }
-
-
-/*
-====================
-=
-= WriteConfig
-=
-====================
-*/
 
 void WriteConfig(void)
 {
@@ -204,39 +125,17 @@ void WriteConfig(void)
 		write(file,&buttonmouse,sizeof(buttonmouse));
 		write(file,&buttonjoy,sizeof(buttonjoy));
 
-		write(file,&viewsize,sizeof(viewsize));
+		write(file,&vw.size,sizeof(vw.size));
 		write(file,&mouseadjustment,sizeof(mouseadjustment));
 
 		close(file);
 	}
 }
 
-/*
-=====================
-=
-= NewGame
-=
-= Set up new game to start from the beginning
-=
-=====================
-*/
-
 void NewGame (s16int difficulty,s16int episode)
 {
-	memset (&gamestate,0,sizeof(gamestate));
-	gamestate.difficulty = difficulty;
-	gamestate.weapon = gamestate.bestweapon
-		= gamestate.chosenweapon = wp_pistol;
-	gamestate.health = 100;
-	gamestate.ammo = STARTAMMO;
-	gamestate.lives = 3;
-	gamestate.nextextra = EXTRAPOINTS;
-	gamestate.episode=episode;
-
-	startgame = true;
+	→ initg, w/o difficulty, map
 }
-
-//===========================================================================
 
 void DiskFlopAnim(s16int x,s16int y)
 {
@@ -258,15 +157,6 @@ s32int DoChecksum(u8int far *source,u16int size,s32int checksum)
 
  return checksum;
 }
-
-
-/*
-==================
-=
-= SaveTheGame
-=
-==================
-*/
 
 int SaveTheGame(s16int file,s16int x,s16int y)
 {
@@ -330,8 +220,8 @@ int SaveTheGame(s16int file,s16int x,s16int y)
 	CA_FarWrite (file,(void far *)actorat,sizeof(actorat));
 	checksum = DoChecksum((u8int far *)actorat,sizeof(actorat),checksum);
 
-	CA_FarWrite (file,(void far *)areaconnect,sizeof(areaconnect));
-	CA_FarWrite (file,(void far *)areabyplayer,sizeof(areabyplayer));
+	CA_FarWrite (file,(void far *)conarea,sizeof(conarea));
+	CA_FarWrite (file,(void far *)plrarea,sizeof(plrarea));
 
 	for (ob = player ; ob ; ob=ob->next)
 	{
@@ -378,16 +268,6 @@ int SaveTheGame(s16int file,s16int x,s16int y)
 	return(true);
 }
 
-//===========================================================================
-
-/*
-==================
-=
-= LoadTheGame
-=
-==================
-*/
-
 int LoadTheGame(s16int file,s16int x,s16int y)
 {
 	s32int checksum,oldchecksum;
@@ -410,7 +290,7 @@ int LoadTheGame(s16int file,s16int x,s16int y)
 #endif
 
 	DiskFlopAnim(x,y);
-	SetupGameLevel ();
+	initmap ();
 
 	DiskFlopAnim(x,y);
 	CA_FarRead (file,(void far *)tilemap,sizeof(tilemap));
@@ -419,12 +299,12 @@ int LoadTheGame(s16int file,s16int x,s16int y)
 	CA_FarRead (file,(void far *)actorat,sizeof(actorat));
 	checksum = DoChecksum((u8int far *)actorat,sizeof(actorat),checksum);
 
-	CA_FarRead (file,(void far *)areaconnect,sizeof(areaconnect));
-	CA_FarRead (file,(void far *)areabyplayer,sizeof(areabyplayer));
+	CA_FarRead (file,(void far *)conarea,sizeof(conarea));
+	CA_FarRead (file,(void far *)plrarea,sizeof(plrarea));
 
 
 
-	InitActorList ();
+	oinit ();
 	DiskFlopAnim(x,y);
 	CA_FarRead (file,(void far *)player,sizeof(*player));
 
@@ -434,7 +314,7 @@ int LoadTheGame(s16int file,s16int x,s16int y)
 		CA_FarRead (file,(void far *)&nullobj,sizeof(nullobj));
 		if (nullobj.active == ac_badobject)
 			break;
-		GetNewActor ();
+		onew ();
 	 // don't copy over the links
 		memcpy (new,&nullobj,sizeof(nullobj)-4);
 	}
@@ -471,161 +351,24 @@ int LoadTheGame(s16int file,s16int x,s16int y)
 
 	if (oldchecksum != checksum)
 	{
-	 Message("Your Save Game file is,\n"
+		Message("Your Save Game file is,\n"
 		"shall we say, \"corrupted\".\n"
 		"But I'll let you go on and\n"
 		"play anyway....");
 
-	 IN_ClearKeysDown();
-	 IN_Ack();
+		IN_ClearKeysDown();
+		IN_Ack();
 
-	 gamestate.score = 0;
-	 gamestate.lives = 1;
-	 gamestate.weapon =
-	   gamestate.chosenweapon =
-	   gamestate.bestweapon = wp_pistol;
-	 gamestate.ammo = 8;
+		gm.score = 0;
+		gm.lives = 1;
+		gm.w = gm.bestw = gm.lastw = WPpistol;
+		gm.ammo = 8;
 	}
 
 	return true;
 }
 
-/*
-==================
-=
-= BuildTables
-=
-= Calculates:
-=
-= scale                 projection constant
-= sintable/costable     overlapping fractional tables
-=
-==================
-*/
-
-const   float   radtoint = (float)FINEANGLES/2/PI;
-
-void BuildTables (void)
-{
-  s16int           i;
-  float         angle,anglestep;
-  double        tang;
-  s32int         value;
-
-
-//
-// calculate fine tangents
-//
-
-	for (i=0;i<FINEANGLES/8;i++)
-	{
-		tang = tan( (i+0.5)/radtoint);
-		finetangent[i] = tang*TILEGLOBAL;
-		finetangent[FINEANGLES/4-1-i] = 1/tang*TILEGLOBAL;
-	}
-
-//
-// costable overlays sintable with a quarter phase shift
-// ANGLES is assumed to be divisable by four
-//
-// The low word of the value is the fraction, the high bit is the sign bit,
-// bits 16-30 should be 0
-//
-
-  angle = 0;
-  anglestep = PI/2/ANGLEQUAD;
-  for (i=0;i<=ANGLEQUAD;i++)
-  {
-	value=GLOBAL1*sin(angle);
-	sintable[i]=
-	  sintable[i+ANGLES]=
-	  sintable[ANGLES/2-i] = value;
-	sintable[ANGLES-i]=
-	  sintable[ANGLES/2+i] = value | 0x80000000l;
-	angle += anglestep;
-  }
-
-}
-
-//===========================================================================
-
-
-/*
-====================
-=
-= CalcProjection
-=
-= Uses focallength
-=
-====================
-*/
-
-void CalcProjection (s32int focal)
-{
-	s16int             i;
-	s32int            intang;
-	float   angle;
-	double  tang;
-	double  planedist;
-	double  globinhalf;
-	s16int             halfview;
-	double  halfangle,facedist;
-
-
-	focallength = focal;
-	facedist = focal+MINDIST;
-	halfview = viewwidth/2;                                 // half view in pixels
-
-//
-// calculate scale value for vertical height calculations
-// and sprite x calculations
-//
-	scale = halfview*facedist/(VIEWGLOBAL/2);
-
-//
-// divide heightnumerator by a posts distance to get the posts height for
-// the heightbuffer.  The pixel height is height>>2
-//
-	heightnumerator = (TILEGLOBAL*scale)>>6;
-	minheightdiv = heightnumerator/0x7fff +1;
-
-//
-// calculate the angle offset from view angle of each pixel's ray
-//
-
-	for (i=0;i<halfview;i++)
-	{
-	// start 1/2 pixel over, so viewangle bisects two middle pixels
-		tang = (s32int)i*VIEWGLOBAL/viewwidth/facedist;
-		angle = atan(tang);
-		intang = angle*radtoint;
-		pixelangle[halfview-1-i] = intang;
-		pixelangle[halfview+i] = -intang;
-	}
-
-//
-// if a point's abs(y/x) is greater than maxslope, the point is outside
-// the view area
-//
-	maxslope = finetangent[pixelangle[0]];
-	maxslope >>= 8;
-}
-
-
-
-//===========================================================================
-
-/*
-===================
-=
-= SetupWalls
-=
-= Map tile values to scaled pics
-=
-===================
-*/
-
-void SetupWalls (void)
+void SetupWalls (void)	/* map tile values to scaled pics */
 {
 	s16int     i;
 
@@ -636,15 +379,7 @@ void SetupWalls (void)
 	}
 }
 
-/*
-==========================
-=
-= InitGame
-=
-= Load a few things right away
-=
-==========================
-*/
+#define	PORTTILESHIGH		13		// non displayed port of this size
 
 void InitGame (void)
 {
@@ -652,10 +387,6 @@ void InitGame (void)
 	u16int        *blockstart;
 
 	mapon = -1;
-
-//
-// build some tables
-//
 
 	for (i=0;i<MAPSIZE;i++)
 	{
@@ -678,145 +409,42 @@ void InitGame (void)
 
 	IntroScreen ();
 
-//
-// load in and lock down some basic chunks
-//
-
 	LoadLatchMem ();
-	BuildTables ();          // trig tables
 	SetupWalls ();
 
-	NewViewSize (viewsize);
+	NewViewSize (vw.size);
 
-
-//
-// initialize variables
-//
 	InitRedShifts ();
 
 	displayofs = PAGE1START;
 	bufferofs = PAGE2START;
 }
 
-//===========================================================================
-
-/*
-==========================
-=
-= SetViewSize
-=
-==========================
-*/
-
 int SetViewSize (u16int width, u16int height)
 {
-	viewwidth = width&~15;                  // must be divisable by 16
-	viewheight = height&~1;                 // must be even
-	centerx = viewwidth/2-1;
-	shootdelta = viewwidth/10;
-	screenofs = ((200-STATUSLINES-viewheight)/2*SCREENWIDTH+(320-viewwidth)/8);
-
-//
-// calculate trace angles and projection constants
-//
-	CalcProjection (FOCALLENGTH);
-
-//
-// build all needed compiled scalers
-//
-	SetupScaling (viewwidth*1.5);
-	return true;
+	→ setvw()
 }
-
 
 void ShowViewSize (s16int width)
 {
 	s16int     oldwidth,oldheight;
 
-	oldwidth = viewwidth;
-	oldheight = viewheight;
+	oldwidth = vw.dx;
+	oldheight = vw.dy;
 
-	viewwidth = width*16;
-	viewheight = width*16*HEIGHTRATIO;
+	vw.dx = width*16;
+	vw.dy = width*16*HEIGHTRATIO;
 	DrawPlayBorder ();
 
-	viewheight = oldheight;
-	viewwidth = oldwidth;
+	vw.dy = oldheight;
+	vw.dx = oldwidth;
 }
-
 
 void NewViewSize (s16int width)
 {
-	CA_UpLevel ();
-	MM_SortMem ();
-	viewsize = width;
+	vw.size = width;
 	SetViewSize (width*16,width*16*HEIGHTRATIO);
-	CA_DownLevel ();
 }
-
-
-
-//===========================================================================
-
-/*
-==========================
-=
-= Quit
-=
-==========================
-*/
-
-void Quit (char *error)
-{
-	u16int        finscreen;
-	uchar *screen;
-
-	ClearMemory ();
-	if (!*error)
-	{
-	 screen = Eorder;
-	 WriteConfig ();
-	}
-	else
-	{
-	 screen = Eerror;
-	}
-
-	if (error && *error)
-	{
-	  movedata ((u16int)screen,7,0xb800,0,7*160);
-	  gotoxy (10,4);
-	  puts(error);
-	  gotoxy (1,8);
-	  exit(1);
-	}
-	else
-	if (!error || !(*error))
-	{
-		clrscr();
-		movedata ((u16int)screen,7,0xb800,0,4000);
-		gotoxy(1,24);
-//asm	mov	bh,0
-//asm	mov	dh,23	// row
-//asm	mov	dl,0	// collumn
-//asm	mov ah,2
-//asm	int	0x10
-	}
-
-	exit(0);
-}
-
-//===========================================================================
-
-
-
-/*
-=====================
-=
-= DemoLoop
-=
-=====================
-*/
 
 void    DemoLoop (void)
 {
@@ -848,81 +476,30 @@ void    DemoLoop (void)
 		Quit (NULL);
 	}
 
-
-//
-// main game cycle
-//
-
-
-//	nsize = (s32int)40*1024;
-//	MM_GetPtr(&nullblock,nsize);
-
 	StartCPMusic(INTROSONG);
-
-	if (!NoWait)
-		PG13 ();
+	// pg13
 
 	while (1)
 	{
-		uchar *p = dems;
+		p = dems;
 		while (!NoWait)
 		{
-//
-// title page
-//
-			MM_SortMem ();
-
-#ifdef SPEAR
-			VWB_DrawPic (0,0,Ptitle1);
-			VWB_DrawPic (0,80,Ptitle2);
-			VW_UpdateScreen ();
-			VL_FadeIn(0,255,Etitpal,30);
-#else
-			CA_CacheScreen (Ptitle1);
-			VW_UpdateScreen ();
-			VW_FadeIn();
-#endif
-			if (IN_UserInput(TickBase*15))
-				break;
-			VW_FadeOut();
-//
-// credits page
-//
-			CA_CacheScreen (Pcreds);
-			VW_UpdateScreen();
-			VW_FadeIn ();
-			if (IN_UserInput(TickBase*10))
-				break;
-			VW_FadeOut ();
-//
-// high scores
-//
-			DrawHighScores ();
-			VW_UpdateScreen ();
-			VW_FadeIn ();
-
-			if (IN_UserInput(TickBase*10))
-				break;
-//
-// demo
-//
+			/* title loop */
 			PlayDemo(p++);
 			if(p >= epis)
 				p = dems;
-
-			if (playstate == ex_abort)
+			if (gm.φ == ex_abort)
 				break;
 			StartCPMusic(INTROSONG);
 		}
 
 		VW_FadeOut ();
-
 		if (Keyboard[sc_Tab] && debug)
 			RecordDemo ();
 		else
 			US_ControlPanel (0);
 
-		if (startgame || loadedgame)
+		if (startgame || gm.load)
 		{
 			GameLoop ();
 			VW_FadeOut();
@@ -930,18 +507,6 @@ void    DemoLoop (void)
 		}
 	}
 }
-
-
-//===========================================================================
-
-
-/*
-==========================
-=
-= main
-=
-==========================
-*/
 
 void main (void)
 {

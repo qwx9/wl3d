@@ -1,8 +1,3 @@
-// WL_SCALE.C
-
-#include "WL_DEF.H"
-#pragma hdrstop
-
 #define OP_RETF	0xcb
 
 /*
@@ -17,8 +12,6 @@ t_compscale _seg *scaledirectory[MAXSCALEHEIGHT+1];
 s32int			fullscalefarcall[MAXSCALEHEIGHT+1];
 
 s16int			maxscale,maxscaleshl2;
-
-int	insetupscaling;
 
 /*
 =============================================================================
@@ -49,20 +42,16 @@ void far BadScale (void)
 }
 
 
-/*
-==========================
-=
-= SetupScaling
-=
-==========================
-*/
-
 void SetupScaling (s16int maxscaleheight)
 {
 	s16int		i,x,y;
 	u8int	far *dest;
 
-	insetupscaling = true;
+The dynamically compiled scaling routines are now a Bad Thing.  
+On uncached machines (the original target) they are the fastest 
+possible way to scale walls, but on modern processors you just 
+wind up thrashing the code cash and wrecking performance.  
+A simple looping texture mapper would be faster on 486+ machines.
 
 	maxscaleheight/=2;			// one scaler every two pixels
 
@@ -81,12 +70,10 @@ void SetupScaling (s16int maxscaleheight)
 	}
 	memset (scaledirectory,0,sizeof(scaledirectory));
 
-	MM_SortMem ();
-
 //
 // build the compiled scalers
 //
-	stepbytwo = viewheight/2;	// save space by double stepping
+	stepbytwo = vw.dy/2;	// save space by double stepping
 	MM_GetPtr (&(uchar *)work,20000);
 
 	for (i=1;i<=maxscaleheight;i++)
@@ -100,7 +87,6 @@ void SetupScaling (s16int maxscaleheight)
 //
 // compact memory and lock down scalers
 //
-	MM_SortMem ();
 	for (i=1;i<=maxscaleheight;i++)
 	{
 		MM_SetLock (&(uchar *)scaledirectory[i],true);
@@ -123,9 +109,7 @@ void SetupScaling (s16int maxscaleheight)
 // check for oversize wall drawing
 //
 	for (i=maxscaleheight;i<MAXSCALEHEIGHT;i++)
-		fullscalefarcall[i] = (s32int)BadScale;
-
-	insetupscaling = false;
+		fullscalefarcall[i] = (uintptr)BadScale;
 }
 
 //===========================================================================
@@ -152,6 +136,8 @@ void SetupScaling (s16int maxscaleheight)
 
 u16int BuildCompScale (s16int height, uchar **finalspot)
 {
+	a simple looping texture mapper would be better, simpler, faster
+
 	u8int		far *code;
 
 	s16int			i;
@@ -162,7 +148,7 @@ u16int BuildCompScale (s16int height, uchar **finalspot)
 
 	step = ((s32int)height<<16) / 64;
 	code = &work->code[0];
-	toppix = (viewheight-height)/2;
+	toppix = (vw.dy-height)/2;
 	fix = 0;
 
 	for (src=0;src<=64;src++)
@@ -187,7 +173,7 @@ u16int BuildCompScale (s16int height, uchar **finalspot)
 		startpix+=toppix;
 		endpix+=toppix;
 
-		if (startpix == endpix || endpix < 0 || startpix >= viewheight || src == 64)
+		if (startpix == endpix || endpix < 0 || startpix >= vw.dy || src == 64)
 			continue;
 
 	//
@@ -199,7 +185,7 @@ u16int BuildCompScale (s16int height, uchar **finalspot)
 
 		for (;startpix<endpix;startpix++)
 		{
-			if (startpix >= viewheight)
+			if (startpix >= vw.dy)
 				break;						// off the bottom of the view area
 			if (startpix < 0)
 				continue;					// not into the view area
@@ -397,7 +383,7 @@ asm	jmp	scaletriple					// do the next segment
 /*
 =======================
 =
-= ScaleShape
+= scalevis
 =
 = Draws a compiled shape at [scale] pixels high
 =
@@ -418,11 +404,11 @@ asm	jmp	scaletriple					// do the next segment
 
 static	s32int		longtemp;
 
-void ScaleShape (s16int xcenter, s16int shapenum, u16int height)
+void scalevis (s16int xcenter, s16int shapenum, u16int height)
 {
 	t_compshape	_seg *shape;
 	t_compscale _seg *comptable;
-	u16int	scale,srcx,stopx,tempx;
+	u16int	scale,srcx,stopx,tempx;	/* /!\ scale shadow */
 	s16int			t;
 	u16int	far *cmdptr;
 	int		leftvis,rightvis;
@@ -455,7 +441,7 @@ void ScaleShape (s16int xcenter, s16int shapenum, u16int height)
 		if (slinewidth == 1)
 		{
 			slinex--;
-			if (slinex<viewwidth)
+			if (slinex<vw.dx)
 			{
 				if (wallheight[slinex] >= height)
 					continue;		// obscured by closer wall
@@ -467,10 +453,10 @@ void ScaleShape (s16int xcenter, s16int shapenum, u16int height)
 		//
 		// handle multi pixel lines
 		//
-		if (slinex>viewwidth)
+		if (slinex>vw.dx)
 		{
 			slinex -= slinewidth;
-			slinewidth = viewwidth-slinex;
+			slinewidth = vw.dx-slinex;
 			if (slinewidth<1)
 				continue;		// still off the right side
 		}
@@ -529,7 +515,7 @@ void ScaleShape (s16int xcenter, s16int shapenum, u16int height)
 	}
 	slinewidth = 0;
 
-	while ( ++srcx <= stopx && (slinex+=slinewidth)<viewwidth)
+	while ( ++srcx <= stopx && (slinex+=slinewidth)<vw.dx)
 	{
 		(u16int)linecmds = *cmdptr++;
 		if ( !(slinewidth = comptable->width[srcx]) )
@@ -557,8 +543,8 @@ void ScaleShape (s16int xcenter, s16int shapenum, u16int height)
 		}
 		else
 		{
-			if (slinex + slinewidth > viewwidth)
-				slinewidth = viewwidth-slinex;
+			if (slinex + slinewidth > vw.dx)
+				slinewidth = vw.dx-slinex;
 		}
 
 
@@ -601,7 +587,7 @@ void ScaleShape (s16int xcenter, s16int shapenum, u16int height)
 /*
 =======================
 =
-= SimpleScaleShape
+= scalespr
 =
 = NO CLIPPING, height in pixels
 =
@@ -622,11 +608,11 @@ void ScaleShape (s16int xcenter, s16int shapenum, u16int height)
 =======================
 */
 
-void SimpleScaleShape (s16int xcenter, s16int shapenum, u16int height)
+void scalespr (s16int xcenter, s16int shapenum, u16int height)
 {
 	t_compshape	_seg *shape;
 	t_compscale _seg *comptable;
-	u16int	scale,srcx,stopx,tempx;
+	u16int	scale,srcx,stopx,tempx;	/* /!\ scale shadow */
 	s16int			t;
 	u16int	far *cmdptr;
 	int		leftvis,rightvis;

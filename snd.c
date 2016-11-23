@@ -7,6 +7,7 @@
 Dat *imfs;
 Sfx *sfxs;
 int sfxon, muson, pcmon;
+int sfxlck;
 
 enum{
 	Rate = 44100,
@@ -176,6 +177,41 @@ enum{
 static int hΔ[nelem(h)], xb[Npbuf], xbi;
 static ulong xt;
 
+static u8int ratt[][30] = {
+	{8,8,8,8,8,8,8,7,7,7,7,7,7,6,0,0,0,0,0,1,3,5,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,7,7,7,7,7,6,4,0,0,0,0,0,2,4,6,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,7,7,7,7,6,6,4,1,0,0,0,1,2,4,6,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,7,7,7,7,6,5,4,2,1,0,1,2,3,5,7,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,7,7,7,6,5,4,3,2,2,3,3,5,6,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,7,7,7,6,6,5,4,4,4,4,5,6,7,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,7,7,7,6,6,5,5,5,6,6,7,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,7,7,7,6,6,7,7,8,8,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8}
+}, latt[][30] = {
+	{8,8,8,8,8,8,8,8,5,3,1,0,0,0,0,0,6,7,7,7,7,7,7,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,6,4,2,0,0,0,0,0,4,6,7,7,7,7,7,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,6,4,2,1,0,0,0,1,4,6,6,7,7,7,7,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,7,5,3,2,1,0,1,2,4,5,6,7,7,7,7,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,6,5,3,3,2,2,3,4,5,6,7,7,7,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,7,6,5,4,4,4,4,5,6,6,7,7,7,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,7,6,6,5,5,5,6,6,7,7,7,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,7,7,6,6,7,7,7,8,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8},
+	{8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8}
+};
+static int atton, attx, atty, lvol, rvol;
+
 static void
 stopal(void)
 {
@@ -231,11 +267,10 @@ alcmd(void)
 static void
 opl2step(void)
 {
-	uchar *p, *e;
+	uchar *p;
 
 	p = sbuf;
-	e = p + sizeof sbuf;
-	while(p < e){
+	while(p < sbuf + sizeof sbuf){
 		if(stc == sdt && sfxd != nil)
 			alcmd();
 		if(stc == mdt && imfd != nil)
@@ -251,9 +286,10 @@ filter(int *xb, uchar *s)
 {
 	ulong l, p, i;
 	int *x, o, a;
+	s16int m;
 	vlong v;
 
-	if(s >= sbuf+sizeof sbuf)
+	if(s >= sbuf + sizeof sbuf)
 		return;
 	v = 0;
 	x = &xb[xt>>Np];	/* left side */
@@ -277,13 +313,22 @@ filter(int *xb, uchar *s)
 	v >>= 2;	/* scale */
 	v *= Lscale;
 	v >>= 27;
-	o = (v >> 16) + (short)(s[0] | s[1]<<8);	/* mix */
+
+	m = s[0] | s[1] << 8;
+	o = (s32int)(v >> 16) * lvol / 16 + m;
 	if(o > 32767)
 		o = 32767;
 	else if(o < -32768)
 		o = -32768;
-	s[0] = s[2] = o;
-	s[1] = s[3] = o>>8;
+	s[0] = o;
+	s[1] = o >> 8;
+	o = (s32int)(v >> 16) * rvol / 16 + m;
+	if(o > 32767)
+		o = 32767;
+	else if(o < -32768)
+		o = -32768;
+	s[2] = o;
+	s[3] = o >> 8;
 }
 
 static void
@@ -298,7 +343,7 @@ resample(uchar *p, int n)
 		for(i=xbi; n>0 && i<Npbuf; n--, i++)
 			xb[i] = ((uint)*p++ << 24) - 0x7fffffff;
 		xbi = i;
-		if(i < 2*Nextra)	/* minimum for filter */
+		if(i < 2 * Nextra)	/* minimum for filter */
 			break;
 		e = i - Nextra << Np;
 		while(xt < e){	/* process buffer and mix */
@@ -313,12 +358,40 @@ resample(uchar *p, int n)
 			e -= Nextra;
 			i -= e;
 			if(i > 0){
-				memmove(xb+s, xb+e, i * sizeof i);
+				memmove(xb + s, xb + e, i * sizeof i);
 				s += i;
 			}
 			xbi = s;
 		}
 	}while(n > 0);
+}
+
+static void
+setvol(void)
+{
+	int x, y, ax, ay;
+	s32int f;
+
+	if(!atton){
+		lvol = rvol = 16;
+		return;
+	}
+	ax = attx - vw.x;
+	ay = atty - vw.y;
+	f = ffs(ax, vw.cos);
+	x = f - ffs(ay, vw.sin) >> Dtlshift;
+	f = ffs(ax, vw.sin);
+	y = f + ffs(ay, vw.cos) >> Dtlshift;
+	if(x < 0)
+		x = -x;
+	if(x >= nelem(latt))
+		x = nelem(latt) - 1;
+	if(y < -nelem(latt))
+		y = -nelem(latt);
+	else if(y >= nelem(latt))
+		y = nelem(latt) - 1;
+	lvol = 16 - latt[x][nelem(latt)+y];
+	rvol = 16 - ratt[x][nelem(latt)+y];
 }
 
 static void
@@ -332,6 +405,7 @@ pcmstep(void)
 		return;
 	if(p + Pdiv < e)
 		e = p + Pdiv;
+	setvol();
 	resample(p, e-p);
 	pcm = e;
 }
@@ -343,7 +417,8 @@ sndstep(void)
 		return;
 	opl2step();
 	pcmstep();
-	write(sfd, sbuf, sizeof sbuf);
+	if(!nosleep)
+		write(sfd, sbuf, sizeof sbuf);
 }
 
 void
@@ -354,23 +429,39 @@ stopsfx(void)
 	pcmd = nil;
 }
 
+int
+lastsfx(void)
+{
+	if(pcm < pcme)
+		return pcmd - sfxs;
+	else if(sfxd != nil)
+		return sfxd - sfxs;
+	return -1;
+}
+
 void
-sfx(int n)
+sfxatt(int n, int att, int x, int y)
 {
 	Sfx *s;
-	uchar *r, *i, *e;
+	uchar *r, *i;
 
-	s = sfxs+n;
-	if(sfd < 0 || !sfxon)
+	if(sfd < 0 || !sfxon || sfxlck)
 		return;
+	s = sfxs+n;
 	if(pcmon && s->pcm != nil){
-		if(pcmd != nil && s->pri < pcmd->pri)
+		if(pcm < pcme && s->pri < pcmd->pri)
 			return;
 		pcmd = s;
 		pcm = s->pcm->p;
 		pcme = s->pcm->e;
 		xbi = Nextra;
 		xt = Nextra << Np;
+		if(att){
+			atton = 1;
+			attx = x;
+			atty = y;
+		}else
+			atton = 0;
 	}else{
 		if(sfxd != nil && s->pri < sfxd->pri)
 			return;
@@ -381,10 +472,15 @@ sfx(int n)
 		sdt = stc;
 		i = s->inst;
 		r = inst;
-		e = r + sizeof inst;
-		while(r < e)
+		while(r < inst + sizeof inst)
 			opl2wr(*r++, *i++);
 	}
+}
+
+void
+sfx(int n)
+{
+	sfxatt(n, 0, 0, 0);
 }
 
 void
@@ -393,6 +489,8 @@ stopmus(void)
 	int i;
 
 	stopsfx();
+	if(!muson && !sfxon)
+		return;
 	opl2wr(Ropm, 0);
 	for(i=Roct+1; i<Roct+9; i++)
 		opl2wr(i, 0);

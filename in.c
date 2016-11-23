@@ -1,15 +1,62 @@
-		int		Keyboard[NumCodes];
+#define	MaxPlayers	4
+#define	NumCodes	128
 
-		KeyboardDef	KbdDefs = {0x1d,0x38,0x47,0x48,0x49,0x4b,0x4d,0x4f,0x50,0x51};
-		ControlType	Controls[MaxPlayers];
+// 	Stuff for the mouse
+#define	MReset		0
+#define	MButtons	3
+#define	MDelta		11
 
-		Demo		DemoMode = demo_Off;
-		u8int _seg	*DemoBuffer;
-		u16int		DemoOffset,DemoSize;
+#define	MouseInt	0x33
+#define	Mouse(x)	_AX = x,geninterrupt(MouseInt)
 
+typedef	enum		{
+						demo_Off,demo_Record,demo_Playback,demo_PlayDone
+					} Demo;
+typedef	enum		{
+						ctrl_Keyboard,
+							ctrl_Keyboard1 = ctrl_Keyboard,ctrl_Keyboard2,
+						ctrl_Mouse
+					} ControlType;
+typedef	enum		{
+						motion_Left = -1,motion_Up = -1,
+						motion_None = 0,
+						motion_Right = 1,motion_Down = 1
+					} Motion;
+typedef	enum		{
+						dir_North,dir_NorthEast,
+						dir_East,dir_SouthEast,
+						dir_South,dir_SouthWest,
+						dir_West,dir_NorthWest,
+						dir_None
+					} Direction;
+typedef	struct		{
+						int		button0,button1,button2,button3;
+						s16int			x,y;
+						Motion		xaxis,yaxis;
+						Direction	dir;
+					} CursorInfo;
+typedef	CursorInfo	ControlInfo;
+typedef	struct		{
+						u8int	button0,button1,
+									upleft,		up,		upright,
+									left,				right,
+									downleft,	down,	downright;
+					} KeyboardDef;
+
+// Function prototypes
+#define	IN_KeyDown(code)	(Keyboard[(code)])
+#define	IN_ClearKey(code)	{Keyboard[code] = false;\
+							if (code == LastScan) LastScan = sc_None;}
+								
+int		Keyboard[NumCodes];
+KeyboardDef	KbdDefs = {0x1d,0x38,0x47,0x48,0x49,0x4b,0x4d,0x4f,0x50,0x51};
+ControlType	Controls[MaxPlayers];
+Demo		DemoMode = demo_Off;
+u8int _seg	*DemoBuffer;
+u16int		DemoOffset,DemoSize;
 
 static	Direction	DirTable[] =		// Quick lookup for total direction
-					{
+{
 						dir_NorthWest,	dir_North,	dir_NorthEast,
 						dir_West,		dir_None,	dir_East,
 						dir_SouthWest,	dir_South,	dir_SouthEast

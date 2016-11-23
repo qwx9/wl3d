@@ -12,8 +12,8 @@
 =============================================================================
 */
 
-#define VIEWTILEX	(viewwidth/16)
-#define VIEWTILEY	(viewheight/16)
+#define VIEWTILEX	(vw.dx/16)
+#define VIEWTILEY	(vw.dy/16)
 
 /*
 =============================================================================
@@ -194,7 +194,7 @@ static	char	buf[10];
 				for (x=0;x<64;x++,postx++,postsource+=64)
 				{
 					wallheight[postx] = 256;
-					FarScalePost ();
+					ScalePost ();
 				}
 				bufferofs -= 32*SCREENWIDTH;
 			}
@@ -204,7 +204,7 @@ static	char	buf[10];
 			// draw the sprite
 			//
 				bufferofs += 32*SCREENWIDTH;
-				SimpleScaleShape (160, i-PMSpriteStart, 64);
+				scalespr (160, i-PMSpriteStart, 64);
 				bufferofs -= 32*SCREENWIDTH;
 			}
 			else if (i == ChunksInFile - 1)
@@ -352,7 +352,7 @@ s16int DebugKeys (void)
 	{
 		if (tedlevel)
 			Quit (NULL);
-		playstate = ex_completed;
+		gm.φ = ex_completed;
 //		gamestate.mapon++;
 	}
 
@@ -385,21 +385,21 @@ s16int DebugKeys (void)
 	if (Keyboard[sc_H])		// H = hurt self
 	{
 		IN_ClearKeysDown ();
-		TakeDamage (16,NULL);
+		hurt (16,NULL);
 	}
 	else if (Keyboard[sc_I])			// I = item cheat
 	{
 		CenterWindow (12,3);
 		US_PrintCentered ("Free items!");
 		VW_UpdateScreen();
-		GivePoints (100000);
+		givep (100000);
 		HealSelf (99);
-		if (gamestate.bestweapon<wp_chaingun)
-			GiveWeapon (gamestate.bestweapon+1);
+		if (gm.bestw<WPgatling)
+			givew (gm.bestw+1);
 		gamestate.ammo += 50;
 		if (gamestate.ammo > 99)
 			gamestate.ammo = 99;
-		DrawAmmo ();
+		huda ();
 		IN_Ack ();
 		return 1;
 	}
@@ -433,9 +433,9 @@ s16int DebugKeys (void)
 		Quit (NULL);
 	else if (Keyboard[sc_S])			// S = slow motion
 	{
-		singlestep^=1;
+		onestep^=1;
 		CenterWindow (18,3);
-		if (singlestep)
+		if (onestep)
 			US_PrintCentered ("Slow motion ON");
 		else
 			US_PrintCentered ("Slow motion OFF");
@@ -484,7 +484,7 @@ s16int DebugKeys (void)
 #endif
 			{
 				gamestate.mapon = level-1;
-				playstate = ex_warped;
+				gm.φ = ex_warped;
 			}
 		}
 		return 1;

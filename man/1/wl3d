@@ -4,7 +4,10 @@ wl3d \- Wolfenstein 3-D engine port
 .SH SYNOPSIS
 .B wl3d
 [
-.B -23dos
+.B -23dopqs
+] [
+.B -f
+.I demo
 ] [
 .B -m
 .I datadir
@@ -37,8 +40,8 @@ These are detailed in
 Two additional files contain the initial loading screens,
 .L intro.wl6
 and
-.LR intro.sod .
-The first is used in Wolfenstein 3-D related game versions, the second in Spear of Destiny related game versions.
+.LR intro.sod ,
+used respectively in Wolfenstein 3-D and Spear of Destiny game versions.
 .PP
 At startup, the current working directory is bound over
 .I datadir
@@ -53,6 +56,10 @@ Data files can thus be contained in a system directory while the config and save
 If these user-specific files exist and
 .I wl3d
 fails to parse them, they are not overwritten.
+The
+.B -m
+parameter is used to change
+.IR datadir .
 .PP
 Several options modify the program's behavior on startup.
 If the
@@ -62,6 +69,9 @@ parameter is used, the game starts immediately at map number
 and
 .B -x
 optionally sets the game difficulty.
+The
+.B -p
+parameter runs the program at the fastest speed possible for testing purposes.
 .PD
 .SS Game versions
 The engine supports several game versions, each requiring different data files.
@@ -78,10 +88,10 @@ Others are set by the following options:
 Wolfenstein 3-D 1.4 shareware
 .TP
 .B -s
-Spear of Destiny
+Spear of Destiny 1.0 retail
 .TP
 .B -o
-Spear of Destiny demo
+Spear of Destiny 1.0 demo
 .TP
 .B -2
 Spear of Destiny Mission 2: Return to Danger
@@ -98,7 +108,25 @@ The respective data file extensions are
 .LR sd3 .
 .PD
 Other game versions are unsupported.
+Note that
+.L sd2
+and
+.L sd3
+versions are the same as
+.L sod
+with the exception of substituting some of the data files.
 .PD
+.SS Demo lumps
+.I Wl3d
+can playback a single external demo lump before resuming normal operation, when its path is supplied with the
+.B -f
+parameter.
+The
+.B -q
+parameter causes the program to exit after playback instead.
+The filename's extension, if any, is ignored.
+Regardless, a corresponding game version must be set using the aforementioned command line parameters.
+An incorrect version will cause erroneous playback or a crash.
 .SS Sound and music
 .I Wl3d
 uses
@@ -128,11 +156,11 @@ Also unlike the reference implementation, these are displayed during data file l
 .PP
 Copy protection code and the Spear of Destiny Jukebox have been excised.
 .PP
-Menus are implemented differently, and some have been altered in functionality.
+Some cosmetic differences exist.
 .PP
 Game keys are no longer set in the options menu, but rather in the config file.
 A single global configuration file is used, rather than a version dependent one.
-In addition, while savegames are in a compatible format, config files are not.
+Also, while savegames are in a compatible format, config files are not.
 .SH FILES
 .TF /sys/games/lib/wl3d/*
 .TP
@@ -146,8 +174,6 @@ wl3d data files
 .IR audio (3) ,
 .IR wl3d (6)
 .SH BUGS
-Timing code may be off, but it's difficult to tell because of other implementation differences with the original engine.
-.PP
 Because of limitations in fmopl.c-based
 .SM OPL2
 emulation, Adlib sound effects crack too much during playback.
@@ -160,7 +186,13 @@ is written to, even when no sound is playing.
 .PP
 The upsampling implementation for digital sound effects is overkill given the number of constraints.
 .PP
-No special handling is done if the program is unable to run at a framerate of 70 Hz.
+Little is done in case the program is unable to run at a framerate of 70 Hz.
+.PD
+.SS Engine bugs
+Correct demo playback depends on the sound settings used during recording.
+Different settings on playback may cause desynchronization.
+.PD
+Spawned projectiles are not properly cleared when removed and may cause aberrant behavior and demo desynchronization.
 .SH HISTORY
 id Software's Wolfenstein 3-D was released for
 .SM MS-DOS

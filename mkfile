@@ -6,10 +6,11 @@ TARG=\
 
 OFILES=
 WOFILES=\
+	drw.$O\
 	fs.$O\
 	gm.$O\
+	hub.$O\
 	map.$O\
-	mn.$O\
 	opl2.$O\
 	rend.$O\
 	snd.$O\

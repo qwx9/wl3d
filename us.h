@@ -46,7 +46,7 @@ extern	void		TEDDeath(void);
 
 extern	int		ingame,		// Set by game code if a game is in progress
 					abortgame,	// Set if a game load failed
-					loadedgame,	// Set if the current game was loaded
+					gm.load,	// Set if the current game was loaded
 					NoWait,
 					HighScoresDirty;
 extern	char		*abortprogram;	// Set to error msg if program is dying

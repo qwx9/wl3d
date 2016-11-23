@@ -142,15 +142,15 @@ void Victory (void)
 	ClearSplitVWB ();
 
 	VWB_Bar (0,0,320,200-STATUSLINES,127);
-	Write(18,2,"you win!");
+	pictxt(18*8, 2*8, "YOU WIN!");
 
-	Write(TIMEX,TIMEY-2,"total time");
+	pictxt(TIMEX*8, TIMEY-2*8, "TOTAL TIME");
 
-	Write(12,RATIOY-2,"averages");
+	pictxt(12*8, RATIOY-2*8, "AVERAGES");
 
-	Write(RATIOX+8,RATIOY,"kill    %");
-	Write(RATIOX+4,RATIOY+2,"secret    %");
-	Write(RATIOX,  RATIOY+4,"treasure    %");
+	pictxt(RATIOX+8*8, RATIOY*8, "KILL    %");
+	pictxt(RATIOX+4*8, RATIOY+2*8, "SECRET    %");
+	pictxt(RATIOX*8, RATIOY+4*8, "TREASURE    %");
 
 	VWB_DrawPic (8,4,Pwin);
 
@@ -187,24 +187,24 @@ void Victory (void)
 	i += 2*8;
 	VWB_DrawPic(i,TIMEY*8,P0+(min%10));
 	i += 2*8;
-	Write(i/8,TIMEY,":");
+	pictxt(i/8*8, TIMEY*8, ":");
 	i += 1*8;
-	VWB_DrawPic(i,TIMEY*8,P0+(sec/10));
+	VWB_DrawPic(i,TIMEY*8,P0+(sec/10));	/* huh? */
 	i += 2*8;
 	VWB_DrawPic(i,TIMEY*8,P0+(sec%10));
 	VW_UpdateScreen ();
 
 	itoa(kr,tempstr,10);
 	x=RATIOX+24-strlen(tempstr)*2;
-	Write(x,RATIOY,tempstr);
+	pictxt(x*8, RATIOY*8, tempstr);
 
 	itoa(sr,tempstr,10);
 	x=RATIOX+24-strlen(tempstr)*2;
-	Write(x,RATIOY+2,tempstr);
+	pictxt(x*8, RATIOY+2*8, tempstr);
 
 	itoa(tr,tempstr,10);
 	x=RATIOX+24-strlen(tempstr)*2;
-	Write(x,RATIOY+4,tempstr);
+	pictxt(x*8, RATIOY+4*8, tempstr);
 
 
 #ifndef UPLOAD
@@ -212,7 +212,7 @@ void Victory (void)
 	//
 	// TOTAL TIME VERIFICATION CODE
 	//
-	if (gamestate.difficulty>=gd_medium)
+	if (gamestate.difficulty>=GDmed)
 	{
 		VWB_DrawPic (30*8,TIMEY*8,Ptc);
 		fontnumber = 0;
@@ -247,93 +247,6 @@ void Victory (void)
 
 #endif // SPEARDEMO
 }
-
-
-//==========================================================================
-
-/*
-==================
-=
-= PG13
-=
-==================
-*/
-
-void PG13 (void)
-{
-	VW_FadeOut();
-	VWB_Bar(0,0,320,200,0x82);			// background
-
-	VWB_DrawPic (216,110,Ppg13);
-	VW_UpdateScreen ();
-
-	VW_FadeIn();
-	IN_UserInput(TickBase*7);
-
-	VW_FadeOut ();
-}
-
-
-//==========================================================================
-
-void Write(s16int x,s16int y,char *string)
-{
-FIXME: use P0+n, Pa+n
- s16int alpha[]={P0,P1,P2,P3,P4,P5,
-	P6,P7,P8,P9,Pcolon,0,0,0,0,0,0,Pa,Pb,
-	Pc,Pd,Pe,Pf,Pg,Ph,Pi,Pj,Pk,
-	Pl,Pm,Pn,Po,Pp,Pq,Pr,Ps,Pt,
-	Pu,Pv,Pw,Px,Py,Pz};
-
- s16int i,ox,nx,ny;
- char ch;
-
-
- ox=nx=x*8;
- ny=y*8;
- for (i=0;i<strlen(string);i++)
-   if (string[i]=='\n')
-   {
-	nx=ox;
-	ny+=16;
-   }
-   else
-   {
-	ch=string[i];
-	if (ch>='a')
-	  ch-=('a'-'A');
-	ch-='0';
-
-	switch(string[i])
-	{
-	 case '!':
-	   VWB_DrawPic(nx,ny,Pexcl);
-	   nx+=8;
-	   continue;
-
-	 case '\'':
-	   VWB_DrawPic(nx,ny,Papo);
-	   nx+=8;
-	   continue;
-
-	 case ' ': break;
-	 case 0x3a:	// ':'
-
-	   VWB_DrawPic(nx,ny,Pcolon);
-	   nx+=8;
-	   continue;
-
-	 case '%':
-	   VWB_DrawPic(nx,ny,Ppercent);
-	   break;
-
-	 default:
-	   VWB_DrawPic(nx,ny,alpha[ch]);
-	}
-	nx+=16;
-   }
-}
-
 
 //
 // Breathe Mr. BJ!!!
@@ -523,29 +436,29 @@ void LevelCompleted (void)
 		mapon < 17)
 #endif
 	{
-	 Write(14,2,"floor\ncompleted");
+	 pictxt(14*8, 2*8, "FLOOR\nCOMPLETED");
 
-	 Write(14,7,"bonus     0");
-	 Write(16,10,"time");
-	 Write(16,12," par");
+	 pictxt(14*8, 7*8, "BONUS     0");
+	 pictxt(16*8, 10*8, "TIME");
+	 pictxt(16*8, 12*8, " PAR");
 
-	 Write(9,14,"kill ratio    %");
-	 Write(5,16,"secret ratio    %");
-	 Write(1,18,"treasure ratio    %");
+	 pictxt(9*8, 14*8, "KILL RATIO    %");
+	 pictxt(5*8, 16*8, "SECRET RATIO    %");
+	 pictxt(1*8, 18*8, "TREASURE RATIO    %");
 
-	 Write(26,2,itoa(gamestate.mapon+1,tempstr,10));
+	 pictxt(26*8, 2*8, itoa(gamestate.mapon+1,tempstr,10));
 
-	 Write(26,12,parTimes[gamestate.episode*10+mapon].timestr);
+	 pictxt(26*8, 12*8, parTimes[gamestate.episode*10+mapon].timestr);
 
 	 //
 	 // PRINT TIME
 	 //
-	 sec=gamestate.TimeCount/70;
+	 sec=gm.lvltc/70;
 
 	 if (sec > 99*60)		// 99 minutes max
 	   sec = 99*60;
 
-	 if (gamestate.TimeCount<parTimes[gamestate.episode*10+mapon].time*4200)
+	 if (gm.lvltc<parTimes[gamestate.episode*10+mapon].time*4200)
 		timeleft=(parTimes[gamestate.episode*10+mapon].time*4200)/70-sec;
 
 	 min=sec/60;
@@ -556,7 +469,7 @@ void LevelCompleted (void)
 	 i+=2*8;
 	 VWB_DrawPic(i,10*8,P0+(min%10));
 	 i+=2*8;
-	 Write(i/8,10,":");
+	 pictxt(i/8*8, 10*8, ":");
 	 i+=1*8;
 	 VWB_DrawPic(i,10*8,P0+(sec/10));
 	 i+=2*8;
@@ -570,12 +483,12 @@ void LevelCompleted (void)
 	 // FIGURE RATIOS OUT BEFOREHAND
 	 //
 	 kr = sr = tr = 0;
-	 if (gamestate.killtotal)
-		kr=(gamestate.killcount*100)/gamestate.killtotal;
-	 if (gamestate.secrettotal)
-		sr=(gamestate.secretcount*100)/gamestate.secrettotal;
-	 if (gamestate.treasuretotal)
-		tr=(gamestate.treasurecount*100)/gamestate.treasuretotal;
+	 if (gm.nkills)
+		kr=(gm.kills*100)/gm.nkills;
+	 if (gm.nsecret)
+		sr=(gm.secret*100)/gm.nsecret;
+	 if (gm.ntreasure)
+		tr=(gm.treasure*100)/gm.ntreasure;
 
 
 	 //
@@ -588,9 +501,9 @@ void LevelCompleted (void)
 	  {
 	   ltoa((s32int)i*PAR_AMOUNT,tempstr,10);
 	   x=36-strlen(tempstr)*2;
-	   Write(x,7,tempstr);
+	   pictxt(x*8, 7*8, tempstr);
 	   if (!(i%(PAR_AMOUNT/10)))
-		 SD_PlaySound(Sendb1);
+		 sfx(Sendb1);
 	   VW_UpdateScreen();
 	   while(SD_SoundPlaying())
 		 BJ_Breathe();
@@ -599,7 +512,7 @@ void LevelCompleted (void)
 	  }
 
 	  VW_UpdateScreen();
-	  SD_PlaySound(Sendb2);
+	  sfx(Sendb2);
 	  while(SD_SoundPlaying())
 		BJ_Breathe();
 	 }
@@ -614,9 +527,9 @@ void LevelCompleted (void)
 	 {
 	  itoa(i,tempstr,10);
 	  x=RATIOXX-strlen(tempstr)*2;
-	  Write(x,14,tempstr);
+	  pictxt(x*8, 14*8, tempstr);
 	  if (!(i%10))
-		SD_PlaySound(Sendb1);
+		sfx(Sendb1);
 	  VW_UpdateScreen ();
 	  while(SD_SoundPlaying())
 		BJ_Breathe();
@@ -631,19 +544,19 @@ void LevelCompleted (void)
 	   bonus+=PERCENT100AMT;
 	   ltoa(bonus,tempstr,10);
 	   x=(RATIOXX-1)-strlen(tempstr)*2;
-	   Write(x,7,tempstr);
+	   pictxt(x*8, 7*8, tempstr);
 	   VW_UpdateScreen();
-	   SD_PlaySound(S100);
+	   sfx(S100);
 	 }
 	 else
 	 if (!ratio)
 	 {
 	   VW_WaitVBL(VBLWAIT);
 	   SD_StopSound();
-	   SD_PlaySound(Snobonus);
+	   sfx(Snobonus);
 	 }
 	 else
-	 SD_PlaySound(Sendb2);
+	 sfx(Sendb2);
 
 	 VW_UpdateScreen();
 	 while(SD_SoundPlaying())
@@ -658,9 +571,9 @@ void LevelCompleted (void)
 	 {
 	  itoa(i,tempstr,10);
 	  x=RATIOXX-strlen(tempstr)*2;
-	  Write(x,16,tempstr);
+	  pictxt(x*8, 16*8, tempstr);
 	  if (!(i%10))
-		SD_PlaySound(Sendb1);
+		sfx(Sendb1);
 	  VW_UpdateScreen ();
 	  while(SD_SoundPlaying())
 		BJ_Breathe();
@@ -676,19 +589,19 @@ void LevelCompleted (void)
 	   bonus+=PERCENT100AMT;
 	   ltoa(bonus,tempstr,10);
 	   x=(RATIOXX-1)-strlen(tempstr)*2;
-	   Write(x,7,tempstr);
+	   pictxt(x*8, 7*8, tempstr);
 	   VW_UpdateScreen();
-	   SD_PlaySound(S100);
+	   sfx(S100);
 	 }
 	 else
 	 if (!ratio)
 	 {
 	   VW_WaitVBL(VBLWAIT);
 	   SD_StopSound();
-	   SD_PlaySound(Snobonus);
+	   sfx(Snobonus);
 	 }
 	 else
-	   SD_PlaySound(Sendb2);
+	   sfx(Sendb2);
 	 VW_UpdateScreen();
 	 while(SD_SoundPlaying())
 	   BJ_Breathe();
@@ -702,9 +615,9 @@ void LevelCompleted (void)
 	 {
 	  itoa(i,tempstr,10);
 	  x=RATIOXX-strlen(tempstr)*2;
-	  Write(x,18,tempstr);
+	  pictxt(x*8, 18*8, tempstr);
 	  if (!(i%10))
-		SD_PlaySound(Sendb1);
+		sfx(Sendb1);
 	  VW_UpdateScreen ();
 	  while(SD_SoundPlaying())
 		BJ_Breathe();
@@ -718,19 +631,19 @@ void LevelCompleted (void)
 	   bonus+=PERCENT100AMT;
 	   ltoa(bonus,tempstr,10);
 	   x=(RATIOXX-1)-strlen(tempstr)*2;
-	   Write(x,7,tempstr);
+	   pictxt(x*8, 7*8, tempstr);
 	   VW_UpdateScreen();
-	   SD_PlaySound(S100);
+	   sfx(S100);
 	 }
 	 else
 	 if (!ratio)
 	 {
 	   VW_WaitVBL(VBLWAIT);
 	   SD_StopSound();
-	   SD_PlaySound(Snobonus);
+	   sfx(Snobonus);
 	 }
 	 else
-	 SD_PlaySound(Sendb2);
+	 sfx(Sendb2);
 	 VW_UpdateScreen();
 	 while(SD_SoundPlaying())
 	   BJ_Breathe();
@@ -743,25 +656,25 @@ void LevelCompleted (void)
 
 	 itoa(kr,tempstr,10);
 	 x=RATIOXX-strlen(tempstr)*2;
-	 Write(x,14,tempstr);
+	 pictxt(x*8, 14*8, tempstr);
 
 	 itoa(sr,tempstr,10);
 	 x=RATIOXX-strlen(tempstr)*2;
-	 Write(x,16,tempstr);
+	 pictxt(x*8, 16*8, tempstr);
 
 	 itoa(tr,tempstr,10);
 	 x=RATIOXX-strlen(tempstr)*2;
-	 Write(x,18,tempstr);
+	 pictxt(x*8, 18*8, tempstr);
 
 	 bonus=(s32int)timeleft*PAR_AMOUNT+
 		   (PERCENT100AMT*(kr==100))+
 		   (PERCENT100AMT*(sr==100))+
 		   (PERCENT100AMT*(tr==100));
 
-	 GivePoints(bonus);
+	 givep(bonus);
 	 ltoa(bonus,tempstr,10);
 	 x=36-strlen(tempstr)*2;
-	 Write(x,7,tempstr);
+	 pictxt(x*8, 7*8, tempstr);
 
 	 //
 	 // SAVE RATIO INFORMATION FOR ENDGAME
@@ -777,28 +690,28 @@ void LevelCompleted (void)
 #ifndef SPEARDEMO
 	  switch(mapon)
 	  {
-	   case 4: Write(14,4," trans\n grosse\ndefeated!"); break;
-	   case 9: Write(14,4,"barnacle\nwilhelm\ndefeated!"); break;
-	   case 15: Write(14,4,"ubermutant\ndefeated!"); break;
-	   case 17: Write(14,4," death\n knight\ndefeated!"); break;
-	   case 18: Write(13,4,"secret tunnel\n    area\n  completed!"); break;
-	   case 19: Write(13,4,"secret castle\n    area\n  completed!"); break;
+	   case 4: pictxt(14*8, 4*8, " TRANS\n GROSSE\nDEFEATED!"); break;
+	   case 9: pictxt(14*8, 4*8, "BARNACLE\nWILHELM\nDEFEATED!"); break;
+	   case 15: pictxt(14*8, 4*8, "UBERMUTANT\nDEFEATED!"); break;
+	   case 17: pictxt(14*8, 4*8, " DEATH\n KNIGHT\nDEFEATED!"); break;
+	   case 18: pictxt(13*8, 4*8, "SECRET TUNNEL\n    AREA\n  COMPLETED!"); break;
+	   case 19: pictxt(13*8, 4*8, "SECRET CASTLE\n    AREA\n  COMPLETED!"); break;
 	  }
 #endif
 #else
-	  Write(14,4,"secret floor\n completed!");
+	  pictxt(14*8, 4*8, "SECRET FLOOR\n COMPLETED!");
 #endif
 
-	  Write(10,16,"15000 bonus!");
+	  pictxt(10*8, 16*8, "15000 BONUS!");
 
 	  VW_UpdateScreen();
 	  VW_FadeIn();
 
-	  GivePoints(15000);
+	  givep(15000);
 	}
 
 
-	DrawScore();
+	hudp();
 	VW_UpdateScreen();
 
 	TimeCount=0;
@@ -812,7 +725,7 @@ void LevelCompleted (void)
 #ifdef SPEARDEMO
 	if (gamestate.mapon == 1)
 	{
-		SD_PlaySound (S1up);
+		sfx (S1up);
 		Message ("This concludes your demo\n"
 				 "of Spear of Destiny! Now,\n"
 				 "go to your local software\n"
@@ -867,7 +780,7 @@ int PreloadUpdate(u16int current, u16int total)
 
 void PreloadGraphics(void)
 {
-	DrawLevel ();
+	hudm ();
 	ClearSplitVWB ();			// set up for double buffering in split screen
 
 	VWB_Bar (0,0,320,200-STATUSLINES,127);

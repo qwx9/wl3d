@@ -1,3 +1,53 @@
+#define WHITE			15			// graphics mode independant colors
+#define BLACK			0
+#define FIRSTCOLOR		1
+#define SECONDCOLOR		12
+#define F_WHITE			15
+#define F_BLACK			0
+#define F_FIRSTCOLOR	1
+#define F_SECONDCOLOR	12
+
+#define MAXSHIFTS	1
+
+typedef struct
+{
+	s16int width,height;
+} pictabletype;
+
+typedef struct
+{
+	s16int height;
+	s16int location[256];
+	char width[256];
+} fontstruct;
+
+extern	pictabletype	_seg *pictable;
+extern	pictabletype	_seg *picmtable;
+extern	spritetabletype _seg *spritetable;
+
+extern	u8int	fontcolor;
+extern	s16int	fontnumber;
+extern	s16int	px,py;
+
+#define VW_SetCRTC		VL_SetCRTC
+#define VW_SetScreen	VL_SetScreen
+#define VW_Bar			VL_Bar
+#define VW_Plot			VL_Plot
+#define VW_Hlin(x,z,y,c)	VL_Hlin(x,y,(z)-(x)+1,c)
+#define VW_Vlin(y,z,x,c)	VL_Vlin(x,y,(z)-(y)+1,c)
+#define VW_DrawPic		VH_DrawPic
+#define VW_ColorBorder	VL_ColorBorder
+#define VW_WaitVBL		VL_WaitVBL
+#define VW_FadeIn()		VL_FadeIn(0,255,&gamepal,30);
+#define VW_FadeOut()	VL_FadeOut(0,255,0,0,0,30);
+#define VW_ScreenToScreen	VL_ScreenToScreen
+#define VW_SetDefaultColors	VH_SetDefaultColors
+#define EGAMAPMASK(x)	VGAMAPMASK(x)
+#define EGAWRITEMODE(x)	VGAWRITEMODE(x)
+#define LatchDrawChar(x,y,p) VL_LatchToScreen(latchpics[0]+(p)*16,2,8,x,y)
+#define LatchDrawTile(x,y,p) VL_LatchToScreen(latchpics[1]+(p)*64,4,16,x,y)
+#define NUMLATCHPICS	100
+
 #define PIXTOBLOCK		4		// 16 pixels to an update block
 
 u8int	update[UPDATEHIGH][UPDATEWIDE];
@@ -149,7 +199,7 @@ void LoadLatchMem (void)
 //
 // tile 8s
 //
-	FIXME: fuck this
+	→ fuck this
 	latchpics[0] = freelatch;
 	src = (u8int _seg *)grsegs[STARTTILE8];
 	destoff = freelatch;
@@ -177,96 +227,4 @@ void LoadLatchMem (void)
 	}
 
 	EGAMAPMASK(15);
-}
-
-//==========================================================================
-
-/*
-===================
-=
-= FizzleFade
-=
-= returns true if aborted
-=
-===================
-*/
-
-extern	ControlInfo	c;
-
-int FizzleFade (u16int source, u16int dest,
-	u16int width,u16int height, u16int frames, int abortable)
-{
-	s16int			pixperframe;
-	u16int	drawofs,pagedelta;
-	u8int 		mask,maskb[8] = {1,2,4,8};
-	u16int	x,y,p,frame;
-	s32int		rndval;
-
-	pagedelta = dest-source;
-	rndval = 1;
-	y = 0;
-	pixperframe = 64000/frames;
-
-	IN_StartAck ();
-
-	TimeCount=frame=0;
-	do	// while (1)
-	{
-		if (abortable && IN_CheckAck () )
-			return true;
-
-		asm	mov	es,[screenseg]
-
-		for (p=0;p<pixperframe;p++)
-		{
-			//
-			// seperate random value into x/y pair
-			//
-			asm	mov	ax,[WORD PTR rndval]
-			asm	mov	dx,[WORD PTR rndval+2]
-			asm	mov	bx,ax
-			asm	dec	bl
-			asm	mov	[BYTE PTR y],bl			// low 8 bits - 1 = y xoordinate
-			asm	mov	bx,ax
-			asm	mov	cx,dx
-			asm	mov	[BYTE PTR x],ah			// next 9 bits = x xoordinate
-			asm	mov	[BYTE PTR x+1],dl
-			//
-			// advance to next random element
-			//
-			asm	shr	dx,1
-			asm	rcr	ax,1
-			asm	jnc	noxor
-			asm	xor	dx,0x0001
-			asm	xor	ax,0x2000
-noxor:
-			asm	mov	[WORD PTR rndval],ax
-			asm	mov	[WORD PTR rndval+2],dx
-
-			if (x>width || y>height)
-				continue;
-			drawofs = source+ylookup[y] + (x>>2);
-
-			//
-			// copy one pixel
-			//
-			mask = x&3;
-			VGAREADMAP(mask);
-			mask = maskb[mask];
-			VGAMAPMASK(mask);
-
-			asm	mov	di,[drawofs]
-			asm	mov	al,[es:di]
-			asm add	di,[pagedelta]
-			asm	mov	[es:di],al
-
-			if (rndval == 1)		// entire sequence has been completed
-				return false;
-		}
-		frame++;
-		while (TimeCount<frame)		// don't go too fast
-		;
-	} while (1);
-
-
 }

@@ -404,52 +404,52 @@ static u32int sodpal[] = {
 uchar *pict;
 static uchar picts[4][Pend]={ {
 	3, 15, 8, 10, 11, 24, 27, 34, 35, 23, 7, 12, 13, 14, 36, 16, 21, 25,
-	26, 87, 37, 129, 40, 41, 42, 52, 53,79, 80, 81, 82, 84, 0, 0, 83, 85, 86,
-	0, 0, 88, 92, 93, 94, 95, 96, 106, 127, 128, 0, 0, 0, 130, 131
+	26, 87, 37, 129, 40, 41, 42, 52, 79, 80, 81, 82, 84, 0, 0, 83, 85,
+	86, 0, 0, 88, 92, 93, 94, 95, 96, 106, 127, 128, 0, 0, 0, 130, 131
 	},{
 	14, 27, 20, 22, 23, 36, 39, 46, 47, 35, 19, 24, 25, 26, 48, 28, 33,
-	37, 38, 99, 49, 141, 52, 53, 54, 64, 65, 91, 92, 93, 94, 96, 0, 0, 95,
+	37, 38, 99, 49, 141, 52, 53, 54, 64, 91, 92, 93, 94, 96, 0, 0, 95,
 	97, 98, 0, 0, 100, 104, 105, 106, 107, 108, 118, 139, 140, 0, 0, 0, 142,
 	143
 	},{
 	0, 1, 2, 4, 5, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 22, 24, 25,
-	26, 27, 0, 28, 29, 30, 40, 41, 67, 68, 69, 70, 71, 72, 0, 73, 74, 75, 0,
+	26, 27, 0, 28, 29, 30, 40, 67, 68, 69, 70, 71, 72, 0, 73, 74, 75, 0,
 	0, 76, 80, 81, 82, 83, 84, 94, 115, 116, 117, 120, 122, 123, 124
 	},{
  	0, 1, 2, 4, 5, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 22, 24, 25,
-	26, 27, 28, 33, 34, 35, 45, 46, 72, 73, 74, 75, 76, 77, 78, 87, 88, 89,
+	26, 27, 28, 33, 34, 35, 45, 72, 73, 74, 75, 76, 77, 78, 87, 88, 89,
 	90, 91, 98, 102, 103, 104, 105, 106, 116, 137, 138, 139, 142, 144, 145,
 	146
 	}
 };
 static uchar pcmt[2][46]={ {
-	Sgd, Sdogbark, Sclosedoor, Sopendoor, Smg, Spistol, Sgatling, Sss, Shans,
-	Shansdeath, Shansfire, Sssfire, Sscream1, Sscream2, Send, Spushwall,
-	Sdogdeath, Smutdeath, Shitlerdeath, Seva, Sssdeath, Sgdfire, Sslurp,
-	Sfake, Sschbdeath, Sschb, Shitler, Soffc, Soffcdeath, Sdogfire, Slvlend,
-	Smechwalk, Syeah, Smechadeath, Sscream4, Sscream5, Sottodeath, Sotto,
-	Sfett, Sscream6, Sscream7, Sscream8, Sscream9, Sgretel, Sgreteldeath,
-	Sfettdeath
+	Sgd, Sdog, Sclosedoor, Sopendoor, Smg, Spistol, Sgatling, Sss, Shans,
+	Shansdie, Shansfire, Sssfire, Sscream1, Sscream2, Send, Spushwall,
+	Sdogdie, Smutdie, Shitlerdie, Seva, Sssdie, Sgdfire, Sslurp,
+	Sfake, Sschbdie, Sschb, Shitler, Sofc, Sofcdie, Sdogfire, Slvlend,
+	Smechwalk, Syeah, Smechdie, Sscream4, Sscream5, Sottodie, Sotto,
+	Sfett, Sscream6, Sscream7, Sscream8, Sscream9, Sgretel, Sgreteldie,
+	Sfettdie
 	},{
-	Sgd, Sdogbark, Sclosedoor, Sopendoor, Smg, Spistol, Sgatling, Sss,
-	Shansfire, Sssfire, Sscream1, Sscream2, Send, Spushwall, Sdogdeath,
-	Smutdeath, Sssdeath, Sgdfire, Sslurp, Soffc, Soffcdeath, Sdogfire,
+	Sgd, Sdog, Sclosedoor, Sopendoor, Smg, Spistol, Sgatling, Sss,
+	Shansfire, Sssfire, Sscream1, Sscream2, Send, Spushwall, Sdogdie,
+	Smutdie, Sssdie, Sgdfire, Sslurp, Sofc, Sofcdie, Sdogfire,
 	Slvlend, Sscream4, Sscream5, Sscream6, Sscream7, Sscream8, Sscream9,
-	Strans, Stransdeath, Swilh, Swilhdeath, Suberdeath, Sknight,
-	Sknightdeath, Sangel, Sangeldeath, Sgetgatling, Spear
+	Strans, Stransdie, Swilh, Swilhdie, Suberdie, Sknight,
+	Sknightdie, Sangel, Sangeldie, Sgetgatling, Sspear
 	}
 };
 
 enum{
 	Nplane = 2,
-	Mapdxy = 64,
-	Planesz = Mapdxy * Mapdxy * Nplane,
+	Planesz = Mapa * Nplane,
 	Mapsz = Planesz * Nplane
 };
 static Dat *pcms;
-static uchar *swpb, *mapb;
+static uchar *swpb;
 static int alofs;
 static u16int rlewtag;
+static u32int *mapofs, *mape;
 
 #define	GBIT16(p)	((p)[0]|((p)[1]<<8))
 
@@ -525,13 +525,13 @@ bsize(Biobuf *bf)
 	return n;
 }
 
-static int
+static void
 unrlew(u16int *d, u16int *s)
 {
 	u16int n, t, v, *e;
 
 	s++;
-	e = d + Planesz/Nplane;
+	e = d + Mapa;
 	t = rlewtag;
 	while(d < e){
 		v = *s++;
@@ -543,14 +543,12 @@ unrlew(u16int *d, u16int *s)
 		}else
 			*d++ = v;
 	}
-	return Planesz;
 }
 
-static int
+static void
 uncarmack(Biobuf *bf, u16int *u, u32int ofs)
 {
-	int len;
-	u16int v, a[Planesz/2], *p, *cp, *e;
+	u16int v, a[Mapa], *p, *cp, *e;
 	u8int n;
 
 	Bseek(bf, ofs, 0);
@@ -585,10 +583,7 @@ uncarmack(Biobuf *bf, u16int *u, u32int ofs)
 			*p++ = v;
 		}
 	}
-	len = unrlew(u, a);
-	if(len != Planesz)
-		sysfatal("uncarmack: truncated lump");
-	return len;
+	unrlew(u, a);
 }
 
 static void
@@ -700,33 +695,21 @@ static void
 gamemaps(void)
 {
 	int n;
-	u32int v, p0, p1;
-	uchar *u, **d, **e;
-	Biobuf *hed, *dat;
+	u32int v, *d;
+	Biobuf *hed;
 
 	hed = bopen("maphead.", OREAD);
-	dat = bopen("gamemaps.", OREAD);
-	n = ver==WL6 ? 60 : ver==WL1 ? 10 : ver==SDM ? 2 : 20;
+	n = ver==WL6 ? 60 : ver==WL1 ? 10 : ver==SDM ? 2 : 21;
 	rlewtag = get16(hed);
-	d = maps = emalloc(n * sizeof *maps);
-	e = d + n;
-	u = mapb = emalloc(n * Mapsz);
-	while(d < e){
+	d = mapofs = emalloc(n * sizeof *mapofs);
+	mape = d + n;
+	while(d < mape){
 		v = get32(hed);
 		if(v == 0xffffffff)
-			sysfatal("sparse map %zud", d-maps);
-		Bseek(dat, v, 0);
-		p0 = get32(dat);
-		p1 = get32(dat);
-		Bseek(dat, 10, 1);
-		if(get16(dat) != Mapdxy || get16(dat) != Mapdxy)
-			sysfatal("invalid map size");
-		*d++ = u;
-		u += uncarmack(dat, (u16int*)u, p0);
-		u += uncarmack(dat, (u16int*)u, p1);
+			sysfatal("sparse map %zud", d-mapofs);
+		*d++ = v;
 	}
 	Bterm(hed);
-	Bterm(dat);
 }
 
 static void
@@ -746,12 +729,12 @@ mungesfx(void)
 	Dat *pcm;
 
 	if(ver >= SDM){
-		swap(sfxs+Sscream4, sfxs+Shansdeath);
-		swap(sfxs+Sscream5, sfxs+Shitlerdeath);
+		swap(sfxs+Sscream4, sfxs+Shansdie);
+		swap(sfxs+Sscream5, sfxs+Shitlerdie);
 		swap(sfxs+Sscream7, sfxs+Seva);
 		swap(sfxs+Sscream8, sfxs+Shans);
-		swap(sfxs+Sscream6, sfxs+Smechadeath);
-		swap(sfxs+Sscream9, sfxs+Sschbdeath);
+		swap(sfxs+Sscream6, sfxs+Smechdie);
+		swap(sfxs+Sscream9, sfxs+Sschbdie);
 	}
 	p = pcmt[ver<SDM ? 0 : 1];
 	e = p + (ver==WL6 ? 46 : ver==WL1 ? 21 : ver==SDM ? 26 : 40);
@@ -950,6 +933,12 @@ gfx(void)
 }
 
 static void
+cfg(void)
+{
+	msense = 5;
+}
+
+static void
 loadscr(void)
 {
 	Biobuf *bf;
@@ -975,6 +964,48 @@ fixpal(void)
 	}
 }
 
+u16int *
+readmap(int n)
+{
+	u16int *u;
+	u32int *m, p0, p1;
+	Biobuf *dat;
+
+	m = mapofs + n;
+	if(m >= mape)
+		sysfatal("readmap: invalid map number %d", n);
+	dat = bopen("gamemaps.", OREAD);
+	Bseek(dat, *m, 0);
+	u = emalloc(Mapsz);
+	p0 = get32(dat);
+	p1 = get32(dat);
+	Bseek(dat, 10, 1);
+	if(get16(dat) != Mapdxy || get16(dat) != Mapdxy)
+		sysfatal("invalid map dimensions");
+	uncarmack(dat, u, p0);
+	uncarmack(dat, u+Mapa, p1);
+	Bterm(dat);
+	return u;
+}
+
+char *
+demof(char *f)
+{
+	char *p;
+	vlong n;
+	Biobuf *bf;
+
+	bf = Bopen(f, OREAD);
+	if(bf == nil)
+		sysfatal("demof: %r");
+	Blethal(bf, nil);
+	n = bsize(bf);
+	p = emalloc(n);
+	eread(bf, p, n);
+	Bterm(bf);
+	return p;
+}
+
 void
 dat(char *dir)
 {
@@ -984,8 +1015,10 @@ dat(char *dir)
 	if(bind(".", dir, MBEFORE|MCREATE) < 0 || chdir(dir) < 0)
 		fprint(2, "dat: %r\n");
 
-	if(ver >= SDM)
+	if(ver >= SDM){
 		fixpal();
+		sodmap();
+	}
 	e = ext;
 	loadscr();
 	ext = e;
@@ -996,4 +1029,5 @@ dat(char *dir)
 	audiot();
 	gfx();
 	ext = e;
+	cfg();
 }
