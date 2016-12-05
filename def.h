@@ -161,7 +161,7 @@ extern	s32int	mindist;
 
 // refresh variables
 extern	s32int		postsource;
-extern	u16int	postx;
+extern	u16int	scx;
 extern	u16int	postwidth;
 
 extern	dirtype opposite[9];

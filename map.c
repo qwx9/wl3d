@@ -41,9 +41,9 @@ spawnstc(Tile *tl, int n)
 	case Rclip2:
 		break;
 	case Rblock:
-		tl->o = nil;	
+		tl->o = nil;
 		tl->to = 1;
-		/* wet floor */
+		break;
 	case Rcross:
 	case Rchalice:
 	case Rbible:
@@ -58,7 +58,10 @@ spawnstc(Tile *tl, int n)
 		break;
 	}
 	stce->tl = tl;
-	stce->spr = sprs + (stctype[n] == Rclip2 ? 28 : 2+n);
+	n = stctype[n] == Rclip2 ? 28 : 2+n;
+	stce->spr = sprs + n;
+	if(stce->spr == nil)
+		sysfatal("spawnstc: missing static sprite %d\n", n);
 	if(++stce == stcs+Nstc)
 		sysfatal("static object overflow");
 }
@@ -720,8 +723,8 @@ spawn(Tile *tl)
 void
 drop(Tile *tl, int n)
 {
+	int sn, *sti;
 	Static *s;
-	int *sti;
 
 	for(sti=stctype; sti<stctype+nelem(stctype); sti++)
 		if(*sti == n)
@@ -737,7 +740,10 @@ drop(Tile *tl, int n)
 	if(s >= stcs+nelem(stcs))
 		return;
 	s->tl = tl;
-	s->spr = sprs + (n == Rclip2 ? 28 : 2+(sti-stctype));
+	sn = n == Rclip2 ? 28 : 2+(sti-stctype);
+	s->spr = sprs + sn;
+	if(s->spr == nil)
+		sysfatal("drop: missing static sprite %d\n", sn);
 	s->f = OFbonus;
 	s->item = n;
 }

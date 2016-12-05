@@ -324,6 +324,8 @@ Graphics are either static data loaded in the executable, or huffman-compressed 
 is used in conjunction with
 .B vgadict
 to read and uncompress each lump upon retrieval.
+Pixel data is usually encoded as a palette index,
+and is used in conjunction with a 256 color palette.
 .SS Vgahead
 .RS
 .IR off [ np ][3]
@@ -361,7 +363,8 @@ contains a the sizes for
 .I np
 pictures, retrieved from
 .IR pic .
-.I Np can be obtained from
+.I Np
+can be obtained from
 .IR pt 's
 uncompressed size.
 The following sections detail each lump type.
@@ -384,7 +387,7 @@ and a byte offset into the lump in
 containing its pixel data.
 The data is an array of bytes of size
 .I dy
-.L *
+.SM *
 .IR dx [ n ],
 to be translated to the character's location on the screen.
 A pixel's color is overwritten with the engine's current foreground color when a non-zero byte in the character's pixel data occurs.
@@ -473,19 +476,29 @@ and
 contain player input for the duration of the frame
 and correspond respectively to pressed game keys, total horizontal movement (turning) and total vertical movement (forward displacement) deltas.
 .I Bt
-is a 8-bit array of the main game keys, regardless of input method.
+is an 8-bit array of the main game keys, regardless of input method.
 These are, from least to most significant bit:
 fire, strafe, run, open, knife, pistol, machine gun and gatling gun.
 The movement deltas are bounded from -100 to 100.
 .SS Static data
-Some of the graphics data is stored in the executable and thus cannot be altered.
+Some of the graphics data is stored in the executable and thus cannot be altered
+without modifying it or the loaded object files.
 These are the base color palette and intro screen.
-The intro screen is a static screen displayed on startup while verifying available memory and hardware, changed depending on the results.
 Each have a
 .B wl1/wl6
 and a
 .B sdm/sod
 version, but only one is present.
+.PP
+The base color palette is stored as any other palette, and is the one used in most circumstances.
+Several other palettes are generated based on it,
+notably for screen flashes and fade effects.
+.PP
+The intro screen is a static screen displayed on startup while verifying available memory and hardware,
+then changed depending on the results.
+It is an uncompressed 320x200 graphic lump.
+.BR wl3d (1)
+separates the intro screen from the binary as a distinct file formatted as a 320x200 byte array, and loaded on startup.
 .SS Palettes
 .RS
 {
@@ -522,16 +535,80 @@ Immediately following are two arrays describing each chunk,
 for file offsets, and
 .IR sz ,
 for lengths in bytes.
+A chunk of size 0 is skipped.
+This is permitted when the specific lump is never referenced,
+which can occur in the
+.B wl1
+and
+.B sdm
+versions, where only a limited number of maps and resources are used.
+Attempting to load a sparse lump will cause a crash.
 .PP
 The rest of the file contains section data.
 .SS Wall textures
-[words]
+Wall tiles are 64x64 byte arrays of palette indices.
+Because they are drawn vertically, they are stored as an array of coloumns.
+In other words, if drawn as is using a given palette,
+the tile would appear rotated by -90° then flipped along its vertical axis.
+The last 8 wall textures are door textures.
 .SS Sprites
-[words]
+.RS
+.IR lx [2]
+.IR rx [2]
+.IR cofs [ rx-lx+1 ][2]
+.IR data []
+.br
+.BR cmd :
+{
+.IR se [2] po [2] ss [2]
+}[]
+.IR nul [2]
+.RE
+.PP
+Sprites are stored as variable-length arrays of offsets and visible pixel data,
+with an implicit maximal size of 64x64.
+.IR Lx
+and
+.IR rx
+define the 0-indexed left and right-most coloumns containing visible pixels,
+and must respect the following restrictions:
+.PP
+.RS
+.I lx  ∈ {0,1,...,63}
+.br
+.I rx ∈ {32,33,...,63}
+.br
+.I lx ≤ rx
+.RE
+.PP
+Sprites are drawn centered on the 32nd coloumn.
+A left bound equal to or greater than 32 will offset the sprite to the right.
+.PP
+The following variable-length array,
+.IR cofs ,
+contains one offset into sprite data for each visible coloumn.
+Each offset is set from the beginning of the lump, and points to a
+.I cmd
+array.
+.I Ss / 2
+and
+.I se / 2
+are, respectively, an upper and lower bound,
+defining a contiguous vertical strip of pixels to draw within a coloumn, with
+.I po + ss
+an offset into the sprite lump pointing to the strip's palette indices.
+The
+.I cmd
+array is terminated by a 16-bit wide zero.
+Since
+.I ss
+and
+.I se
+are used as word table offsets, they are multiplied by two.
 .SS Raw pcm
 .RS
 {
-.IR chunk [ size/4096 ][]
+.IR chunk [ (size-1)/4096+1 ][]
 .RI }[ npcm ]
 {
 .IR index [2]
@@ -551,20 +628,31 @@ is the zero-based index of the lump's first chunk relative to the first pcm chun
 .I Size
 is the sum in bytes of the lengths of the lump's chunks.
 .PP
-The references for each pcm sound effect (different than those for regular sound effects), as well as their number, are hardcoded in the engine:
+The valid references for each pcm sound effect (different than those for regular sound effects), as well as their number, are hardcoded in the engine:
 .TF wl1
 .TP
 .B wl1
-21 pcms
+46 pcms (20 non empty)
 .TP
 .B wl6
 46 pcms
 .TP
 .B sdm
-26 pcms
+40 pcms (25 non empty)
 .TP
 .B sod
 40 pcms
+.PD
+.PP
+However, neither
+.I npcm
+nor the pcm table actually reflect this number.
+The number in parentheses indicates the actual number of valid pcm lumps for versions
+which may contain empty chunks.
+These are not contiguous,
+and care must be taken to skip all zero-sized chunks referencing each individual sparse
+pcm lump,
+as indicated in the pcm table.
 .SH "CONFIGURATION FILE AND HIGHSCORES"
 [words]
 .SH "SEE ALSO"

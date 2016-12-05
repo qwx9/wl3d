@@ -6,19 +6,21 @@
 s32int sint[360+90], *cost;
 
 typedef struct Vis Vis;
-struct Vis{
-	s16int vwdx;
-	s16int vwdy;
-	Dat *spr;
-};
-
+typedef struct Scaler Scaler;
 enum{
 	Nvis = 50,
+	Nscal = 256+1,
+	Wdxy = 64,
 	Fineθ = 3600,
 	Dfoclen = 0x5700,
 	Dglob = 0x10000,
 	Dtile = 0x2000,
 	Dobj = 0x4000
+};
+struct Vis{
+	s16int vwx;
+	s16int vwdy;
+	Spr *spr;
 };
 #define	Pi	3.141592657
 static float Rad = (float)Fineθ / 2 / Pi;
@@ -30,16 +32,145 @@ static int prjw, prjh;
 static s32int xin, yin;
 static int dtx, dty;
 static u16int ∂xdown, ∂xup, ∂ydown, ∂yup;
-static int lastside;
+
+struct Scaler{
+	int skip;
+	int ps;
+	int pe;
+	int dx;
+};
+static Scaler scals[Nscal][Wdxy+1], *sce;
+static uchar *scps, *scts;
+static int scx, scdx, scdy;
+static int waldy[Vw];
+static s32int lastin;
+static int lasttile, lastside;
 
 static void
-scalespr(int, int, int)
+scalscol(Scaler *ss, Sprc *c, int dx)
 {
+	int ps, pe, w;
+	uchar n, *d, *sp, *ds;
+	Scaler *s, *se;
+
+	ds = pxb + vw.ofs + scx;
+	se = ss + c->e;
+	while(se != ss){
+		sp = c->p;
+		s = ss + c->s;
+		for(; s<se; s++, sp++){
+			if(s->skip)
+				continue;
+			n = *sp;
+			for(ps=s->ps, pe=s->pe; ps<pe; ps++){
+				if(ps >= vw.dy)
+					break;
+				if(ps < 0)
+					continue;
+				d = ds + ps * Vw;
+				w = dx;
+				while(w-- > 0)
+					*d++ = n;
+			}
+		}
+		c++;
+		se = ss + c->e;
+	}
 }
 
 static void
-scalevis(Vis *)
+scalvis(Vis *v)
 {
+	int x, dx, lx, rx, *lw, *rw;
+	Scaler *ss, *s, *se;
+	Spr *spr;
+	Sprc **c;
+
+	ss = scals[v->vwdy >> 3];
+	if(ss == scals[0] || ss > sce)
+		return;
+	spr = v->spr;
+	lx = spr->lx;
+	rx = spr->rx;
+	scx = v->vwx;
+	if(lx < 32){
+		s = ss + lx;
+		se = ss + 32;
+		while(s < se)
+			scx -= s++->dx;
+	}else{
+		s = ss + 32;
+		se = ss + lx;
+		while(s < se)
+			scx += s++->dx;
+	}
+	c = spr->cs;
+	for(s=ss+lx, se=ss+rx+1; s<se && scx<vw.dx; c++, scx+=dx){
+		dx = s++->dx;
+		if(dx == 0)
+			continue;
+		if(dx == 1){
+			if(scx >= 0 && waldy[scx] < v->vwdy)
+				scalscol(ss, *c, 1);
+			continue;
+		}
+		x = scx + dx;
+		if(scx < 0){
+			if(x <= 0)
+				continue;
+			dx = x;
+			scx = 0;
+		}else if(x > vw.dx)
+			dx = vw.dx - scx;
+		lw = waldy + scx;
+		rw = lw + dx - 1;
+		if(*lw < v->vwdy){
+			if(*rw < v->vwdy){
+				scalscol(ss, *c, dx);
+				continue;
+			}
+			while(*rw >= v->vwdy)
+				rw--, dx--;
+			scalscol(ss, *c, dx);
+			break;
+		}else{
+			if(*rw >= v->vwdy)
+				continue;
+			while(*lw >= v->vwdy){
+				lw++, scx++;
+				dx--;
+			}
+			scalscol(ss, *c, dx);
+		}
+	}
+}
+
+static void
+scalcol(void)
+{
+	int i, n, x, dx;
+	uchar c, *ds, *d;
+	Scaler *s;
+
+	s = scals[(waldy[scx] & 0xfff8) >> 3];
+	if(s > sce)
+		s = sce;
+	ds = pxb + vw.ofs + scx;
+	for(x=0; x<Wdxy; x++, s++){
+		if(s->skip)
+			continue;
+		c = scps[x];
+		for(i=s->ps, n=s->pe; i<n; i++){
+			if(i >= vw.dy)
+				break;
+			if(i < 0)
+				continue;
+			d = ds + i * Vw;
+			dx = scdx;
+			while(dx-- > 0)
+				*d++ = c;
+		}
+	}
 }
 
 static void
@@ -47,13 +178,13 @@ topspr(void)
 {
 	if(ver < SDM && gm.won){
 		if(oplr->s == stt+GSplrcam && mtc & 32)
-			scalespr(SPcam, vw.dx/2, vw.dy+1);
+			scalspr(SPcam, vw.dx/2, vw.dy+1);
 		return;
 	}
 	if(gm.w != -1)
-		scalespr(wspr[gm.w] + gm.wfrm, vw.dx/2, vw.dy+1);
+		scalspr(wspr[gm.w] + gm.wfrm, vw.dx/2, vw.dy+1);
 	if(gm.record || gm.demo)
-		scalespr(SPdemo, vw.dx/2, vw.dy+1);
+		scalspr(SPdemo, vw.dx/2, vw.dy+1);
 }
 
 static int
@@ -83,7 +214,8 @@ projtl(Tile *tl, Vis *v)
 		v->vwdy = 0;
 		return 0;
 	}
-	v->vwdx = vw.mid + cy * prjw / cx;
+	v->vwx = vw.mid + cy * prjw / cx;
+	/* low 3 bits are fractional */
 	v->vwdy = prjh / (cx >> 8);
 	return cx < Dtlglobal && abs(cy) < Dtlglobal / 2;
 }
@@ -109,12 +241,13 @@ projob(Obj *o)
 }
 
 static void
-scaleall(void)
+scalobj(void)
 {
+	int i, n, min;
 	Obj *o;
 	Tile *tl;
 	Static *st;
-	Vis viss[Nvis], *v, *w, *e, *m;
+	Vis viss[Nvis], *v, *e, *m;
 
 	memset(viss, 0, sizeof viss);
 	e = viss;
@@ -149,11 +282,9 @@ scaleall(void)
 			if(o->vwdy == 0)
 				continue;
 			o->f |= OFvis;
-			e->vwdx = o->vwdx;
+			e->vwx = o->vwdx;
 			e->vwdy = o->vwdy;
 			e->spr = o->s->spr;
-			if(e->spr == nil)
-				e->spr = sprs + o->sdt;
 			if(o->s->rot)
 				e->spr += rot(o);
 			if(e < viss + nelem(viss)-1)
@@ -161,20 +292,23 @@ scaleall(void)
 		}else
 			o->f &= ~OFvis;
 	}
-	for(v=viss; v<e; v++){
-		for(w=v, m=v; w<=e; w++)
-			if(w->vwdy < m->vwdy)
-				m = w;
-		scalevis(m);
-		if(v != m)
-			memcpy(m, v, sizeof *m);
+	for(i=0, n=e-viss; i<n; i++){
+		min = 32000;
+		v = m = viss;
+		while(v < e){
+			if(v->vwdy < min){
+				min = v->vwdy;
+				m = v;
+			}
+			v++;
+		}
+		scalvis(m);
+		m->vwdy = 32000;
 	}
-	if(e != viss)
-		scalevis(e);
 }
 
 static s16int
-walldy(s32int xin, s32int yin)
+walldy(void)
 {
 	s32int cx, dy;
 
@@ -188,7 +322,7 @@ walldy(s32int xin, s32int yin)
 static void
 vwall(int i, int tx, int ty, int tile)
 {
-	s16int p;
+	int n;
 	u16int tex;
 
 	tex = yin >> 4 & 0xfc0;
@@ -196,50 +330,43 @@ vwall(int i, int tx, int ty, int tile)
 		tex = 0xfc0 - tex;
 		xin += Dtlglobal;
 	}
-	p = 0;
-	USED(tex, p, tx, ty, tile, xin, i);
-#ifdef DICKS
-	wallheight[i] = walldy();
-	if(lastside==1 && lastintercept == tx && lasttilehit == tile){
-		/* in the same wall type as last time, so check for
-		 * optimized draw */
-		if(tex == (u16int)postsource){
-			// wide scale
-			postwidth++;
-			wallheight[i] = wallheight[i-1];
+	waldy[i] = walldy();
+	if(lastside == 1 && lastin == tx && lasttile == tile){
+		if(scps == scts + tex){
+			scdx++;
+			waldy[i] = waldy[i-1];
 		}else{
-			ScalePost();
-			(u16int)postsource = tex;
-			postwidth = 1;
-			postx = i;
+			scalcol();
+			scps = scts + tex;
+			scdx = 1;
+			scx = i;
 		}
 		return;
 	}
-	/* new wall */
-	if(lastside != -1)	/* if not the first scaled post */
-		ScalePost();
-	lastside = true;
-	lastintercept = tx;
-	lasttilehit = tile;
-	postx = i;
-	postwidth = 1;
-
-	if(tile & 0x40){	/* check for adjacent doors */
-		if(tiles[ty][tx-dtx].tl & 0x80)
-			p = SPdoor+3;
+	if(lastside != -1)
+		scalcol();
+	lastside = 1;
+	lastin = tx;
+	lasttile = tile;
+	scx = i;
+	scdx = 1;
+	if(tile & 0x40){
+		if(tiles[ty*Mapdxy + tx-dtx].tl & 0x80)
+			n = drofs + 3;
 		else
-			p = vertwall[tile & ~0x40];
+			n = ((tile & ~0x40) - 1) * 2 + 1;
 	}else
-		p = vertwall[tile];
-	*(((u16int *)&postsource)+1) = (u16int)PM_GetPage(p);
-	(u16int)postsource = tex;
-#endif
+		n = (tile - 1) * 2 + 1;
+	scts = wals[n];
+	if(scts == nil)
+		sysfatal("sparse wall %d\n", n);
+	scps = scts + tex;
 }
 
 static void
 hwall(int i, int tx, int ty, int tile)
 {
-	s16int p;
+	int n;
 	u16int tex;
 
 	tex = xin >> 4 & 0xfc0;
@@ -247,141 +374,130 @@ hwall(int i, int tx, int ty, int tile)
 		yin += Dtlglobal;
 	else
 		tex = 0xfc0 - tex;
-	p = 0;
-	USED(i, tx, ty, tile, tex, p);
-#ifdef DICKS
-	wallheight[i] = walldy();
-	if(lastside == 0 && lastintercept == ty && lasttilehit == tile){
-		/* in the same wall type as last time, so check for
-		 * optimized draw */
-		if(tex == (u16int)postsource){	/* wide scale */
-			postwidth++;
-			wallheight[i] = wallheight[i-1];
-			return;
+	waldy[i] = walldy();
+	if(lastside == 0 && lastin == ty && lasttile == tile){
+		if(scps == scts + tex){
+			scdx++;
+			waldy[i] = waldy[i-1];
 		}else{
-			ScalePost();
-			(u16int)postsource = tex;
-			postwidth = 1;
-			postx = i;
+			scalcol();
+			scps = scts + tex;
+			scdx = 1;
+			scx = i;
 		}
-	}else{	/* new wall */
-		if(lastside != -1)	/* if not the first scaled post */
-			ScalePost();
-
-		lastside = 0;
-		lastintercept = ty;
-		lasttilehit = tile;
-		postx = i;
-		postwidth = 1;
-		if(tile & 0x40){	/* check for adjacent doors */
-			tx = xin >> Dtlshift;
-			if(tiles[ty-dty][tx].tl & 0x80)
-				p = SPdoor+2;
-			else
-				p = horizwall[tile & ~0x40];
-		}else
-			p = horizwall[tile];
-		*( ((u16int *)&postsource)+1) = (u16int)PM_GetPage(p);
-		(u16int)postsource = tex;
+		return;
 	}
-#endif
+	if(lastside != -1)
+		scalcol();
+	lastside = 0;
+	lastin = ty;
+	lasttile = tile;
+	scx = i;
+	scdx = 1;
+	if(tile & 0x40){
+		tx = xin >> Dtlshift;
+		if(tiles[(ty-dty)*Mapdxy + tx].tl & 0x80)
+			n = drofs + 2;
+		else
+			n = ((tile & ~0x40) - 1) * 2;
+	}else
+		n = (tile - 1) * 2;
+	scts = wals[n];
+	if(scts == nil)
+		sysfatal("sparse wall %d\n", n);
+	scps = scts + tex;
 }
 
 static void
 vdoor(int i, int tile)
 {
-	USED(i, xin, yin, tile);
-#ifdef DICKS
+	int n;
+	u16int tex;
 	Door *d;
-	u16int tex, p;
 
-	wallheight[i] = walldy(xin, yin);
+	waldy[i] = walldy();
 	d = doors + (tile & 0x7f);
 	tex = yin - d->dopen >> 4 & 0xfc0;
-	if(lasttilehit == tile){
-		/* in the same door as last time, so check for optimized draw */
-		if(tex == (u16int)postsource){
-			/* wide scale */
-			postwidth++;
-			wallheight[i] = wallheight[i-1];
-			return;
+	if(lasttile == tile){
+		if(scps == scts + tex){
+			scdx++;
+			waldy[i] = waldy[i-1];
 		}else{
-			ScalePost ();
-			(u16int)postsource = tex;
-			postwidth = 1;
-			postx = i;
+			scalcol();
+			scps = scts + tex;
+			scdx = 1;
+			scx = i;
 		}
-	}else{
-		if (lastside != -1)	/* if not the first scaled post */
-			ScalePost ();		/* draw last post */
-		/* first pixel in this door */
-		lastside = 2;
-		lasttile = tile;
-		postx = i;
-		postwidth = 1;
-		switch(d->lock){
-		case DRunlk: p = SPdoor; break;
-		case DRlock1:
-		case DRlock2:
-		case DRlock3:
-		case DRlock4: p = SPdoor+6; break;
-		case DRup: p = SPdoor+4; break;
-		}
-		*( ((u16int *)&postsource)+1) = (u16int)PM_GetPage(p+1);
-		(u16int)postsource = tex;
+		return;
 	}
-#endif
+	if(lastside != -1)
+		scalcol();
+	lastside = 2;
+	lasttile = tile;
+	scx = i;
+	scdx = 1;
+	n = 1;
+	switch(d->lock){
+	case DRunlk: n += drofs; break;
+	case DRlock1:
+	case DRlock2:
+	case DRlock3:
+	case DRlock4: n += drofs + 6; break;
+	case DRup: n += drofs + 4; break;
+	}
+	scts = wals[n];
+	if(scts == nil)
+		sysfatal("sparse wall %d\n", n);
+	scps = scts + tex;
 }
 
 static void
 hdoor(int i, int tile)
 {
-	USED(i, xin, yin, tile);
-#ifdef DICKS
+	int n;
+	u16int tex;
 	Door *d;
-	u16int tex, p;
 
-	wallheight[i] = walldy(xin, yin);
+	waldy[i] = walldy();
 	d = doors + (tile & 0x7f);
 	tex = xin - d->dopen >> 4 & 0xfc0;
-	if(lasttilehit == tile){
-		/* in the same door as last time, so check for optimized draw */
-		if(tex == (u16int)postsource){	/* wide scale */
-			postwidth++;
-			wallheight[i] = wallheight[i-1];
-			return;
+	if(lasttile == tile){
+		if(scps == scts + tex){
+			scdx++;
+			waldy[i] = waldy[i-1];
 		}else{
-			ScalePost();
-			(u16int)postsource = tex;
-			postwidth = 1;
-			postx = i;
+			scalcol();
+			scps = scts + tex;
+			scdx = 1;
+			scx = i;
 		}
-	}else{
-		if(lastside != -1)	/* if not the first scaled post */
-			ScalePost();	/* draw last post */
-		/* first pixel in this door */
-		lastside = 2;
-		lasttile = tile;
-		postx = i;
-		postwidth = 1;
-		switch(d->lock){
-		case DRunlk: p = SPdoor; break;
-		case DRlock1:
-		case DRlock2:
-		case DRlock3:
-		case DRlock4: p = SPdoor+6; break;
-		case DRup: p = SPdoor+4; break;
-		}
-		*( ((u16int *)&postsource)+1) = (u16int)PM_GetPage(p);
-		(u16int)postsource = tex;
+		return;
 	}
-#endif
+	if(lastside != -1)
+		scalcol();
+	lastside = 2;
+	lasttile = tile;
+	scx = i;
+	scdx = 1;
+	n = 0;
+	switch(d->lock){
+	case DRunlk: n = drofs; break;
+	case DRlock1:
+	case DRlock2:
+	case DRlock3:
+	case DRlock4: n = drofs + 6; break;
+	case DRup: n = drofs + 4; break;
+	}
+	scts = wals[n];
+	if(scts == nil)
+		sysfatal("sparse wall %d\n", n);
+	scps = scts + tex;
 }
 
 static void
 vpush(int i, int tile)
 {
-	s16int p;
+	int n;
 	u16int tex, ofs;
 
 	tex = yin >> 4 & 0xfc0;
@@ -391,40 +507,35 @@ vpush(int i, int tile)
 		tex = 0xfc0 - tex;
 	}else
 		xin += ofs;
-	p = 0;
-	USED(i, xin, tile, p, tex, ofs);
-#ifdef DICKS
-	wallheight[i] = walldy(xin, yin);
-	if(lasttilehit == tile){
-		/* in the same wall type as last time, so check for
-		 * optimized draw */
-		if(tex == (u16int)postsource){	/* wide scale */
-			postwidth++;
-			wallheight[i] = wallheight[i-1];
-			return;
+	waldy[i] = walldy();
+	if(lasttile == tile){
+		if(scps == scts + tex){
+			scdx++;
+			waldy[i] = waldy[i-1];
 		}else{
-			ScalePost();
-			(u16int)postsource = tex;
-			postwidth = 1;
-			postx = i;
+			scalcol();
+			scps = scts + tex;
+			scdx = 1;
+			scx = i;
 		}
-	}else{	/* new wall */
-		if(lastside != -1)	// if not the first scaled post
-			ScalePost ();
-		lasttile = tile;
-		postx = i;
-		postwidth = 1;
-		p = vertwall[tile&63];
-		*( ((u16int *)&postsource)+1) = (u16int)PM_GetPage(p);
-		(u16int)postsource = tex;
+		return;
 	}
-#endif
+	if(lastside != -1)
+		scalcol();
+	lasttile = tile;
+	scx = i;
+	scdx = 1;
+	n = ((tile & 63) - 1) * 2 + 1;
+	scts = wals[n];
+	if(scts == nil)
+		sysfatal("sparse wall %d\n", n);
+	scps = scts + tex;
 }
 
 static void
 hpush(int i, int tile)
 {
-	s16int p;
+	int n;
 	u16int tex, ofs;
 
 	tex = xin >> 4 & 0xfc0;
@@ -435,34 +546,29 @@ hpush(int i, int tile)
 		tex = 0xfc0 - tex;
 		yin += ofs;
 	}
-	p = 0;
-	USED(i, yin, tile, p, tex, ofs);
-#ifdef DICKS
-	wallheight[i] = walldy(xin, yin);
-	if(lasttilehit == tile){
-		/* in the same wall type as last time, so check for
-		 * optimized draw */
-		if(tex == (u16int)postsource){	/* wide scale */
-			postwidth++;
-			wallheight[i] = wallheight[i-1];
-			return;
+	waldy[i] = walldy();
+	if(lasttile == tile){
+		if(scps == scts + tex){
+			scdx++;
+			waldy[i] = waldy[i-1];
 		}else{
-			ScalePost();
-			(u16int)postsource = tex;
-			postwidth = 1;
-			postx = i;
+			scalcol();
+			scps = scts + tex;
+			scdx = 1;
+			scx = i;
 		}
-	}else{	/* new wall */
-		if(lastside != -1)	/* if not the first scaled post */
-			ScalePost();
-		lasttile = tile;
-		postx = i;
-		postwidth = 1;
-		p = horizwall[tile&63];
-		*( ((u16int *)&postsource)+1) = (u16int)PM_GetPage(p);
-		(u16int)postsource = tex;
+		return;
 	}
-#endif
+	if(lastside != -1)
+		scalcol();
+	lasttile = tile;
+	scx = i;
+	scdx = 1;
+	n = ((tile & 63) - 1) * 2;
+	scts = wals[n];
+	if(scts == nil)
+		sysfatal("sparse wall %d\n", n);
+	scps = scts + tex;
 }
 
 static void
@@ -474,6 +580,19 @@ raytrace(void)
 	u16int dr, x, y, ∂x, ∂y, tilehit;
 	s32int rs, dx, dy;
 
+	vw.θ = oplr->θ;
+	midθ = vw.θ * (Fineθ / 360);
+	vw.sin = sint[vw.θ];
+	vw.cos = cost[vw.θ];
+	vw.x = oplr->x - ffs(Dfoclen, vw.cos);
+	vw.y = oplr->y + ffs(Dfoclen, vw.sin);
+	vw.tx = vw.x >> Dtlshift;
+	vw.ty = vw.y >> Dtlshift;
+	∂xdown = vw.x & Dtlglobal - 1;
+	∂xup = Dtlglobal - ∂xdown;
+	∂ydown = vw.y & Dtlglobal - 1;
+	∂yup = Dtlglobal - ∂ydown;
+	lastside = -1;
 	i = 0;
 	tilehit = 0;
 loop:
@@ -608,84 +727,85 @@ hpass:
 next:
 	if(++i < vw.dx)
 		goto loop;
+	scalcol();
 }
 
 static void
-ScalePost(void)
+calcscal(Scaler *s, int dy)
 {
-#ifdef DICKS
-	ax = SCREENSEG;
-	es = ax;
-	bx = postx >> 1;
+	int i, step, fix, top, ps, pe;
 
-	asm mov	bp,WORD PTR [wallheight+bx]	// fractional height (low 3 bits frac)
-	asm and	bp,0xfff8			// bp = heightscaler*4
-	asm shr	bp,1
-	asm cmp	bp,[maxscaleshl2]
-	asm jle	heightok
-	asm mov	bp,[maxscaleshl2]
-heightok:
-	asm add	bp,OFFSET fullscalefarcall
+	top = (vw.dy - dy) / 2;
+	step = (dy << 16) / 64;
+	fix = 0;
+	for(i=0; i<nelem(scals[0]); i++, s++){
+		ps = (fix >> 16) + top;
+		fix += step;
+		pe = (fix >> 16) + top;
+		s->dx = pe > ps ? pe - ps : 0;
+		s->skip = ps == pe || pe < 0 || ps >= vw.dy || i == nelem(scals[0])-1;
+		if(s->skip)
+			continue;
+		s->ps = ps;
+		s->pe = pe;
+	}
+}
+static void
+scaltab(int maxdy)
+{
+	int save, dy;
+	Scaler (*s)[nelem(scals[0])];
 
-	// scale a byte wide strip of wall
-	asm mov	bx,[postx]
-	asm mov	di,bx
-	asm shr	di,2		// X in bytes
-	asm add	di,[bufferofs]
-
-	asm and	bx,3
-	asm shl	bx,3		// bx = pixel*8+pixwidth
-	asm add	bx,[postwidth]
-
-	asm mov	al,BYTE PTR [mapmasks1-1+bx]	// -1 because no widths of 0
-	asm mov	dx,SC_INDEX+1
-	asm out	dx,al		// set bit mask register
-	asm lds	si,DWORD PTR [postsource]
-	asm call DWORD PTR [bp]	// scale the line of pixels
-
-	asm mov	al,BYTE PTR [ss:mapmasks2-1+bx]   // -1 because no widths of 0
-	asm or	al,al
-	asm jz	nomore
-
-	// draw a second byte for vertical strips that cross two bytes
-	asm inc	di
-	asm out	dx,al			// set bit mask register
-	asm call DWORD PTR [bp]		// scale the line of pixels
-
-	asm mov al,BYTE PTR [ss:mapmasks3-1+bx]	// -1 because no widths of 0
-	asm or	al,al
-	asm jz	nomore
-
-	// draw a third byte for vertical strips that cross three bytes
-	asm inc	di
-	asm out	dx,al			// set bit mask register
-	asm call DWORD PTR [bp]		// scale the line of pixels
-
-nomore:
-	asm mov	ax,ss
-	asm mov	ds,ax
-#endif
+	dy = 1;
+	memset(scals, 0, sizeof scals);
+	s = scals + 1;
+	save = vw.dy / 2;
+	while(dy <= maxdy){
+		calcscal(*s++, dy * 2);
+		if(dy >= save){
+			memcpy(s[0], s[-1], sizeof scals[0]);
+			memcpy(s[1], s[-1], sizeof scals[0]);
+			s += 2, dy += 2;
+		}
+		dy++;
+	}
+	memcpy(scals, scals+1, sizeof *scals);
+	sce = scals[dy-1];
 }
 
-static void
-walls(void)
+void
+scalspr(int n, int x, int dy)
 {
-	vw.θ = oplr->θ;
-	midθ = vw.θ * (Fineθ / 360);
-	vw.sin = sint[vw.θ];
-	vw.cos = cost[vw.θ];
-	vw.x = oplr->x - ffs(Dfoclen, vw.cos);
-	vw.y = oplr->y + ffs(Dfoclen, vw.sin);
-	vw.tx = vw.x >> Dtlshift;
-	vw.ty = vw.y >> Dtlshift;
-	∂xdown = vw.x & Dtlglobal - 1;
-	∂xup = Dtlglobal - ∂xdown;
-	∂ydown = vw.y & Dtlglobal - 1;
-	∂yup = Dtlglobal - ∂ydown;
+	int dx, lx, rx;
+	Scaler *ss, *s, *se;
+	Spr *spr;
+	Sprc **c;
 
-	lastside = -1;	// the first pixel is on a new wall
-	raytrace();
-	ScalePost();	// no more optimization on last post
+	spr = sprs + n;
+	if(spr == nil)
+		sysfatal("scalspr: missing sprite %d\n", n);
+	dy >>= 1;
+	ss = scals[dy];
+	lx = spr->lx;
+	rx = spr->rx;
+	scx = x;
+	if(lx < 32){
+		s = ss + lx;
+		se = ss + 32;
+		while(s < se)
+			scx -= s++->dx;
+	}else{
+		s = ss + 32;
+		se = ss + lx;
+		while(s < se)
+			scx += s++->dx;
+	}
+	c = spr->cs;
+	for(s=ss+lx, se=ss+rx+1; s<se; c++, scx+=dx){
+		dx = s++->dx;
+		if(dx != 0)
+			scalscol(ss, *c, dx);
+	}
 }
 
 s32int
@@ -717,8 +837,8 @@ render(void)
 	for(tl=tiles; tl<tiles+nelem(tiles); tl++)
 		tl->vis = 0;
 	clear();
-	walls();
-	scaleall();
+	raytrace();
+	scalobj();
 	topspr();
 }
 
@@ -745,7 +865,7 @@ initscal(void)
 		*q-- = an;
 	}
 
-	//SetupScaling(vw.dx * 1.5);
+	scaltab((vw.dx * 1.5) / 2);
 }
 
 void

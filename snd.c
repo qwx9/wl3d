@@ -14,7 +14,8 @@ enum{
 	PcmHz = 7000,
 	ImfHz = 700,
 	SfxHz = 140,
-	Nsamp = Rate/ImfHz * 4,
+	Nsamp = Rate / ImfHz * 4,
+	Npsamp = Rate / PcmHz * 4,
 	Mdiv = ImfHz / Tb,
 	Pdiv = PcmHz / Tb,
 	Nbuf = Nsamp * Mdiv,
@@ -282,15 +283,13 @@ opl2step(void)
 
 /* stolen property cargocult upsampling */
 static void
-filter(int *xb, uchar *s)
+filter(uchar *s)
 {
 	ulong l, p, i;
 	int *x, o, a;
 	s16int m;
 	vlong v;
 
-	if(s >= sbuf + sizeof sbuf)
-		return;
 	v = 0;
 	x = &xb[xt>>Np];	/* left side */
 	l = p = xt & (1<<Np)-1;
@@ -339,6 +338,7 @@ resample(uchar *p, int n)
 	ulong e;
 
 	b = sbuf;
+more:
 	do{
 		for(i=xbi; n>0 && i<Npbuf; n--, i++)
 			xb[i] = ((uint)*p++ << 24) - 0x7fffffff;
@@ -347,7 +347,11 @@ resample(uchar *p, int n)
 			break;
 		e = i - Nextra << Np;
 		while(xt < e){	/* process buffer and mix */
-			filter(xb, b);
+			if(b >= sbuf + nelem(sbuf)){
+				n = 0;
+				break;
+			}
+			filter(b);
 			b += 4;
 			xt += TΔ;
 		}
@@ -364,6 +368,11 @@ resample(uchar *p, int n)
 			xbi = s;
 		}
 	}while(n > 0);
+	if(b < sbuf + nelem(sbuf) && p < pcme){
+		n += (b - sbuf) / Npsamp;
+		goto more;
+	}
+	pcm = p;
 }
 
 static void
@@ -407,7 +416,6 @@ pcmstep(void)
 		e = p + Pdiv;
 	setvol();
 	resample(p, e-p);
-	pcm = e;
 }
 
 void

@@ -2,6 +2,8 @@ typedef short s16int;
 typedef int s32int;
 typedef struct Col Col;
 typedef struct Dat Dat;
+typedef struct Sprc Sprc;
+typedef struct Spr Spr;
 typedef struct Pic Pic;
 typedef struct Fnt Fnt;
 typedef struct Sfx Sfx;
@@ -82,8 +84,22 @@ struct Dat{
 	uchar *p;
 	uchar *e;
 };
-extern Dat *wals, *sprs, *imfs;
-extern uchar **exts, **dems, **epis;
+extern Dat *imfs;
+struct Sprc{
+	uchar *p;
+	int s;
+	int e;
+};
+struct Spr{
+	int lx;
+	int rx;
+	Sprc **cs;
+	Sprc **ce;
+	uchar *sp;
+};
+extern Spr *sprs;
+extern uchar **exts, **dems, **epis, **wals;
+extern int drofs;
 
 struct Pic{
 	int x;
@@ -1096,6 +1112,7 @@ enum{
 	GSspark2,
 	GSspark3,
 	GSspark4,
+	GSe,
 
 	θE = 0,
 	θNE = 45,
@@ -1123,9 +1140,10 @@ struct State{
 	void (*up)(Obj *);
 	void (*act)(Obj *);
 	int dt;
-	Dat *spr;
+	int sprn;
 	State *n;
 	int rot;
+	Spr *spr;
 };
 extern State stt[];
 struct Obj{
@@ -1164,7 +1182,7 @@ struct Door{
 extern Door doors[], *doore, pusher;
 struct Static{
 	Tile *tl;
-	Dat *spr;
+	Spr *spr;
 	int f;
 	int item;
 };
@@ -1243,7 +1261,6 @@ struct Game{
 	int demo;
 	int record;
 	int load;
-	int fizz;
 };
 extern Game gm;
 extern int god, noclip, onestep;

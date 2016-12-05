@@ -5,8 +5,8 @@
 
 Fnt fnts[2], *fnt;
 Pic *pics;
-uchar **exts, **dems, **epis;
-Dat *wals, *sprs;
+uchar **exts, **dems, **epis, **wals;
+Spr *sprs;
 
 int scale, npx;
 uchar *px, pxb[Va], fzb[Vw*Vhud];

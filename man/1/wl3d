@@ -33,6 +33,42 @@ Bummer.
 Now, you must do anything to escape from the belly of a Nazi dungeon - or die trying."
 .RE
 .PP
+The command line options are:
+.TP \w'\fLf\ \ \ \fIdemo'u
+.B -2
+Set game version to Spear of Destiny Mission 2: Return to Danger.
+.TP
+.B -3
+Set game version to Spear of Destiny Mission 3: The Ultimate Challenge.
+.TP
+.B -d
+Set game version to Wolfenstein 3-D 1.4 shareware.
+.TP
+.BI -f\  demo
+Play demo from file on startup.
+.TP
+.BI -m\  dir
+Set game data directory.
+.TP
+.B -o
+Set game version to Spear of Destiny 1.0 demo.
+.TP
+.B -p
+Run at full speed.
+.TP
+.B -q
+Quit after demofile playback.
+.TP
+.B -s
+Set game version to Spear of Destiny 1.0 retail.
+.TP
+.BI -w\  map
+Warp to the given map number on startup.
+.TP
+.BI -x\  1-4
+Set default game difficulty.
+.PD
+.PP
 .I Wl3d
 requires several data files to operate, containing sound effects, music, and several types of graphics.
 These are detailed in
@@ -51,7 +87,8 @@ with the
 .B MBEFORE
 and
 .B MCREATE
-flags.
+flags (see
+.IR bind (2)).
 Data files can thus be contained in a system directory while the config and save files' location, which are user-specific, can be left at the user's discretion.
 If these user-specific files exist and
 .I wl3d
@@ -68,7 +105,8 @@ parameter is used, the game starts immediately at map number
 .IR map ,
 and
 .B -x
-optionally sets the game difficulty.
+optionally sets the game difficulty to 1-4, from easiest to hardest,
+the default being 2.
 The
 .B -p
 parameter runs the program at the fastest speed possible for testing purposes.
@@ -81,31 +119,19 @@ Each corresponds to a specific data file extension.
 The default game version is Wolfenstein 3-D 1.4 retail, and the data files use the
 .L wl6
 extension.
-Others are set by the following options:
-.TF -2
-.TP
-.B -d
-Wolfenstein 3-D 1.4 shareware
-.TP
-.B -s
-Spear of Destiny 1.0 retail
-.TP
+Others are set by the options
+.BR -2 ,
+.BR -3 ,
+.BR -d ,
 .B -o
-Spear of Destiny 1.0 demo
-.TP
-.B -2
-Spear of Destiny Mission 2: Return to Danger
-.TP
-.B -3
-Spear of Destiny Mission 3: The Ultimate Challenge
-.PD
-.PP
+and
+.BR -s .
 The respective data file extensions are
-.LR wl1 ,
-.LR sod ,
-.LR sdm ,
 .LR sd2 ,
-.LR sd3 .
+.LR sd3 ,
+.LR wl1 ,
+.LR sdm ,
+.LR sod .
 .PD
 Other game versions are unsupported.
 Note that
@@ -123,7 +149,7 @@ can playback a single external demo lump before resuming normal operation, when 
 parameter.
 The
 .B -q
-parameter causes the program to exit after playback instead.
+parameter causes the program to exit after its playback instead.
 The filename's extension, if any, is ignored.
 Regardless, a corresponding game version must be set using the aforementioned command line parameters.
 An incorrect version will cause erroneous playback or a crash.
@@ -147,7 +173,7 @@ Most of
 .I wl3d
 has been rewritten from scratch, and some parts have been implemented differently from the reference.
 Most importantly, individual data lumps are no longer read and cached as needed, but rather all loaded into memory, uncompressed, and in some cases converted, at startup.
-This bumps the required amount of free memory up to around 4 megabytes, depending on the game version and architecture.
+This bumps the required amount of free memory up to around at least 5 megabytes, depending on the game version, architecture and window size.
 In addition, a single executable handles all supported game versions.
 .PP
 Intro screens are now additional data files to be loaded on start up, rather than being compiled in, and must therefore be installed in the
@@ -156,16 +182,25 @@ Also unlike the reference implementation, these are displayed during data file l
 .PP
 Copy protection code and the Spear of Destiny Jukebox have been excised.
 .PP
-Some cosmetic differences exist.
+Menus are implemented differently, and some have been altered in functionality.
 .PP
 Game keys are no longer set in the options menu, but rather in the config file.
 A single global configuration file is used, rather than a version dependent one.
 Also, while savegames are in a compatible format, config files are not.
 .SH FILES
-.TF /sys/games/lib/wl3d/*
+.TF /sys/games/lib/wl3d/intro.wl6
 .TP
-.B /sys/games/lib/wl3d/*
-wl3d data files
+.B /sys/games/lib/wl3d/
+default wl3d data directory
+.TP
+.B /sys/games/lib/wl3d/intro.wl6
+.B wl6/wl1
+intro screen
+.TP
+.B /sys/games/lib/wl3d/intro.sod
+.B sdm/sod
+intro screen
+.PD
 .SH "SEE ALSO"
 .IR doom (1) ,
 .IR opl2 (1) ,
@@ -189,9 +224,9 @@ The upsampling implementation for digital sound effects is overkill given the nu
 Little is done in case the program is unable to run at a framerate of 70 Hz.
 .PD
 .SS Engine bugs
-Correct demo playback depends on the sound settings used during recording.
+Correct demo playback depends on the sound and view size settings used during recording.
 Different settings on playback may cause desynchronization.
-.PD
+.PP
 Spawned projectiles are not properly cleared when removed and may cause aberrant behavior and demo desynchronization.
 .SH HISTORY
 id Software's Wolfenstein 3-D was released for

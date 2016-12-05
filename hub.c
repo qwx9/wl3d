@@ -52,7 +52,8 @@ enum{
 	Lmscore,
 	Lpants,
 	Lquit,
-	Ldie
+	Lmexit,
+	Lexit
 };
 struct Seq{
 	int dt;
@@ -241,7 +242,7 @@ ask(void)
 		return;
 	if(r == 'y'){
 		sfx(Sshoot);
-		reset(ml+Ldie);
+		reset(ml+Lmexit);
 	}
 	else if(r == 'n' || r == Kesc){
 		sfx(Sesc);
@@ -448,19 +449,21 @@ gcont(void)
 {
 	step = gstep;
 	gm.end = 0;
-	gm.fizz = 0;
 }
 
 static void
 camtxt2(void)
 {
-	put(0, 56, Vw, 16, 0x7f);
+	camwarp();
+	mtc = 32;
+	render();
+	fizzop(-1, 1);
+	put(0, 0, Vw, Vhud, 0x7f);
 	viewbox();
 }
 static void
 camtxt(void)
 {
-	fizzop(-1, 0);
 	pictxt(0, 56, "LET\'S SEE THAT AGAIN!");
 	out();
 }
@@ -565,7 +568,7 @@ intro(void)
 }
 
 static void
-die(void)
+exit(void)
 {
 	threadexitsall(nil);
 }
@@ -604,7 +607,8 @@ static Seq *mqp,
 	mscoreq[] = {{10, fadeout}, {0, score}, {10, fadein}},
 	pantsq[] = {{30, fadeout}, {0, pants}, {30, fadein}},
 	quitq[] = {{0, blink}, {10, ask}},
-	dieq[] = {{10, fadeout}, {1, die}};
+	mexitq[] = {{10, fadeout}},
+	exitq[] = {{1, exit}};
 
 static Menu *mp, ml[] = {
 	[Lload] {nil, decq, decq+nelem(decq), ml+Lintro, &fblk},
@@ -628,7 +632,8 @@ static Menu *mp, ml[] = {
 	[Lmscore] {nil, mscoreq, mscoreq+nelem(mscoreq), ml+Lack, &fmenu},
 	[Lpants] {nil, pantsq, pantsq+nelem(pantsq), ml+Lwait, &fblk},
 	[Lquit] {quit, quitq, quitq+nelem(quitq), ml+Lquit},
-	[Ldie] {nil, dieq, dieq+nelem(dieq), nil, &fmenu}
+	[Lmexit] {nil, mexitq, mexitq+nelem(mexitq), ml+Lexit, &fmenu},
+	[Lexit] {nil, exitq, exitq+nelem(exitq)}
 };
 
 static void
@@ -637,11 +642,11 @@ dend(void)
 	gm.demo = gm.record = 0;
 	pal = pals[Cfad];
 	if(demf != nil){
-		if(demexit)
-			threadexitsall(nil);
 		free(demf);
 		demf = nil;
 		demd = dems;
+		if(demexit)
+			mp->m = ml+Lexit;
 	}
 }
 void
@@ -655,24 +660,27 @@ gend(void)
 		break;
 	enddem:
 	case EDdem:
-		dend();
 		mp->m = ml+Ltitle;
+		dend();
 		break;
 	case EDcam:
-		fizzop(0x7f, 1);
+		if(gm.record || gm.demo)
+			scalspr(SPdemo, vw.dx/2, vw.dy+1);
+		out();
+		fizzop(0x7f, 0);
 		reset(ml+Lcam);
 		mp->m = gm.demo || gm.record ? ml+Ltitle : ml+Lwin;
-		gm.fizz++;
 		break;
 	case EDcam2:
 		if(gm.demo || gm.record)
 			dend();
 		else
 			pal = pals[Cfad];
+		scalspr(SPcam, vw.dx/2, vw.dy+1);
 		break;
 	case EDkey:
-		dend();
 		mp->m = ml+Linctl;
+		dend();
 		break;
 	case EDdie:
 		if(gm.demo || gm.record)
@@ -686,6 +694,7 @@ gend(void)
 		mp->m = ml+Lsfxwait;
 		break;
 	}
+	mtc = 0;
 	step = mstep;
 }
 

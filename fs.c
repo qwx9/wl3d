@@ -4,6 +4,7 @@
 #include "dat.h"
 #include "fns.h"
 
+int drofs;
 u32int *pal, pals[Cend][256]={ {
 	0x000000, 0x0000aa, 0x00aa00, 0x00aaaa, 0xaa0000, 0xaa00aa, 0xaa5500,
 	0xaaaaaa, 0x555555, 0x5555ff, 0x55ff55, 0x55ffff, 0xff5555, 0xff55ff,
@@ -446,8 +447,7 @@ enum{
 	Mapsz = Planesz * Nplane
 };
 static Dat *pcms;
-static uchar *swpb;
-static int alofs;
+static int alofs, npcm;
 static u16int rlewtag;
 static u32int *mapofs, *mape;
 
@@ -628,66 +628,132 @@ deplane(uchar *d, uchar *s, int n)
 }
 
 static void
-packpcm(Biobuf *bf, Dat *e, u16int so, u16int po)
+walls(Biobuf *bf, int n, u16int *sz, u32int *of)
 {
-	u16int n;
-	Dat *p, *s;
+	uchar **d, **e;
 
-	p = s = wals+po;
-	while(++p < e){
-		Bseek(bf, 2, 1);
-		n = get16(bf);
-		while(s->e < s->p + n)
-			s->e = p++->e;
-		while(p->p == nil && p < e-1)
-			p++;
-		s++;
-		s->p = p->p;
-		s->e = p->e;
+	drofs = n - 8;
+	wals = emalloc(n * sizeof *wals);
+	e = wals + n;
+	for(d=wals; d<e; d++, of++){
+		n = *sz++;
+		if(n == 0)
+			continue;
+		Bseek(bf, *of, 0);
+		*d = emalloc(n);
+		eread(bf, *d, n);
 	}
-	n = s-wals;
-	wals = erealloc(wals, n * sizeof *wals);
-	sprs = wals + so;
-	pcms = wals + po;
+}
+
+static void
+sprites(Biobuf *bf, int n, u16int *sz, u32int *of)
+{
+	uchar *hu, *u;
+	Spr *s, *e;
+	Sprc **c, *ap, a[65];
+
+	sprs = emalloc(n * sizeof *sprs);
+	e = sprs + n;
+	for(s=sprs; s<e; s++, of++){
+		n = *sz++;
+		if(n == 0)
+			continue;
+		Bseek(bf, *of, 0);
+		s->lx = get16(bf);
+		s->rx = get16(bf);
+		n -= 4;
+		s->sp = emalloc(n);
+		eread(bf, s->sp, n);
+		n = s->rx - s->lx + 1;
+		s->cs = emalloc(n * sizeof *s->cs);
+		s->ce = s->cs + n;
+		hu = s->sp;
+		c = s->cs;
+		while(n-- > 0){
+			u = s->sp + GBIT16(hu) - 4;
+			hu += 2;
+			ap = a;
+			ap->e = GBIT16(u) / 2, u+=2;
+			while(ap->e != 0){
+				ap->p = s->sp + (s16int)GBIT16(u) - 4, u+=2;
+				ap->s = GBIT16(u) / 2, u+=2;
+				ap->p += ap->s;
+				ap++;
+				ap->e = GBIT16(u) / 2, u+=2;
+			}
+			ap++;
+			*c = emalloc((ap-a) * sizeof **c);
+			memcpy(*c, a, (ap-a) * sizeof **c);
+			c++;
+		}
+	}
+}
+
+static void
+pcmpak(Biobuf *bf, int n, u16int *sz, u32int *of)
+{
+	u16int *csz, *cp, *ce;
+	uchar *u;
+	vlong sof;
+	Dat *d, *e;
+
+	sof = Bseek(bf, 0, 1);
+	Bseek(bf, of[n], 0);
+	n = sz[n] / 4;
+	csz = emalloc(n * sizeof *csz);
+	cp = csz;
+	ce = csz + n;
+	while(cp < ce){
+		Bseek(bf, 2, 1);
+		*cp++ = get16(bf);
+	}
+	npcm = n;
+	pcms = emalloc(n * sizeof *pcms);
+	Bseek(bf, sof, 0);
+	for(d=pcms, e=pcms+n, cp=csz; d<e; d++){
+		n = *cp++;
+		if(*sz == 0){
+			n = (n-1) / 4096 + 1;
+			sz += n;
+			of += n;
+			continue;
+		}
+		d->p = emalloc(n * sizeof *d->p);
+		d->e = d->p + n;
+		u = d->p;
+		while(u < d->e){
+			Bseek(bf, *of++, 0);
+			u += eread(bf, u, *sz++);
+		}
+	}
+	free(csz);
 }
 
 static void
 vswap(void)
 {
-	u16int n, v, w;
-	u32int *o, *p;
-	uchar *u;
-	Dat *s, *e;
+	int n, so, po;
+	u32int *ofs, *ofp;
+	u16int *szs, *szp;
 	Biobuf *bf;
 
 	bf = bopen("vswap.", OREAD);
 	n = get16(bf);
-	s = wals = emalloc((n-1) * sizeof *wals);
-	e = s + n-1;
-	v = get16(bf);
-	w = get16(bf);
-	p = o = emalloc(n * sizeof *o);
-
-	while(p < o+n)
-		*p++ = get32(bf);
-	while(s < e)
-		s++->e = (uchar*)(uintptr)get16(bf);
-	u = swpb = emalloc(bsize(bf) - Bseek(bf, 0, 1));
-	Bseek(bf, 2, 1);
-	for(p=o, s=wals; s<e; s++, p++){
-		n = (uintptr)s->e;
-		if(n == 0)
-			continue;
-		Bseek(bf, *p, 0);
-		s->p = u;
-		s->e = u + n;
-		u += eread(bf, u, n);
-	}
-	Bseek(bf, *p, 0);
-	free(o);
-	swpb = erealloc(swpb, u-swpb);
-
-	packpcm(bf, e-1, v, w);
+	so = get16(bf);
+	po = get16(bf);
+	ofs = emalloc(n * sizeof *ofs);
+	szs = emalloc(n * sizeof *szs);
+	ofp = ofs;
+	while(ofp < ofs + n)
+		*ofp++ = get32(bf);
+	szp = szs;
+	while(szp < szs + n)
+		*szp++ = get16(bf);
+	walls(bf, so, szs, ofs);
+	sprites(bf, po - so, szs + so, ofs + so);
+	pcmpak(bf, n - po - 1, szs + po, ofs + po);
+	free(ofs);
+	free(szs);
 	Bterm(bf);
 }
 
@@ -737,7 +803,7 @@ mungesfx(void)
 		swap(sfxs+Sscream9, sfxs+Sschbdie);
 	}
 	p = pcmt[ver<SDM ? 0 : 1];
-	e = p + (ver==WL6 ? 46 : ver==WL1 ? 21 : ver==SDM ? 26 : 40);
+	e = p + npcm;
 	for(pcm=pcms; p<e; p++, pcm++)
 		if(*p != Send)
 			sfxs[*p].pcm = pcm;
@@ -951,6 +1017,16 @@ loadscr(void)
 }
 
 static void
+sttspr(void)
+{
+	State *s;
+
+	for(s=stt; s<stt+GSe; s++)
+		if(s->sprn != 0)
+			s->spr = sprs + s->sprn;
+}
+
+static void
 fixpal(void)
 {
 	u32int *p, *s;
@@ -1015,10 +1091,6 @@ dat(char *dir)
 	if(bind(".", dir, MBEFORE|MCREATE) < 0 || chdir(dir) < 0)
 		fprint(2, "dat: %r\n");
 
-	if(ver >= SDM){
-		fixpal();
-		sodmap();
-	}
 	e = ext;
 	loadscr();
 	ext = e;
@@ -1028,6 +1100,11 @@ dat(char *dir)
 		ext = "sod";
 	audiot();
 	gfx();
+	sttspr();
+	if(ver >= SDM){
+		fixpal();
+		sodmap();
+	}
 	ext = e;
 	cfg();
 }

@@ -296,14 +296,12 @@ threadmain(int argc, char **argv)
 			tc = 1;
 		else if(tc > 10)
 			tc = 10;
-		Δtc = (gm.demo || gm.record) && !gm.fizz ? 4 : tc;
+		Δtc = tc;
 		t0 += tc * Td;
-		if(nosleep)
-			continue;
 		if(onestep)
 			t0 += Td;
 		dt = (t0 - t) / Te6;
-		if(dt > 0)
+		if(dt > 0 && !nosleep)
 			sleep(dt);
 		else
 			t0 = t;
