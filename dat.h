@@ -15,6 +15,7 @@ typedef struct Door Door;
 typedef struct Static Static;
 typedef struct Tile Tile;
 typedef struct Game Game;
+typedef struct Score Score;
 
 enum{
 	WL6,
@@ -43,15 +44,17 @@ enum{
 	Ke
 };
 extern int msense;
-extern int kbon, mson;
-extern int kb, mΔx, mΔy, mΔb;
+extern int vwsize;
+extern int kbon;
+extern int kb, mΔx, mΔy, mb;
 extern int sfxon, muson, pcmon;
 extern int sfxlck;
 extern Rune keys[];
 extern void (*step)(void);
 extern int Δtc;
 extern int nosleep;
-extern int mtc;
+extern int autorun;
+extern int qtc;
 
 enum{
 	Vw = 320,
@@ -64,6 +67,8 @@ enum{
 };
 extern uchar *px, pxb[], fzb[];
 extern int npx, scale;
+extern void (*mclear)(void);
+extern void (*stripe)(int);
 
 enum{
 	C0,
@@ -226,12 +231,16 @@ enum{
 	Sangeltired = Sotto,
 	Ssend = Sfett,
 
+	Msdwon = 6,
+	Mend = 7,
 	Mintro = 7,
 	Mmenu = 14,
+	Minter = 16,
 	Mnazjazz = 18,
 	Maward = 20,
 	Mroster = 23,
 	Mtower = 23,
+	Mwon = 24,
 
 	Pbackdrop = 0,
 	Pmouselback,
@@ -597,7 +606,6 @@ enum{
 extern s32int sint[], *cost;
 
 struct View{
-	int size;
 	int dx;
 	int dy;
 	int ofs;
@@ -1224,15 +1232,21 @@ enum{
 	WPmg,
 	WPgatling,
 
+	GMup = 0,
+	GMsetec,
+	GMret,
+
 	EDfizz = 1,
+	EDcam,
+	EDcam2,
 	EDdem,
 	EDkey,
 	EDdie,
-	EDcam,
-	EDcam2,
 	EDup,
 	EDsetec,
-	EDwon
+	EDwon,
+	EDspear,
+	EDmsg
 };
 struct Game{
 	int hp;
@@ -1243,24 +1257,39 @@ struct Game{
 	int lives;
 	int keys;
 	int pt;
+	int oldpt;
 	int to1up;
 	int wfrm;
 	int facefrm;
 	int map;
 	int difc;
-	int lvltc;
-	int kills;
-	int nkills;
-	int secret;
-	int nsecret;
-	int treasure;
-	int ntreasure;
+	int tc;
+	int eptm;
+	int kp;
+	int ktot;
+	int epk;
+	int sp;
+	int stot;
+	int eps;
+	int tp;
+	int ttot;
+	int ept;
 	int won;
 	int mut;
 	int end;
+	int com;
 	int demo;
 	int record;
 	int load;
 };
 extern Game gm;
-extern int god, noclip, onestep;
+extern int allrecv, god, noclip, slomo;
+
+struct Score{
+	char name[58];
+	int n;
+	int lvl;
+	int ep;
+};
+extern Score scs[];
+extern char savs[][32];

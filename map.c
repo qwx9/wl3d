@@ -24,7 +24,7 @@ static int stctype[] = {
 	Rblock, Rblock, Rgibs, Rblock, Rblock, Rnil, Rnil, Rnil, Rnil,
 	Rblock, Rblock, Rnil, Rclip2, Rammobox, Rblock, Rspear, Rclip2
 };
-static Obj opool[Nobj];
+static Obj opool[Nobj+2];
 
 static void
 spawnstc(Tile *tl, int n)
@@ -50,7 +50,7 @@ spawnstc(Tile *tl, int n)
 	case Rcrown:
 	case R1up:
 		if(!gm.load)
-			gm.ntreasure++;
+			gm.ttot++;
 		/* wet floor */
 	default:
 		stce->f = OFbonus;
@@ -427,7 +427,7 @@ spawnghost(Tile *tl, State *s)
 	o->θ = θE;
 	o->f |= OFambush;
 	if(!gm.load)
-		gm.nkills++;
+		gm.ktot++;
 }
 
 static void
@@ -485,6 +485,7 @@ spawnboss(Tile *tl, int type)
 		θ = θS;
 		goto wlonly;
 	case Ofake:
+		/* bug? */
 		stt[GShitlerdie2].dt = pcmon ? 140 : 5;
 		s = stt+GSfake;
 		hp = 200 + 100 * gm.difc;
@@ -538,7 +539,7 @@ spawnboss(Tile *tl, int type)
 	o->θ = θ;
 	o->f |= OFshootable | OFambush;
 	if(!gm.load)
-		gm.nkills++;
+		gm.ktot++;
 }
 
 static void
@@ -605,7 +606,7 @@ spawnguy(Tile *tl, int type, int dir, int patrol)
 	o->θ = dir * 90;
 
 	if(!gm.load)
-		gm.nkills++;
+		gm.ktot++;
 	if(patrol){
 		o->Δr = Dtlglobal;
 		o->on++;
@@ -622,7 +623,7 @@ spawn(Tile *tl)
 	int n, difc;
 
 	n = tl->p1;
-	difc = GDeasy;
+	difc = GDbaby;
 	switch(n){
 	case 19: case 20: case 21: case 22:
 		spawnplr(tl, n-19);
@@ -638,64 +639,64 @@ spawn(Tile *tl)
 		break;
 	case 98:
 		if(!gm.load)
-			gm.nsecret++;
+			gm.stot++;
 		break;
 	case 180: case 181: case 182: case 183: difc++;	n-=36; /* wet floor */
-	case 144: case 145: case 146: case 147: difc++;	n-=36; /* wet floor */
+	case 144: case 145: case 146: case 147: difc+=2; n-=36; /* wet floor */
 	case 108: case 109: case 110: case 111:
 		if(difc <= gm.difc)
 			spawnguy(tl, Ogd, n-108, 0);
 		break;
 	case 184: case 185: case 186: case 187: difc++;	n-=36; /* wet floor */
-	case 148: case 149: case 150: case 151: difc++;	n-=36; /* wet floor */
+	case 148: case 149: case 150: case 151: difc+=2; n-=36; /* wet floor */
 	case 112: case 113: case 114: case 115:
 		if(difc <= gm.difc)
 			spawnguy(tl, Ogd, n-112, 1);
 		break;
 	case 188: case 189: case 190: case 191: difc++;	n-=36; /* wet floor */
-	case 152: case 153: case 154: case 155: difc++;	n-=36; /* wet floor */
+	case 152: case 153: case 154: case 155: difc+=2; n-=36; /* wet floor */
 	case 116: case 117: case 118: case 119:
 		if(difc <= gm.difc)
 			spawnguy(tl, Oofc, n-116, 0);
 		break;
 	case 192: case 193: case 194: case 195: difc++;	n-=36; /* wet floor */
-	case 156: case 157: case 158: case 159: difc++;	n-=36; /* wet floor */
+	case 156: case 157: case 158: case 159: difc+=2; n-=36; /* wet floor */
 	case 120: case 121: case 122: case 123:
 		if(difc <= gm.difc)
 			spawnguy(tl, Oofc, n-120, 1);
 		break;
 	case 198: case 199: case 200: case 201: difc++;	n-=36; /* wet floor */
-	case 162: case 163: case 164: case 165: difc++;	n-=36; /* wet floor */
+	case 162: case 163: case 164: case 165: difc+=2; n-=36; /* wet floor */
 	case 126: case 127: case 128: case 129:
 		if(difc <= gm.difc)
 			spawnguy(tl, Oss, n-126, 0);
 		break;
 	case 202: case 203: case 204: case 205: difc++;	n-=36; /* wet floor */
-	case 166: case 167: case 168: case 169: difc++;	n-=36; /* wet floor */
+	case 166: case 167: case 168: case 169: difc+=2; n-=36; /* wet floor */
 	case 130: case 131: case 132: case 133:
 		if(difc <= gm.difc)
 			spawnguy(tl, Oss, n-130, 1);
 		break;
 	case 206: case 207: case 208: case 209: difc++;	n-=36; /* wet floor */
-	case 170: case 171: case 172: case 173: difc++;	n-=36; /* wet floor */
+	case 170: case 171: case 172: case 173: difc+=2; n-=36; /* wet floor */
 	case 134: case 135: case 136: case 137:
 		if(difc <= gm.difc)
 			spawnguy(tl, Odog, n-134, 0);
 		break;
 	case 210: case 211: case 212: case 213: difc++;	n-=36; /* wet floor */
-	case 174: case 175: case 176: case 177: difc++;	n-=36; /* wet floor */
+	case 174: case 175: case 176: case 177: difc+=2; n-=36; /* wet floor */
 	case 138: case 139: case 140: case 141:
 		if(difc <= gm.difc)
 			spawnguy(tl, Odog, n-138, 1);
 		break;
 	case 252: case 253: case 254: case 255: difc++;	n-=18; /* wet floor */
-	case 234: case 235: case 236: case 237: difc++;	n-=18; /* wet floor */
+	case 234: case 235: case 236: case 237: difc+=2; n-=18; /* wet floor */
 	case 216: case 217: case 218: case 219:
 		if(difc <= gm.difc)
 			spawnguy(tl, Omut, n-216, 0);
 		break;
 	case 256: case 257: case 258: case 259: difc++;	n-=18; /* wet floor */
-	case 238: case 239: case 240: case 241: difc++;	n-=18; /* wet floor */
+	case 238: case 239: case 240: case 241: difc+=2; n-=18; /* wet floor */
 	case 220: case 221: case 222: case 223:
 		if(difc <= gm.difc)
 			spawnguy(tl, Omut, n-220, 1);
@@ -812,7 +813,14 @@ ospawn(Tile *tl, State *s)
 	o->ty = (tl-tiles) / Mapdxy;
 	osetglobal(o);
 	o->areaid = tl->p0 - MTfloor;
-	o->tc = s->dt != 0 ? rnd() % s->dt : 0;
+	if(s->dt != 0){
+		o->tc = rnd() % s->dt;
+		/* bug: if .tc is 0, uobj won't update its state on its own,
+		 * and moving objects randomly won't change their sprite */
+		if(!gm.record && !gm.demo && o->tc == 0)
+			o->tc = 1;
+	}else
+		o->tc = 0;
 	return o;
 }
 

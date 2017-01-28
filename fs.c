@@ -805,7 +805,7 @@ mungesfx(void)
 	p = pcmt[ver<SDM ? 0 : 1];
 	e = p + npcm;
 	for(pcm=pcms; p<e; p++, pcm++)
-		if(*p != Send)
+		if(*p != Send && pcm->p != nil)
 			sfxs[*p].pcm = pcm;
 	sfxs[Sscream3].pcm = sfxs[ver<SDM ? Sscream2 : Sscream4].pcm;	/* why */
 }
@@ -999,12 +999,6 @@ gfx(void)
 }
 
 static void
-cfg(void)
-{
-	msense = 5;
-}
-
-static void
 loadscr(void)
 {
 	Biobuf *bf;
@@ -1089,8 +1083,7 @@ dat(char *dir)
 
 	rfork(RFNAMEG);
 	if(bind(".", dir, MBEFORE|MCREATE) < 0 || chdir(dir) < 0)
-		fprint(2, "dat: %r\n");
-
+		sysfatal("dat: %r\n");
 	e = ext;
 	loadscr();
 	ext = e;
@@ -1106,5 +1099,4 @@ dat(char *dir)
 		sodmap();
 	}
 	ext = e;
-	cfg();
 }

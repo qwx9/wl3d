@@ -9,13 +9,14 @@ uchar **exts, **dems, **epis, **wals;
 Spr *sprs;
 
 int scale, npx;
-uchar *px, pxb[Va], fzb[Vw*Vhud];
+uchar *px, pxb[Va], *fzd, fzb[Vw*Vhud];
 View vw;
+void (*mclear)(void);
+void (*stripe)(int);
 
 static Col *fcol;
 static u32int *fref;
 static int fi, fo, fdt;
-static uchar *fzd;
 static int fzc, fzdx, fzdy, fzdn, fzn, fzout;
 
 static uchar wl6ceil[] = {
@@ -53,6 +54,76 @@ hudnp(int x, int y, int dx, int n)
 }
 
 void
+out(void)
+{
+	int n;
+	u32int c;
+	uchar *s, *d, *w;
+
+	d = px;
+	s = pxb;
+	n = scale * 3;
+	while(s < pxb + sizeof pxb){
+		c = pal[*s++];
+		w = d + n;
+		while(d < w){
+			*d++ = c;
+			*d++ = c>>8;
+			*d++ = c>>16;
+		}
+	}
+	flush();
+}
+
+void
+put(int x, int y, int dx, int dy, int c)
+{
+	uchar *d;
+
+	d = pxb + x + y*Vw;
+	while(dy-- > 0){
+		memset(d, c, dx);
+		d += Vw;
+	}	
+}
+
+void
+pput(int x, int y, int dx, int dy, uchar *s)
+{
+	uchar *d;
+
+	d = pxb + x + y*Vw;
+	while(dy-- > 0){
+		memcpy(d, s, dx);
+		s += dx;
+		d += Vw;
+	}	
+}
+
+void
+fill(int c)
+{
+	memset(pxb, c, sizeof pxb);
+}
+
+void
+clear(void)
+{
+	int n;
+	uchar c, *p;
+
+	c = ver < SDM ? wl6ceil[gm.map] : sodceil[gm.map];
+	p = pxb + vw.ofs;
+	n = 0;
+	while(n++ < vw.dy){
+		memset(p, c, vw.dx);
+		p += Vw;
+		if(n == vw.dy/2)
+			c = 0x19;
+	}
+}
+
+void
 fizz(void)
 {
 	int i, x, y, ofs;
@@ -78,16 +149,18 @@ fizzop(int c, int save)
 {
 	if(save)
 		memcpy(fzb, pxb + vw.ofs, (vw.dy-1) * Vw + vw.dx-1);
+	fzdx = vw.dx;
+	fzdy = vw.dy;
+	fzd = pxb + vw.ofs;
 	if(c < 0){
-		fzd = pxb + vw.ofs;
-		fzdx = vw.dx;
-		fzdy = vw.dy;
 		fzdn = Va / 20;
 		fzout = 0;
 	}else{
-		fzd = pxb;
-		fzdx = Vw;
-		fzdy = Vhud;
+		if(gm.won){
+			fzd = pxb;
+			fzdx = Vw;
+			fzdy = Vhud;
+		}
 		fzdn = Va / 70;
 		fzout = 1;
 		fzc = c;
@@ -157,62 +230,28 @@ fadeop(Col *c, int dt)
 }
 
 void
+palfill(Col *c)
+{
+	u32int v, *p;
+
+	p = pals[Csod];
+	v = c->r << 16 | c->g << 8 | c->b;
+	while(p < pals[Cend])
+		*p++ =  v;
+	pal = pals[Csod];
+}
+
+void
 palpic(uchar *s)
 {
 	u32int *p;
 
-	p = pal = pals[Csod];
+	p = pals[Csod];
 	while(p < pals[Csod] + nelem(pals[0])){
-		*p++ = s[0]*255/63<<16 | s[1]*255/63<<8 | s[2]*255/63;
+		*p++ = s[0]*255/63 << 16 | s[1]*255/63 << 8 | s[2]*255/63;
 		s += 3;
 	}
-}
-
-void
-out(void)
-{
-	int n;
-	u32int c;
-	uchar *s, *d, *w;
-
-	d = px;
-	s = pxb;
-	n = scale * 3;
-	while(s < pxb + sizeof pxb){
-		c = pal[*s++];
-		w = d + n;
-		while(d < w){
-			*d++ = c;
-			*d++ = c>>8;
-			*d++ = c>>16;
-		}
-	}
-	flush();
-}
-
-void
-pput(int x, int y, int dx, int dy, uchar *s)
-{
-	uchar *d;
-
-	d = pxb + x + y*Vw;
-	while(dy-- > 0){
-		memcpy(d, s, dx);
-		s += dx;
-		d += Vw;
-	}	
-}
-
-void
-put(int x, int y, int dx, int dy, int c)
-{
-	uchar *d;
-
-	d = pxb + x + y*Vw;
-	while(dy-- > 0){
-		memset(d, c, dx);
-		d += Vw;
-	}	
+	pal = pals[Csod];
 }
 
 int
@@ -299,9 +338,12 @@ txtw(char *t)
 }
 
 void
-fill(int c)
+txtcen(int y, char *t, int c)
 {
-	memset(pxb, c, sizeof pxb);
+	int n;
+
+	n = txtw(t);
+	txt((Vw - n) / 2, y, t, c);
 }
 
 void
@@ -340,12 +382,65 @@ skip:
 }
 
 void
+wlmclear(void)
+{
+	put(0, 0, Vw, Vh, 0x29);
+}
+void
+sdmclear(void)
+{
+	pic(0, 0, pict[Pbackdrop]);
+}
+
+void
+wlstripe(int y)
+{
+	put(0, y, Vw, 24, 0);
+	put(0, y+22, 320, 1, 0x2c);
+}
+void
+sdstripe(int y)
+{
+	put(0, y, Vw, 22, 0);
+	put(0, y+23, 320, 1, 0);
+}
+
+void
+outbox(int x, int y, int dx, int dy, int c1, int c2)
+{
+	put(x, y, dx, 1, c2);
+	put(x, y+1, 1, dy-1, c2);
+	put(x, y+dy, dx+1, 1, c1);
+	put(x+dx, y, 1, dy, c1);
+}
+
+void
+box(int x, int y, int dx, int dy, int col, int out, int out2)
+{
+	put(x+1, y+1, dx-1, dy-1, col);
+	outbox(x, y, dx, dy, out, out2);
+}
+
+void
+viewbox(void)
+{
+	int x, y;
+
+	x = Vhud - vw.dx / 2 - 1;
+	y = (Vhud - vw.dy) / 2 - 1;
+	put(0, 0, 320, Vhud, 0x7f);
+	box(x, y, vw.dx+1, vw.dy+1, 0, 0x7d, 0);
+	put(x, y+vw.dy+1, 1, 1, 0x7c);
+}
+
+void
 hudf(void)
 {
 	int p;
 
 	if(gm.hp > 0){
-		p = god ? pict[Pgod] : pict[Pface1] + 3 * (100 - gm.hp >> 4);
+		p = ver >= SDM && god ? pict[Pgod]
+			: pict[Pface1] + 3 * (100 - gm.hp >> 4);
 		p += gm.facefrm;
 	}else
 		p = gm.mut ? pict[Pmut] : pict[Pface8];
@@ -367,7 +462,10 @@ hudl(void)
 void
 hudm(void)
 {
-	hudnp(16, 176, 2, ver == SOD && gm.map == 20 ? 18 : gm.map+1);
+	int n;
+
+	n = ver == SOD ? (gm.map == 20 ? 18 : gm.map + 1) : gm.map % 10 + 1;
+	hudnp(16, 176, 2, n);
 }
 
 void
@@ -396,18 +494,16 @@ hudp(void)
 }
 
 void
-clear(void)
+view(void)
 {
-	int n;
-	uchar c, *p;
-
-	c = ver < SDM ? wl6ceil[gm.map] : sodceil[gm.map];
-	p = pxb + vw.ofs;
-	n = 0;
-	while(n++ < vw.dy){
-		memset(p, c, vw.dx);
-		p += Vw;
-		if(n == vw.dy/2)
-			c = 0x19;
-	}
+	viewbox();
+	pic(0, Vhud, pict[Pstat]);
+	hudf();
+	hudh();
+	hudl();
+	hudm();
+	huda();
+	hudk();
+	hudw();
+	hudp();
 }

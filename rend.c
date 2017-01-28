@@ -4,6 +4,7 @@
 #include "fns.h"
 
 s32int sint[360+90], *cost;
+int vwsize;
 
 typedef struct Vis Vis;
 typedef struct Scaler Scaler;
@@ -177,7 +178,7 @@ static void
 topspr(void)
 {
 	if(ver < SDM && gm.won){
-		if(oplr->s == stt+GSplrcam && mtc & 32)
+		if(oplr->s == stt+GSplrcam && qtc & 32)
 			scalspr(SPcam, vw.dx/2, vw.dy+1);
 		return;
 	}
@@ -644,7 +645,7 @@ ventry:
 	n = tiles[x].tl;
 	if(n == 0){
 vpass:
-		tiles[x].vis++;
+		tiles[x].vis = 1;
 		tx += dtx;
 		rs = (yinh << 16 | yin & 0xffff) + dy;
 		yinh = rs >> 16;
@@ -688,7 +689,7 @@ hentry:
 	n = tiles[y].tl;
 	if(n == 0){
 hpass:
-		tiles[y].vis++;
+		tiles[y].vis = 1;
 		ty += dty;
 		rs = (xinh << 16 | xin & 0xffff) + dx;
 		xinh = rs >> 16;
@@ -753,22 +754,14 @@ calcscal(Scaler *s, int dy)
 static void
 scaltab(int maxdy)
 {
-	int save, dy;
+	int dy;
 	Scaler (*s)[nelem(scals[0])];
 
 	dy = 1;
 	memset(scals, 0, sizeof scals);
 	s = scals + 1;
-	save = vw.dy / 2;
-	while(dy <= maxdy){
-		calcscal(*s++, dy * 2);
-		if(dy >= save){
-			memcpy(s[0], s[-1], sizeof scals[0]);
-			memcpy(s[1], s[-1], sizeof scals[0]);
-			s += 2, dy += 2;
-		}
-		dy++;
-	}
+	while(dy <= maxdy)
+		calcscal(*s++, dy++ * 2);
 	memcpy(scals, scals+1, sizeof *scals);
 	sce = scals[dy-1];
 }
@@ -843,41 +836,32 @@ render(void)
 }
 
 void
-initscal(void)
+setvw(void)
 {
 	int i, an, dx, *p, *q, *e;
 	double dface;
 
+	vw.dx = vwsize * 16 & ~15;
+	vw.dy = vwsize * 16 / 2 & ~1;
+	vw.mid = vw.dx / 2 - 1;
+	vw.Δhit = vw.dx / 10;
+	vw.ofs = Vw * (160 - vw.dy) / 2 + (Vw - vw.dx) / 2;
+	scaltab((vw.dx * 1.5) / 2);
+
 	dx = vw.dx / 2;
 	dface = Dfoclen + Dmin;
-	prjw = dx * dface / (Dglob/2);
-	prjh = prjw * Dtlglobal >> 6;
-
 	i = 0;
 	p = Δvwθ + dx;
 	e = p + dx;
 	q = p - 1;
-	dx = vw.dx;
 	while(p < e){
 		/* start 0.5px over so vw.θ bisects two middle pixels */
-		an = (float)atan(i++ * Dglob / dx / dface) * Rad;
+		an = (float)atan(i++ * Dglob / vw.dx / dface) * Rad;
 		*p++ = -an;
 		*q-- = an;
 	}
-
-	scaltab((vw.dx * 1.5) / 2);
-}
-
-void
-setvw(int n)
-{
-	vw.size = n;
-	vw.dx = n * 16 & ~15;
-	vw.dy = n * 16 / 2 & ~1;
-	vw.mid = vw.dx / 2 - 1;
-	vw.Δhit = vw.dx / 10;
-	vw.ofs = Vw * (160 - vw.dy) / 2 + (Vw - vw.dx) / 2;
-	initscal();
+	prjw = dx * dface / (Dglob/2);
+	prjh = prjw * Dtlglobal >> 6;
 }
 
 void

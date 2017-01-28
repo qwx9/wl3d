@@ -13,10 +13,7 @@ wl3d \- Wolfenstein 3-D engine port
 .I datadir
 ] [
 .B -w
-.I map
-] [
-.B -x
-.I 1-4
+.I map 0-3
 ]
 .SH DESCRIPTION
 .I Wl3d
@@ -34,7 +31,7 @@ Now, you must do anything to escape from the belly of a Nazi dungeon - or die tr
 .RE
 .PP
 The command line options are:
-.TP \w'\fLf\ \ \ \fIdemo'u
+.TP \w'\fLw\ \ \fI"map\ 0-3"'u
 .B -2
 Set game version to Spear of Destiny Mission 2: Return to Danger.
 .TP
@@ -62,11 +59,8 @@ Quit after demofile playback.
 .B -s
 Set game version to Spear of Destiny 1.0 retail.
 .TP
-.BI -w\  map
-Warp to the given map number on startup.
-.TP
-.BI -x\  1-4
-Set default game difficulty.
+.BI -w\  "map 0-3"
+Warp to the given map number with a given difficulty on startup.
 .PD
 .PP
 .I Wl3d
@@ -103,10 +97,10 @@ If the
 .B -w
 parameter is used, the game starts immediately at map number
 .IR map ,
-and
-.B -x
-optionally sets the game difficulty to 1-4, from easiest to hardest,
-the default being 2.
+with difficulty set to
+.BR 0-3 ,
+.B 0
+being the easiest.
 The
 .B -p
 parameter runs the program at the fastest speed possible for testing purposes.
@@ -138,9 +132,9 @@ Note that
 .L sd2
 and
 .L sd3
-versions are the same as
-.L sod
-with the exception of substituting some of the data files.
+versions are variants of
+.LR sod ,
+only substituting some of the data files.
 .PD
 .SS Demo lumps
 .I Wl3d
@@ -172,21 +166,30 @@ is inaccessible, audio is ignored.
 Most of
 .I wl3d
 has been rewritten from scratch, and some parts have been implemented differently from the reference.
-Most importantly, individual data lumps are no longer read and cached as needed, but rather all loaded into memory, uncompressed, and in some cases converted, at startup.
-This bumps the required amount of free memory up to around at least 5 megabytes, depending on the game version, architecture and window size.
-In addition, a single executable handles all supported game versions.
+Most importantly, individual data lumps are no longer read and cached as needed,
+but rather all loaded into memory, uncompressed, and in some cases converted,
+at startup.
+This bumps the required amount of free memory up to around at least 5 megabytes,
+depending on the game version, architecture and window size.
 .PP
-Intro screens are now additional data files to be loaded on start up, rather than being compiled in, and must therefore be installed in the
+A single executable handles all supported game versions.
+.PP
+Intro screens are now additional data files to be loaded on startup,
+rather than being compiled in, and must therefore be installed in the
 .IR datadir .
-Also unlike the reference implementation, these are displayed during data file loading, and are immediately faded out of afterwards.
+Also unlike the reference implementation,
+these are displayed during data file loading,
+and are immediately faded out of afterwards.
 .PP
 Copy protection code and the Spear of Destiny Jukebox have been excised.
-.PP
 Menus are implemented differently, and some have been altered in functionality.
+Debug mode has been removed, and cheats work differently.
 .PP
-Game keys are no longer set in the options menu, but rather in the config file.
-A single global configuration file is used, rather than a version dependent one.
-Also, while savegames are in a compatible format, config files are not.
+Game keys are no longer set in the options menu, but rather in the configuration file.
+A single configuration file is used for all game versions.
+Savegames and config files are incompatible in format.
+.PP
+The texture and sprite scaling implementation does not attempt to save memory and avoids quantization at close range.
 .SH FILES
 .TF /sys/games/lib/wl3d/intro.wl6
 .TP
@@ -213,13 +216,14 @@ Because of limitations in fmopl.c-based
 .SM OPL2
 emulation, Adlib sound effects crack too much during playback.
 .PP
+The upsampling implementation for digital sound effects is overkill given the number of constraints.
+It is also buggy and playback cracks too much.
+.PP
 With sound effects enabled, the
 .SM OPL2
 emulation runs on every frame and
 .L /dev/audio
 is written to, even when no sound is playing.
-.PP
-The upsampling implementation for digital sound effects is overkill given the number of constraints.
 .PP
 Little is done in case the program is unable to run at a framerate of 70 Hz.
 .PD

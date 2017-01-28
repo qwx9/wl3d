@@ -9,36 +9,39 @@ These files are:
 .TP
 .B audiohed
 PC Speaker, Adlib, digital effects and music offsets in
-.B audiot
+.BR audiot .
 .TP
 .B audiot
-uncompressed PC Speaker, Adlib, digital effects and music lumps
+Uncompressed PC Speaker, Adlib, digital effects and music lumps.
 .TP
 .B config
-saved game settings and highscores
+Saved game settings and highscores.
 .TP
 .B gamemaps
-maps lump
+Map lumps.
 .TP
 .B maphead
-map offsets in
-.B gamemaps
+Map offsets in
+.BR gamemaps .
+.TP
+.B savegam?
+Saved games.
 .TP
 .B vgadict
-huffman dictionary for lumps contained in
-.B vgagraph
+Huffman dictionary for lumps contained in
+.BR vgagraph .
 .TP
 .B vgagraph
-fonts, pictures, tiles and screens, encoded for
+Fonts, pictures, tiles and screens, encoded for
 .SM VGA
-graphics cards
+graphics cards.
 .TP
 .B vgahead
-graphics offsets in
-.B vgagraph
+Graphics offsets in
+.BR vgagraph .
 .TP
 .B vswap
-wall textures, sprites and raw pcm audio
+Wall textures, sprites and raw pcm audio.
 .PD
 .PP
 Integers are stored in little-endian byte order.
@@ -64,7 +67,7 @@ for Wolfenstein 3-D 1.4 retail,
 for Spear of Destiny 1.0 demo and
 .B sod
 for Spear of Destiny 1.0 retail (including mission packs).
-Other versions are outside of the scope of this document.
+Other versions are outside the scope of this document.
 .SH SOUND EFFECTS AND MUSIC
 .SS Audiohed
 .RS
@@ -128,8 +131,8 @@ music lumps in
 format.
 Each sound effect has a PC Speaker, Adlib and digital version.
 .PP
-Each types of lump is stored in a specific format detailed below.
-No digital sounds are ever stored in
+Each type of lump is stored in a specific format detailed below.
+No digital sound is ever stored in
 .BR audiot ,
 having raw pcm lumps in
 .B vswap
@@ -193,13 +196,13 @@ Since only one Adlib sound effect can play at any one time, if an effect is alre
 .I priority
 is lower than the new one, it is interrupted, then substituted.
 .PP
-At the end of playback, the engine resets the values of the instrument registers and writes a zero to registers
-.L 0xb0
-and
-.LR 0xc0 .
+At the end of playback, the engine resets the values of the instrument registers and writes a zero to register
+.LR 0xb0 .
 .PP
 .I Ignored
-contains 6 fields only used by Muse.
+contains 1 byte intended to be written to register
+.LR 0xc0 ,
+but never is, then 5 fields only used by Muse.
 .I Tag
 is a variable-length field suffixed by Muse and is also ignored.
 .SS Digital sound effect
@@ -301,10 +304,14 @@ exits if it reads such an offset.
 Maps are decomposed into three planes.
 .B Gamemaps
 holds an array of map headers, followed by doubly-compressed plane data.
-.IR Pls and pll
+.I Pls
+and
+.I pll
 are respectively arrays of offsets and lengths for each plane.
 Only the first two planes are ever used.
-.IR dx and dy
+.I dx
+and
+.I dy
 are the planes' dimensions, and must both be 64.
 .I Name
 is an unused unterminated
@@ -312,11 +319,31 @@ is an unused unterminated
 string.
 .I Planes
 stores contiguously each plane's data.
-.SS Compression
+.PP
+The first plane is an array of [words].
+.PP
+The second plane is an array of [other words].
+.PP
+There are static limits for objects on the map:
+.TF "static objects"
+.TP
+.B actors
+150 (including the player)
+.TP
+.B doors
+64
+.TP
+.B static objects
+399
+.SS RLEW Compression
 Each map plane is first compressed using
 .SM RLEW,
 then further using what is eponymously refered to as
 .SM Carmack compression.
+.PP
+[words]
+.SS Carmack Compression
+[words]
 .SH GRAPHICS
 Graphics are either static data loaded in the executable, or huffman-compressed lumps contained in
 .BR vgagraph .
@@ -420,13 +447,14 @@ format, that is, with pixels stored in 4
 .SM VGA
 color planes rather than contiguously.
 .SS Tiles
-Tiles used in Wolfenstein 3-D are exclusively of size 8x8, and thus stored as arrays of 64 bytes.
+These tiles are exclusively of size 8x8, and thus stored as arrays of 64 bytes.
 All tiles are stored contiguously in a single lump following the last pic lump.
 Their number is version dependent, but only the first 8 tiles are ever used.
 .PP
-The tile lumps in Wolfenstein 3-D and Spear of Destiny versions all decode incorrectly and result in reads past the allocated buffer (or past the end of the lump).
+This lump decodes incorrectly in all game versions
+and results in reads past the allocated buffer (or past the end of the lump).
 .IR Wl3d (1)
-skips this lump entirely.
+skips it entirely.
 .SS Screens and demos
 .RS
 .IR misc [ ns ][]
@@ -535,6 +563,7 @@ Immediately following are two arrays describing each chunk,
 for file offsets, and
 .IR sz ,
 for lengths in bytes.
+.PP
 A chunk of size 0 is skipped.
 This is permitted when the specific lump is never referenced,
 which can occur in the
@@ -550,12 +579,15 @@ Wall tiles are 64x64 byte arrays of palette indices.
 Because they are drawn vertically, they are stored as an array of coloumns.
 In other words, if drawn as is using a given palette,
 the tile would appear rotated by -90° then flipped along its vertical axis.
-The last 8 wall textures are door textures.
+The last 8 wall textures are used for doors.
 .SS Sprites
 .RS
 .IR lx [2]
 .IR rx [2]
 .IR cofs [ rx-lx+1 ][2]
+.IR pad []
+.IR cmd []
+.IR pad []
 .IR data []
 .br
 .BR cmd :
@@ -574,15 +606,19 @@ define the 0-indexed left and right-most coloumns containing visible pixels,
 and must respect the following restrictions:
 .PP
 .RS
-.I lx  ∈ {0,1,...,63}
+.BR lx \ ∈\ {0,1,...,63}
 .br
-.I rx ∈ {32,33,...,63}
+.BR rx \ ∈\ {32,33,...,63}
 .br
-.I lx ≤ rx
+.BR lx \ ≤\ rx
 .RE
 .PP
 Sprites are drawn centered on the 32nd coloumn.
 A left bound equal to or greater than 32 will offset the sprite to the right.
+Because of a bug in the original
+.SM DOS
+binaries, such a left bound results in reads past the lump
+and excess pixels may show up as garbage on the screen.
 .PP
 The following variable-length array,
 .IR cofs ,
@@ -595,7 +631,7 @@ and
 .I se / 2
 are, respectively, an upper and lower bound,
 defining a contiguous vertical strip of pixels to draw within a coloumn, with
-.I po + ss
+.I po + ss / 2
 an offset into the sprite lump pointing to the strip's palette indices.
 The
 .I cmd
@@ -654,6 +690,8 @@ and care must be taken to skip all zero-sized chunks referencing each individual
 pcm lump,
 as indicated in the pcm table.
 .SH "CONFIGURATION FILE AND HIGHSCORES"
+[words]
+.SH "SAVED GAMES"
 [words]
 .SH "SEE ALSO"
 .IR opl2 (1) ,

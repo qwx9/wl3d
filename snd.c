@@ -219,7 +219,6 @@ stopal(void)
 	if(sfxd == nil)
 		return;
 	opl2wr(Roct, 0);
-	opl2wr(Rfed, 0);
 	sfxp = sfxe = nil;
 	sfxd = nil;
 }
@@ -265,11 +264,13 @@ alcmd(void)
 /* this spins constantly even when there's no music being played continuously,
  * in essence only because some sound effects need an echo to play correctly.
  * it sucks. */
-static void
+static int
 opl2step(void)
 {
 	uchar *p;
 
+	if(!muson && !sfxon)
+		return -1;
 	p = sbuf;
 	while(p < sbuf + sizeof sbuf){
 		if(stc == sdt && sfxd != nil)
@@ -279,6 +280,7 @@ opl2step(void)
 		p = opl2out(p, Nsamp);
 		stc++;
 	}
+	return 0;
 }
 
 /* stolen property cargocult upsampling */
@@ -421,9 +423,13 @@ pcmstep(void)
 void
 sndstep(void)
 {
-	if(!muson && !sfxon)
+	if(sfd < 0)
 		return;
-	opl2step();
+	if(opl2step() < 0){
+		if(!pcmon)
+			return;
+		memset(sbuf, 0, sizeof sbuf);
+	}
 	pcmstep();
 	if(!nosleep)
 		write(sfd, sbuf, sizeof sbuf);
@@ -432,6 +438,8 @@ sndstep(void)
 void
 stopsfx(void)
 {
+	if(sfd < 0)
+		return;
 	stopal();
 	pcm = pcme = nil;
 	pcmd = nil;
@@ -453,7 +461,7 @@ sfxatt(int n, int att, int x, int y)
 	Sfx *s;
 	uchar *r, *i;
 
-	if(sfd < 0 || !sfxon || sfxlck)
+	if(sfd < 0 || sfxlck)
 		return;
 	s = sfxs+n;
 	if(pcmon && s->pcm != nil){
@@ -470,7 +478,7 @@ sfxatt(int n, int att, int x, int y)
 			atty = y;
 		}else
 			atton = 0;
-	}else{
+	}else if(sfxon){
 		if(sfxd != nil && s->pri < sfxd->pri)
 			return;
 		stopal();
@@ -496,10 +504,11 @@ stopmus(void)
 {
 	int i;
 
+	if(sfd < 0)
+		return;
 	stopsfx();
 	if(!muson && !sfxon)
 		return;
-	opl2wr(Ropm, 0);
 	for(i=Roct+1; i<Roct+9; i++)
 		opl2wr(i, 0);
 	imf = nil;
@@ -532,8 +541,9 @@ initsnd(void)
 	}
 	opl2init(Rate);
 	opl2wr(Rwse, 0x20);
+	opl2wr(Ropm, 0);
+	opl2wr(Rfed, 0);
 	for(n=0; n<nelem(hΔ)-1; n++)
 		hΔ[n] = h[n+1] - h[n];
 	sfd = fd;
-	muson = sfxon = pcmon = 1;
 }

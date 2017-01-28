@@ -11,33 +11,33 @@ extern Channel *csc;
 extern QLock inlck;
 
 Rune keys[Ke] = {
-	[K↑] Kup,
-	[K↓] Kdown,
-	[K←] Kleft,
-	[K→] Kright,
-	[Krun] Kshift,
 	[Kfire] Kctl,
-	[Kopen] ' ',
 	[Kstrafe] Kalt,
+	[Krun] Kshift,
+	[Kopen] ' ',
 	[Kknife] '1',
 	[Kpistol] '2',
 	[Kmg] '3',
 	[Kgatling] '4',
+	[K↑] Kup,
+	[K↓] Kdown,
+	[K←] Kleft,
+	[K→] Kright,
 	[Kmenu] Kesc
 };
 Game gm;
 int msense;
-int god, noclip, onestep;
+int allrecv, god, noclip, slomo;
 
+typedef struct Crm Crm;
 enum{
 	Ncrm = 7
 };
-
-typedef struct Crm Crm;
 struct Crm{
 	char s[Ncrm];
 	void (*f)(void);
 };
+static char crs[Ncrm];
 
 static int rndi, rndt[] = {
   0, 8, 109, 220, 222, 241, 149, 107, 75, 248, 254, 140, 16, 66, 74, 21,
@@ -60,14 +60,13 @@ static int rndi, rndt[] = {
 static int demfrm;
 static int kon, kold, kΔx, kΔy;
 static s16int kΔθ;
-static int allrecv, firing, noise;
+static int firing, noise, dirty;
 static char *dem, *deme;
-static Crm crms[];
-static char crs[Ncrm];
 static int dmgtc, bonustc, facetc, funtc;
 static Obj *camobj;
-static int bosskillx, bosskilly;
-static int gotspear, spearx, speary, spearθ;
+static int killx, killy;
+static int dieΔθ, diedir;
+static int spearx, speary, spearθ;
 static int atk[][4] = {
 	{0, 2, 0, -1},
 	{0, 1, 0, -1},
@@ -91,15 +90,6 @@ givea(int n)
 }
 
 static void
-givew(int n)
-{
-	givea(6);
-	if(gm.bestw < n)
-		gm.w = gm.lastw = gm.bestw = n;
-	hudw();
-}
-
-static void
 givek(int n)
 {
 	gm.keys |= 1 << n;
@@ -113,17 +103,6 @@ givel(void)
 		gm.lives++;
 	hudl();
 	sfx(S1up);
-}
-
-static void
-givep(int n)
-{
-	gm.pt += n;
-	while(gm.pt >= gm.to1up){
-		gm.to1up += 40000;
-		givel();
-	}
-	hudp();
 }
 
 static void
@@ -287,10 +266,11 @@ mechblow(Obj *o)
 static void
 yelp(Obj *o)
 {
-	int n, s[] = {
+	static int s[] = {
 		Sscream1, Sscream2, Sscream3, Sscream4,
 		Sscream5, Sscream7, Sscream8, Sscream9
 	};
+	int n;
 
 	n = gm.map;
 	if((ver == WL6 && n % 10 == 9 || ver == SOD && (n == 18 || n == 19)) && !rnd())
@@ -303,7 +283,6 @@ yelp(Obj *o)
 			sfxatt(Sscream6, 1, o->x, o->y);
 			return;
 		}
-
 	switch(o->type){
 	case Omut: sfxatt(Smutdie, 1, o->x, o->y); break;
 	case Ogd: sfxatt(s[rnd()%(ver==WL1?2:8)], 1, o->x, o->y); break;
@@ -368,8 +347,8 @@ odie(Obj *o)
 		break;
 	case Oschb:
 		givep(5000);
-		bosskillx = oplr->x;
-		bosskilly = oplr->y;
+		killx = oplr->x;
+		killy = oplr->y;
 		ostate(o, stt+GSschbdie1);
 		yelp(o);
 		break;
@@ -380,14 +359,14 @@ odie(Obj *o)
 		break;
 	case Ootto:
 		givep(5000);
-		bosskillx = oplr->x;
-		bosskilly = oplr->y;
+		killx = oplr->x;
+		killy = oplr->y;
 		ostate(o, stt+GSottodie1);
 		break;
 	case Ofett:
 		givep(5000);
-		bosskillx = oplr->x;
-		bosskilly = oplr->y;
+		killx = oplr->x;
+		killy = oplr->y;
 		ostate(o, stt+GSfettdie1);
 		break;
 	case Ofake:
@@ -400,8 +379,8 @@ odie(Obj *o)
 		break;
 	case Ohitler:
 		givep(5000);
-		bosskillx = oplr->x;
-		bosskilly = oplr->y;
+		killx = oplr->x;
+		killy = oplr->y;
 		ostate(o, stt+GShitlerdie1);
 		yelp(o);
 		break;
@@ -434,7 +413,7 @@ odie(Obj *o)
 		drop(tl, Rkey1);
 		break;
 	}
-	gm.kills++;
+	gm.kp++;
 	o->f &= ~OFshootable;
 	o->f |= OFnomark;
 	tl->o = nil;
@@ -472,8 +451,9 @@ hurt(int n, Obj *from)
 		gm.hp -= n;
 	if(gm.hp <= 0){
 		gm.hp = 0;
-		gm.end = EDdie;
-		camobj = from;
+		gm.end = gm.demo || gm.record ? EDdem : EDdie;
+		killx = from->x;
+		killy = from->y;
 		if(ver >= SDM && from->type == Oneedle)
 			gm.mut++;
 	}
@@ -527,7 +507,6 @@ spotline(Obj *o)
 	py = oplr->y >> 8;
 	ptx = oplr->tx;
 	pty = oplr->ty;
-
 	if(ptx != otx){
 		if(ptx > otx){
 			δ = 256 - (ox & 0xff);
@@ -541,7 +520,6 @@ spotline(Obj *o)
 			dy = 0x7fff;
 		else if(dy < -0x7fff)
 			dy = -0x7fff;
-
 		y = oy + (dy * δ >> 8);
 		x = otx + dx;
 		ptx += dx;
@@ -568,7 +546,6 @@ spotline(Obj *o)
 			dx = 0x7fff;
 		else if(dx < -0x7fff)
 			dx = -0x7fff;
-
 		x = ox + (dx * δ >> 8);
 		y = oty + dy;
 		pty += dy;
@@ -1311,9 +1288,8 @@ cam(Obj *o)
 		gm.end = EDcam2;
 		return;
 	}
-	gm.won++;
 	gm.end = EDcam;
-	mtc = 0;
+	qtc = 0;
 	dofizz++;
 	camobj = o;
 }
@@ -1374,7 +1350,6 @@ thrust(int θ, int v)
 static void
 kmove(void)
 {
-	int θ;
 	s16int u;
 
 	oplr->v = 0;
@@ -1387,12 +1362,7 @@ kmove(void)
 		kΔθ += kΔx;
 		u = kΔθ / 20;
 		kΔθ -= u * 20;
-		θ = oplr->θ - u;
-		if(θ >= 360)
-			θ -= 360;
-		if(θ < 0)
-			θ += 360;
-		oplr->θ = θ;
+		oplr->θ = (oplr->θ - u + 360) % 360;
 	}
 	if(kΔy < 0)
 		thrust(oplr->θ, -kΔy * 150);
@@ -1420,7 +1390,7 @@ push(Tile *tl, int θ)
 	}
 	c->to = tl->tl;
 	c->tl = tl->tl;
-	gm.secret++;
+	gm.sp++;
 	pusher.tl = tl;
 	pusher.isvert = θ;
 	pusher.φ = 1;
@@ -1463,6 +1433,7 @@ kopen(void)
 			kold |= 1<<Kopen;
 			tl->tl++;	/* flip switch */
 			gm.end = oplr->tl->p0 == MTsetec ? EDsetec : EDup;
+			stopmus();
 			sfx(Slvlend);
 			sfxlck++;
 			return;
@@ -1690,163 +1661,6 @@ uplr(Obj *)
 }
 
 static void
-crmwapr(void)
-{
-	allrecv++;
-}
-static void
-crmamo(void)
-{
-	gm.ammo = 99;
-	huda();
-}
-static void
-crmkey(void)
-{
-	gm.keys = 15;
-	hudk();
-}
-static void
-crmwep(void)
-{
-	if(gm.bestw < WPgatling)
-		givew(gm.bestw + 1);
-}
-static void
-crmmli(void)
-{
-	gm.hp = 100;
-	gm.ammo = 99;
-	gm.keys = 15;
-	givew(WPgatling);
-	gm.pt = 0;
-	gm.lvltc += 42000;
-	hudw();
-	hudh();
-	hudk();
-	huda();
-	hudp();
-}
-static void
-crmmap(void)
-{
-}
-static void
-crmgod(void)
-{
-	if(ver < SDM)
-		return;
-	god ^= 1;
-	if(god)
-		sfx(Sendb2);
-	else
-		sfx(Snobonus);
-}
-static void
-crmclp(void)
-{
-	if(ver < SDM)
-		return;
-	noclip ^= 1;
-}
-static void
-crmslo(void)
-{
-	onestep ^= 1;
-}
-static void
-crmskp(void)
-{
-}
-static void
-crmwrp(void)
-{
-}
-
-static Crm crms[] = {
-	{"fgd135", crmwapr},
-	{"opepak", crmamo},
-	{"opeopn", crmkey},
-	{"opephz", crmwep},
-	{"opemli", crmmli},
-	{"opepda", crmmap},
-	{"opedqd", crmgod},
-	{"opeclp", crmclp},
-	{"opeslo", crmslo},
-	{"opeskp", crmskp},
-	{"opewrp", crmwrp}
-};
-
-static char *
-crm114(void)
-{
-	int n;
-	Crm *p, *e;
-
-	n = strlen(crs);
-	p = crms;
-	e = crms + 1;
-	if(allrecv){
-		p++;
-		e = crms + nelem(crms);
-	}
-	while(p < e){
-		if(strncmp(crs, p->s, n) != 0){
-			memset(crs, 0, sizeof crs);
-			return crs;
-		}else if(n = Ncrm-1){
-			p->f();
-			memset(crs, 0, sizeof crs);
-			return crs;
-		}
-		p++;
-	}
-	return crs+n;
-}
-static int
-quickkey(Rune r)
-{
-	switch(r){
-	case Kesc:
-	case KF|1:
-	case KF|2:
-	case KF|3:
-	case KF|4:
-	case KF|5:
-	case KF|6:
-	case KF|7:
-	case KF|8:
-	case KF|9:
-		;
-	}
-	return 0;
-}
-static void
-eatcs(void)
-{
-	int i, d;
-	char *p, rc[UTFmax];
-	Rune r;
-
-	if(gm.demo && nbrecv(csc, nil) > 0){
-		gm.end = EDkey;
-		return;
-	}
-	if(gm.record)
-		return;
-	i = 0;
-	p = crs + strlen(crs);
-	while(nbrecv(csc, &r) > 0 && i++ < 6){
-		if(quickkey(r))
-			continue;
-		d = runetochar(rc, &r);
-		if(p + d < crs + sizeof crs){
-			memcpy(p, rc, d);
-			p = crm114();
-		}
-	}
-}
-static void
 gamein(void)
 {
 	int mx, my, scale;
@@ -1854,10 +1668,16 @@ gamein(void)
 	qlock(&inlck);
 	mx = mΔx;
 	my = mΔy;
-	kon = kb | mΔb & 5 | (mΔb & 2) << 2;
 	mΔx = mΔy = 0;
+	kon = kb | mb & 1 | (mb & 2) << 2 | (mb & 4) >> 1;
 	qunlock(&inlck);
 
+	if(kon & 1<<Kmenu){
+		gm.end = EDkey;
+		return;
+	}
+	if(autorun)
+		kon |= 1<<Krun;
 	kΔx = kΔy = 0;
 	scale = Δtc * (kon & 1<<Krun ? 70 : 35);
 	if(kon & 1<<K↑)
@@ -1884,6 +1704,8 @@ gamein(void)
 static void
 demoin(void)
 {
+	if(dem >= deme)
+		sysfatal("demoin: read past end of lump");
 	kon = *dem++;
 	kΔx = *dem++ * Δtc;
 	kΔy = *dem++ * Δtc;
@@ -1894,7 +1716,7 @@ static void
 input(void)
 {
 	kold = kon;
-	if(gm.demo && dem < deme)
+	if(gm.demo)
 		demoin();
 	else
 		gamein();
@@ -1909,7 +1731,7 @@ input(void)
 		if(kon & 1<<Kopen & ~kold)
 			kon &= ~(1<<Kopen);
 		if(kon & 1<<Kfire & ~kold)
-			kon &= ~(1<<Kfire);	
+			kon &= ~(1<<Kfire);
 	}
 }
 
@@ -2381,17 +2203,167 @@ upal(void)
 		pal = pals[C0];
 }
 
+static void
+crmchop(void)
+{
+	gm.tc = 99 * 60 * Tb;
+	gm.pt = 0;
+	hudp();
+	bonustc = 6 * (Cfad-Cwht);
+	dirty = 1;
+}
+static void
+crmrcv(void)
+{
+	allrecv++;
+	sfx(Snobonus);
+}
+static void
+crmmed(void)
+{
+	giveh(100);
+	sfx(Shealth2);
+	crmchop();
+}
+static void
+crmamo(void)
+{
+	givea(99);
+	sfx(Sgetammo);
+	crmchop();
+}
+static void
+crmkey(void)
+{
+	givek(0);
+	givek(1);
+	sfx(Sgetkey);
+	crmchop();
+}
+static void
+crmwep(void)
+{
+	givew(WPgatling);
+	sfx(Sgetgatling);
+	crmchop();
+}
+static void
+crmmli(void)
+{
+	giveh(100);
+	givea(99);
+	givek(0);
+	givek(1);
+	givew(WPgatling);
+	sfx(Sgetgatling);
+	crmchop();
+}
+static void
+crmmap(void)
+{
+}
+static void
+crmgod(void)
+{
+	god ^= 1;
+	if(god){
+		sfx(Sendb2);
+		crmchop();
+	}else
+		sfx(Snobonus);
+}
+static void
+crmclp(void)
+{
+	noclip ^= 1;
+	if(noclip){
+		sfx(Sbonus4);
+		crmchop();
+	}else
+		sfx(Snobonus);
+}
+static void
+crmslo(void)
+{
+	slomo ^= 1;
+	if(slomo){
+		sfx(Sbonus4);
+		crmchop();
+	}else
+		sfx(Snobonus);
+}
+static void
+crmskp(void)
+{
+	gm.end = EDup;
+	if(ver < SDM && gm.map % 10 == 8 || ver >= SDM && gm.map == 20)
+		gm.end = EDwon;
+	sfx(Slvlend);
+	crmchop();
+}
+static void
+crmmus(void)
+{
+	mus(nrand(ver < SDM ? 27 : 24));
+}
+
+void
+dieturn(void)
+{
+	int Δθ;
+
+	Δθ = Δtc * 2;
+	if(dieΔθ - Δθ < 0)
+		Δθ = dieΔθ;
+	dieΔθ -= Δθ;
+	oplr->θ = (oplr->θ + Δθ * diedir + 360) % 360;
+	render();
+	out();
+	if(dieΔθ != 0)
+		qtc = 0;
+	else
+		pal = pals[C0];
+}
+
+void
+die(void)
+{
+	int θ, lrot, rrot;
+	double fθ;
+
+	gm.w = -1;
+	gm.lives--;
+	stopmus();
+	sfx(Sdie);
+	fizzop(0x4, 0);
+	fθ = atan2(oplr->y - killy, killx - oplr->x);
+	if(fθ < 0)
+		fθ += Fpi * 2;
+	θ = fθ / (Fpi * 2) * 360;
+	lrot = θ - oplr->θ;
+	rrot = oplr->θ - θ;
+	if(oplr->θ > θ)
+		lrot += 360;
+	else
+		rrot += 360;
+	if(lrot < rrot){
+		diedir = 1;
+		dieΔθ = abs(lrot % 360);
+	}else{
+		diedir = -1;
+		dieΔθ = abs(rrot % 360);
+	}
+}
+
 void
 camwarp(void)
 {
-	int Δx, Δy, Δr;
+	int Δr;
 	double θ;
 
-	oplr->x = bosskillx;
-	oplr->y = bosskilly;
-	Δx = camobj->x - oplr->x;
-	Δy = oplr->y - camobj->y;
-	θ = atan2(Δy, Δx);
+	oplr->x = killx;
+	oplr->y = killy;
+	θ = atan2(oplr->y - camobj->y, camobj->x - oplr->x);
 	if(θ < 0)
 		θ = Fpi * 2 + θ;
 	oplr->θ = θ / (Fpi * 2) * 360;
@@ -2414,8 +2386,36 @@ camwarp(void)
 }
 
 void
+givew(int n)
+{
+	givea(6);
+	if(gm.bestw < n)
+		gm.w = gm.lastw = gm.bestw = n;
+	hudw();
+	if(n == WPgatling){
+		pic(136, 164, pict[Pgat]);
+		facetc = 0;
+	}
+}
+
+void
+givep(int n)
+{
+	if(dirty)
+		return;
+	gm.pt += n;
+	while(gm.pt >= gm.to1up){
+		gm.to1up += 40000;
+		givel();
+	}
+	hudp();
+}
+
+void
 bonus(Static *s)
 {
+	if(gm.hp == 0)
+		s->item = Rnil;
 	switch(s->item){
 	case Rstim:
 		if(gm.hp == 100)
@@ -2433,22 +2433,22 @@ bonus(Static *s)
 	case Rcross:
 		sfx(Sbonus1);
 		givep(100);
-		gm.treasure++;
+		gm.tp++;
 		break;
 	case Rchalice:
 		sfx(Sbonus2);
 		givep(500);
-		gm.treasure++;
+		gm.tp++;
 		break;
 	case Rbible:
 		sfx(Sbonus3);
 		givep(1000);
-		gm.treasure++;
+		gm.tp++;
 		break;
 	case Rcrown:
 		sfx(Sbonus4);
 		givep(5000);
-		gm.treasure++;
+		gm.tp++;
 		break;
 	case Rclip1:
 		if(gm.ammo == 99)
@@ -2475,15 +2475,13 @@ bonus(Static *s)
 	case Rchaingun:
 		sfx(Sgetgatling);
 		givew(WPgatling);
-		pic(136, 164, pict[Pgat]);
-		facetc = 0;
 		break;
 	case R1up:
 		sfx(S1up);
 		giveh(99);
 		givea(25);
 		givel();
-		gm.treasure++;
+		gm.tp++;
 		break;
 	case Rfood:
 		if(gm.hp == 100)
@@ -2504,14 +2502,79 @@ bonus(Static *s)
 		giveh(1);
 		break;
 	case Rspear:
-		gotspear++;
 		spearx = oplr->x;
 		speary = oplr->y;
 		spearθ = oplr->θ;
-		gm.end = EDup;
+		gm.end = gm.demo || gm.record ? EDdem : EDspear;
 	}
 	bonustc = 6 * (Cfad-Cwht);
 	s->tl = nil;
+}
+
+void
+crm114(int n)
+{
+	static Crm crms[] = {
+		{"fgd135", crmrcv},
+		{"opeaid", crmmed},
+		{"opepak", crmamo},
+		{"opeopn", crmkey},
+		{"opephz", crmwep},
+		{"opemli", crmmli},
+		{"opepda", crmmap},
+		{"opedqd", crmgod},
+		{"opeclp", crmclp},
+		{"opeslo", crmslo},
+		{"opeskp", crmskp},
+		{"opemus", crmmus}
+	};
+	Crm *p, *e;
+
+	p = crms;
+	e = crms + 1;
+	if(allrecv){
+		p++;
+		e = crms + nelem(crms);
+	}
+	while(p < e){
+		if(strncmp(crs, p->s, n) == 0){
+			if(n == Ncrm-1){
+				p->f();
+				memset(crs, 0, sizeof crs);
+			}
+			return;
+		}
+		p++;
+	}
+	memset(crs, 0, sizeof crs);
+}
+
+void
+eatcs(void)
+{
+	int i, d;
+	char *p, rc[UTFmax];
+	Rune r;
+
+	if(gm.demo){
+		if(nbrecv(csc, nil) > 0)
+			gm.end = EDkey;
+		return;
+	}
+	i = 0;
+	p = crs + strlen(crs);
+	while(nbrecv(csc, &r) > 0 && i++ < Ncrm-1){
+		if(quickkey(r))
+			return;
+		if(gm.record)
+			continue;
+		d = runetochar(rc, &r);
+		if(p + d < crs + sizeof crs){
+			memcpy(p, rc, d);
+			p += d;
+			crm114(p - crs);
+		}
+	}
 }
 
 int
@@ -2524,19 +2587,19 @@ rnd(void)
 void
 gstep(void)
 {
-	if(gm.demo || gm.record){
+	if(gm.demo || gm.record || slomo){
 		if(demfrm-- != 0)
 			return;
 		demfrm = 3;
-		Δtc = 4;
+		Δtc = slomo ? 1 : 4;
 	}
 	input();
 	noise = 0;
 	uworld();
 	upal();
 	render();
-	mtc += Δtc;
-	gm.lvltc += Δtc;
+	qtc += Δtc;
+	gm.tc += Δtc;
 	if(dofizz){
 		dofizz = 0;
 		if(!gm.end)
@@ -2553,9 +2616,34 @@ gstep(void)
 }
 
 void
-demo(void)
+nextmap(void)
+{
+	static int setece[] = {1, 11, 27, 33, 45, 53};
+	int n, e, m;
+
+	m = gm.map;
+	n = m + 1;
+	if(ver < SDM){
+		e = m / 10;
+		if(gm.com == GMret)
+			n = setece[e];
+		else if(gm.com == GMsetec)
+			n = e + 9;
+	}else{
+		if(gm.com == GMret)
+			n = m == 18 ? 4 : m == 19 ? 12 : m + 1;
+		else if(gm.com == GMsetec)
+			n = m == 3 ? 18 : m == 11 ? 19 : m + 1;
+	}
+	gm.map = n;
+}
+
+void
+game(void)
 {
 	initmap();
+	killx = oplr->x;
+	killy = oplr->y;
 	mapmus();
 	pal = pals[C0];
 	dofizz++;
@@ -2563,8 +2651,56 @@ demo(void)
 }
 
 void
-initg(int r, uchar *p)
+spshunt(void)
 {
+	gm.oldpt = gm.pt;
+	gm.map = 20;
+	dmgtc = bonustc = 0;
+	initmap();
+	sfx(Sspear);
+	oplr->x = spearx;
+	oplr->y = speary;
+	oplr->tx = spearx >> Dtlshift;
+	oplr->ty = speary >> Dtlshift;
+	oplr->θ = spearθ;
+	oplr->areaid = oplr->tl->p0 - MTfloor;
+}
+
+void
+greset(void)
+{
+	if(gm.w == -1){
+		gm.hp = 100;
+		gm.ammo = 8;
+		gm.w = gm.lastw = gm.bestw = WPpistol;
+	}
+	gm.pt = gm.oldpt;
+	gm.tc = 0;
+	gm.kp = gm.sp = gm.tp = 0;
+	gm.ktot = gm.stot = gm.ttot = 0;
+	gm.wfrm = gm.facefrm = 0;
+	gm.keys = 0;
+	gm.won = gm.mut = 0;
+	dmgtc = bonustc = facetc = funtc = 0;
+	firing = 0;
+	kb = 0;
+	mb = 0;
+	kon = kold = 0;
+	mΔx = mΔy = 0;
+	kΔθ = 0;
+	allrecv = 0;
+	dirty = 0;
+	slomo = noclip = god = 0;
+	if(ver == SOD && gm.map == 20)
+		givek(0);
+}
+
+void
+ginit(uchar *p, int m, int d)
+{
+	int r;
+
+	r = 1;
 	memset(&gm, 0, sizeof gm);
 	if(p != nil){
 		gm.demo++;
@@ -2575,20 +2711,16 @@ initg(int r, uchar *p)
 		if((deme-dem) % 3 != 0)
 			sysfatal("initd: invalid demo lump\n");
 		demfrm = 0;
+		r = 0;
+		greset();
+	}else if(m != -1){
+		gm.map = m;
+		gm.difc = d;
 	}
+	rndi = r ? time(nil) & 0xff : 0;
 	gm.hp = 100;
 	gm.ammo = 8;
 	gm.lives = 3;
 	gm.w = gm.lastw = gm.bestw = WPpistol;
 	gm.to1up = GPextra;
-	rndi = r ? time(nil) & 0xff : 0;
-	dmgtc = bonustc = facetc = funtc = 0;
-	firing = 0;
-	kon = kold = 0;
-	kΔθ = 0;
-	allrecv = 0;
-	sfxlck = 0;
-	gotspear = 0;
-	if(ver == SOD && gm.map == 20)
-		givek(0);
 }

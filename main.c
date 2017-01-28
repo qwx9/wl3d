@@ -1,16 +1,7 @@
-char            str[80],str2[20];
-s16int				tedlevelnum;
-int         tedlevel;
-s16int  dirangle[9] = {0,ANGLES/8,2*ANGLES/8,3*ANGLES/8,4*ANGLES/8,
-	5*ANGLES/8,6*ANGLES/8,7*ANGLES/8,ANGLES};
-
-u16int        screenofs;
-
 int         startgame;
 s16int             mouseadjustment;
 
 char	configname[13]="CONFIG.";
-
 
 void ReadConfig(void)
 {
@@ -61,7 +52,6 @@ void ReadConfig(void)
 			mouseenabled = false;
 
 		MainMenu[6].active=1;
-		MainItems.curpos=0;
 	}
 	else
 	{
@@ -130,11 +120,6 @@ void WriteConfig(void)
 
 		close(file);
 	}
-}
-
-void NewGame (s16int difficulty,s16int episode)
-{
-	→ initg, w/o difficulty, map
 }
 
 void DiskFlopAnim(s16int x,s16int y)
@@ -368,123 +353,12 @@ int LoadTheGame(s16int file,s16int x,s16int y)
 	return true;
 }
 
-void SetupWalls (void)	/* map tile values to scaled pics */
-{
-	s16int     i;
-
-	for (i=1;i<MAXWALLTILES;i++)
-	{
-		horizwall[i]=(i-1)*2;
-		vertwall[i]=(i-1)*2+1;
-	}
-}
-
-#define	PORTTILESHIGH		13		// non displayed port of this size
-
-void InitGame (void)
-{
-	s16int                     i,x,y;
-	u16int        *blockstart;
-
-	mapon = -1;
-
-	for (i=0;i<MAPSIZE;i++)
-	{
-		farmapylookup[i] = i*64;
-	}
-
-	for (i=0;i<PORTTILESHIGH;i++)
-		uwidthtable[i] = UPDATEWIDE*i;
-
-	blockstart = &blockstarts[0];
-	for (y=0;y<UPDATEHIGH;y++)
-		for (x=0;x<UPDATEWIDE;x++)
-			*blockstart++ = SCREENWIDTH*16*y+x*TILEWIDTH;
-
-	updateptr = &update[0];
-
-	bufferofs = 0;
-	displayofs = 0;
-	ReadConfig ();
-
-	IntroScreen ();
-
-	LoadLatchMem ();
-	SetupWalls ();
-
-	NewViewSize (vw.size);
-
-	InitRedShifts ();
-
-	displayofs = PAGE1START;
-	bufferofs = PAGE2START;
-}
-
-int SetViewSize (u16int width, u16int height)
-{
-	→ setvw()
-}
-
-void ShowViewSize (s16int width)
-{
-	s16int     oldwidth,oldheight;
-
-	oldwidth = vw.dx;
-	oldheight = vw.dy;
-
-	vw.dx = width*16;
-	vw.dy = width*16*HEIGHTRATIO;
-	DrawPlayBorder ();
-
-	vw.dy = oldheight;
-	vw.dx = oldwidth;
-}
-
-void NewViewSize (s16int width)
-{
-	vw.size = width;
-	SetViewSize (width*16,width*16*HEIGHTRATIO);
-}
-
 void    DemoLoop (void)
 {
-	static s16int LastDemo;
-	s16int     i,level;
-	s32int nsize;
-	uchar *nullblock;
-
-//
-// check for launch from ted
-//
-	/* → if warping to map [tedlevel] */
-	if (tedlevel)
-	{
-		NoWait = true;
-		NewGame(1,0);
-
-		/* → set difficulty level 1-4 if parameter passed as
-		 * gamestate.difficulty */
-
-#ifndef SPEAR
-		gamestate.episode = tedlevelnum/10;
-		gamestate.mapon = tedlevelnum%10;
-#else
-		gamestate.episode = 0;
-		gamestate.mapon = tedlevelnum;
-#endif
-		GameLoop();
-		Quit (NULL);
-	}
-
-	StartCPMusic(INTROSONG);
-	// pg13
-
 	while (1)
 	{
-		p = dems;
 		while (!NoWait)
 		{
-			/* title loop */
 			PlayDemo(p++);
 			if(p >= epis)
 				p = dems;
@@ -492,13 +366,11 @@ void    DemoLoop (void)
 				break;
 			StartCPMusic(INTROSONG);
 		}
-
 		VW_FadeOut ();
 		if (Keyboard[sc_Tab] && debug)
 			RecordDemo ();
 		else
 			US_ControlPanel (0);
-
 		if (startgame || gm.load)
 		{
 			GameLoop ();
@@ -507,25 +379,3 @@ void    DemoLoop (void)
 		}
 	}
 }
-
-void main (void)
-{
-	if (wl6)
-	{
-		NewEmenu[2].active =
-		NewEmenu[4].active =
-		NewEmenu[6].active =
-		NewEmenu[8].active =
-		NewEmenu[10].active =
-		EpisodeSelect[1] =
-		EpisodeSelect[2] =
-		EpisodeSelect[3] =
-		EpisodeSelect[4] =
-		EpisodeSelect[5] = 1;
-	}
-
-	InitGame ();
-
-	DemoLoop();
-}
-

@@ -11,12 +11,13 @@ mainstacksize = 16*1024;
 char *ext = "wl6";
 int ver;
 int grabon;
-int kbon, mson;
-int kb, mΔx, mΔy, mΔb;
+int kbon;
+int kb, mΔx, mΔy, mb;
 int demexit;
 void (*step)(void);
 int Δtc;
 int nosleep;
+int autorun;
 Channel *csc;
 QLock inlck;
 
@@ -29,12 +30,12 @@ static Point p0;
 static Rectangle fbr, grabr;
 static Image *fb;
 static Channel *reszc;
-static int cson;
+static int cson, mson, fixms;
 
 static void
 mproc(void *)
 {
-	int n, fd, nerr;
+	int n, b, fd, nerr;
 	char buf[1+5*12], *px, *py, *pb;
 	Point o, p;
 
@@ -62,14 +63,20 @@ mproc(void *)
 		case 'm':
 			if(!mson)
 				break;
+			if(fixms){
+				fixms = 0;
+				goto res;
+			}
 			p.x = strtol(px, nil, 10);
 			p.y = strtol(py, nil, 10);
+			b = strtol(pb, nil, 10);
 			qlock(&inlck);
 			mΔx += p.x - o.x;
-			mΔy += o.y - p.y;
-			mΔb = *pb;
+			mΔy += p.y - o.y;
+			mb = b;
 			qunlock(&inlck);
 			if(!ptinrect(p, grabr)){
+		res:
 				fprint(fd, "m%d %d", p0.x, p0.y);
 				p = p0;
 			}
@@ -106,7 +113,7 @@ kproc(void *)
 			chartorune(&r, buf+1);
 			nbsend(csc, &r);
 		}
-		if(c != 'k' || c != 'K' || !kbon)
+		if(c != 'k' && c != 'K' || !kbon)
 			continue;
 		s = buf+1;
 		k = 0;
@@ -157,14 +164,14 @@ static void
 croak(void *, char *s)
 {
 	if(strncmp(s, "sys:", 4) == 0)
-		mson = 0;
+		grab(0);
 	noted(NDFLT);
 }
 
 static void
 usage(void)
 {
-	fprint(2, "usage: %s [-23dopqs] [-f demo] [-m dir] [-w map] [-x difficulty]\n", argv0);
+	fprint(2, "usage: %s [-23dopqs] [-f demo] [-m dir] [-w map difc]\n", argv0);
 	threadexits("usage");
 }
 
@@ -176,15 +183,7 @@ emalloc(ulong n)
 	p = mallocz(n, 1);
 	if(p == nil)
 		sysfatal("emalloc: %r");
-	return p;
-}
-
-void *
-erealloc(void *p, ulong n)
-{
-	p = realloc(p, n);
-	if(p == nil)
-		sysfatal("erealloc: %r");
+	setmalloctag(p, getcallerpc(&n));
 	return p;
 }
 
@@ -203,6 +202,7 @@ grab(int on)
 			return;
 		}
 		write(fd, nocurs, sizeof nocurs);
+		fixms++;
 	}else if(fd >= 0){
 		close(fd);
 		fd = -1;
@@ -242,13 +242,14 @@ flush(void)
 void
 threadmain(int argc, char **argv)
 {
-	int tc;
+	int tc, m, d;
 	vlong t0, t, dt;
 	char *datdir, *df;
 
 	datdir = "/sys/games/lib/wl3d/";
 	df = nil;
-	step = mstep;
+	m = -1;
+	d = 0;
 	ARGBEGIN{
 	case '2': ext = "sd2"; ver = SOD; break;
 	case '3': ext = "sd3"; ver = SOD; break;
@@ -259,8 +260,7 @@ threadmain(int argc, char **argv)
 	case 'p': nosleep++; break;
 	case 'q': demexit++; break;
 	case 's': ext = "sod"; ver = SOD; break;
-	case 'w': /* TODO: warp to ep, level */ break;
-	case 'x': /* TODO: set difficulty for warp */ break;
+	case 'w': m = strtoul(EARGF(usage()), nil, 0); d = strtoul(EARGF(usage()), nil, 0); break;
 	default:
 		usage();
 	}ARGEND;
@@ -270,18 +270,19 @@ threadmain(int argc, char **argv)
 	pal = pals[C0];
 	resetfb();
 	dat(datdir);
-	initsnd();
 	csc = chancreate(sizeof(Rune), 20);
 	reszc = chancreate(sizeof(int), 2);
 	if(csc == nil | reszc == nil)
 		sysfatal("chancreate: %r");
 	if(proccreate(kproc, nil, 8192) < 0 || proccreate(mproc, nil, 8192) < 0)
 		sysfatal("proccreate: %r");
-
-	init(df);
+	tab();
+	initsnd();
+	init(df, m, d);
 	cson++;
 	t0 = nsec();
 	Δtc = 1;
+	step = qstep;
 	for(;;){
 		if(nbrecv(reszc, nil) != 0){
 			if(getwindow(display, Refnone) < 0)
@@ -298,8 +299,6 @@ threadmain(int argc, char **argv)
 			tc = 10;
 		Δtc = tc;
 		t0 += tc * Td;
-		if(onestep)
-			t0 += Td;
 		dt = (t0 - t) / Te6;
 		if(dt > 0 && !nosleep)
 			sleep(dt);
