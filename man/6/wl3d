@@ -386,7 +386,7 @@ contains a series of Huffman-encoded graphics lumps of various types.
 Each lump is prefixed by its uncompressed size.
 The first lump,
 .IR pt ,
-contains a the sizes for
+contains the sizes for
 .I np
 pictures, retrieved from
 .IR pic .
@@ -517,6 +517,8 @@ Each have a
 and a
 .B sdm/sod
 version, but only one is present.
+.B Sdm
+has its own intro screen as well.
 .PP
 The base color palette is stored as any other palette, and is the one used in most circumstances.
 Several other palettes are generated based on it,

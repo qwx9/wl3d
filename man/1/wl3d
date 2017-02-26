@@ -138,12 +138,12 @@ only substituting some of the data files.
 .PD
 .SS Demo lumps
 .I Wl3d
-can playback a single external demo lump before resuming normal operation, when its path is supplied with the
+can playback a single external demo lump before resuming normal operation, when its path is supplied via the
 .B -f
 parameter.
 The
 .B -q
-parameter causes the program to exit after its playback instead.
+parameter causes the program to exit after playback instead.
 The filename's extension, if any, is ignored.
 Regardless, a corresponding game version must be set using the aforementioned command line parameters.
 An incorrect version will cause erroneous playback or a crash.
@@ -238,4 +238,4 @@ id Software's Wolfenstein 3-D was released for
 on May 5, 1992.
 .br
 .I Wl3d
-appeared first for 9front (May, 2016), based on the source code release of Wolfenstein 3-D's engine from July 21, 1995.
+first appeared in 9front (May, 2016), based on the source code release of Wolfenstein 3-D's engine from July 21, 1995.

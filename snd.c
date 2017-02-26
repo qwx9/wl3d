@@ -472,12 +472,10 @@ sfxatt(int n, int att, int x, int y)
 		pcme = s->pcm->e;
 		xbi = Nextra;
 		xt = Nextra << Np;
-		if(att){
-			atton = 1;
+		if(atton = att){
 			attx = x;
 			atty = y;
-		}else
-			atton = 0;
+		}
 	}else if(sfxon){
 		if(sfxd != nil && s->pri < sfxd->pri)
 			return;

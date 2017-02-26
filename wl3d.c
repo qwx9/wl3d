@@ -302,7 +302,5 @@ threadmain(int argc, char **argv)
 		dt = (t0 - t) / Te6;
 		if(dt > 0 && !nosleep)
 			sleep(dt);
-		else
-			t0 = t;
 	}
 }
