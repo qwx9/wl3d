@@ -1083,7 +1083,7 @@ dat(char *dir)
 
 	rfork(RFNAMEG);
 	if(bind(".", dir, MBEFORE|MCREATE) < 0 || chdir(dir) < 0)
-		sysfatal("dat: %r\n");
+		fprint(2, "dat: %r\n");
 	e = ext;
 	loadscr();
 	ext = e;
