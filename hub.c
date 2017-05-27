@@ -1725,6 +1725,7 @@ rep:
 void
 init(char *f, int m, int d)
 {
+	srand(time(nil));
 	cfg();
 	initseqs();
 	inctl();
