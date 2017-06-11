@@ -900,7 +900,7 @@ sodmap(void)
 	for(s=stt+GSgd; s<stt+GShans; s++)
 		s->spr += 4;
 	for(s=stt+GSmissile; s<stt+GSrocket; s++)
-		s->spr -= SPmissile1 - SPofcfire3 - 1;
+		s->spr -= SPmissile1 - SPofcfire3 - 1 - 4;
 	for(w=wspr; w<wspr+nelem(wspr); w++)
 		*w += SPangeldead - SPbjjump4;
 }
