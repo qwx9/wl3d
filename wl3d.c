@@ -295,8 +295,10 @@ threadmain(int argc, char **argv)
 		tc = (t - t0) / Td;
 		if(tc <= 0)
 			tc = 1;
-		else if(tc > 10)
+		else if(tc > 10){
+			t0 += (vlong)(tc - 10) * Td;
 			tc = 10;
+		}
 		Δtc = tc;
 		t0 += tc * Td;
 		dt = (t0 - t) / Te6;
