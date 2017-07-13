@@ -456,7 +456,7 @@ static u32int *mapofs, *mape;
 static Biobuf *
 bopen(char *f, int m)
 {
-	char s[16];
+	char s[256];
 	Biobuf *bf;
 
 	snprint(s, sizeof s, "%s%s", f, ext);
