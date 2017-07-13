@@ -139,8 +139,8 @@ resetfb(void)
 	scale = Dx(screen->r) / Vw;
 	if(scale <= 0)
 		scale = 1;
-	else if(scale > 10)
-		scale = 10;
+	else if(scale > 12)
+		scale = 12;
 	p = divpt(addpt(screen->r.min, screen->r.max), 2);
 	d = Pt(Vw/2 * scale, Vh/2 * scale);
 	fbr = Rpt(subpt(p, d), addpt(p, d));
@@ -152,7 +152,7 @@ resetfb(void)
 	free(px);
 	npx = Vt * scale;
 	px = emalloc(npx);
-	fb = allocimage(display, Rect(0,0,Vw*scale,scale==1 ? Vh : 1), RGB24, 1, 0);
+	fb = allocimage(display, Rect(0,0,Vw*scale,scale==1 ? Vh : 1), RGB24, scale!=1, 0);
 	if(fb == nil)
 		sysfatal("resetfb: %r");
 
