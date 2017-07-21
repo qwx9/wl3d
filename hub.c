@@ -1256,11 +1256,13 @@ psych2(void)
 	int n;
 
 	n = (qtc - 1) * 16 + 6;
-	if(n > 214 || nbrecv(csc, nil) > 0){
+	if(nbrecv(csc, nil) > 0){
 		n = 214;
 		qp = qsp->e - 1;
 		qtc = 0;
 	}
+	if(n > 214)
+		n = 214;
 	put(53, 101, n, 2, 0x37);
 	put(53, 101, n-1, 1, 0x32);
 	out();
