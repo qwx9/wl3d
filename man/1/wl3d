@@ -31,7 +31,8 @@ Now, you must do anything to escape from the belly of a Nazi dungeon - or die tr
 .RE
 .PP
 The command line options are:
-.TP \w'\fLw\ \ \fI"map\ 0-3"'u
+.TF "-w map 0-3"
+.TP
 .B -2
 Set game version to Spear of Destiny Mission 2: Return to Danger.
 .TP
@@ -84,9 +85,9 @@ and
 flags (see
 .IR bind (2)).
 Data files can thus be contained in a system directory while the config and save files' location, which are user-specific, can be left at the user's discretion.
-If these user-specific files exist and
+If the configuration file exists and
 .I wl3d
-fails to parse them, they are not overwritten.
+fails to parse it, it is not overwritten.
 The
 .B -m
 parameter is used to change

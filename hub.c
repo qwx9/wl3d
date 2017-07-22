@@ -1,5 +1,6 @@
 #include <u.h>
 #include <libc.h>
+#include <ctype.h>
 #include <thread.h>
 #include <keyboard.h>
 #include "dat.h"
@@ -17,7 +18,7 @@ Score scs[] = {
 	{"John Romero", 10000, 1},
 	{"Jay Wilbur", 10000, 1},
 };
-char savs[10][32];
+char savs[11][32];
 
 typedef struct Fade Fade;
 typedef struct Sp Sp;
@@ -107,14 +108,22 @@ enum{
 	Lfsav,
 	Lmsav,
 	Lsvctl,
+	Lsvname,
+	Lwrsav,
 	Lflod,
 	Lmlod,
 	Lldctl,
+	Lldsav,
+	Lldsav2,
+	Lldsav3,
+	Lldsav4,
+	Lldsav5,
 	Lfvw,
 	Lmvw,
 	Lvwctl,
 	Lfmscore,
 	Lmscore,
+	Lovrsav,
 	Lend,
 	Lcurgame,
 	Lquit,
@@ -305,12 +314,21 @@ reset(Seq *p)
 static void
 pblink(void)
 {
-	if(mp->n == 0)
-		txt(mp->x, mp->y, "_", 0);
-	else
+	if(mp->n ^= 1)
 		put(mp->x, mp->y, fnt->w['_'], fnt->h, DIreg);
+	else
+		txt(mp->x, mp->y, "_", 0);
 	out();
-	mp->n ^= 1;
+}
+
+static void
+iblink(void)
+{
+	if(mp->n ^= 1)
+		txt(111 + irb - 1, mp->y + 3, "\x80", DIrhi);
+	else
+		put(111 + irb - 1, mp->y + 3, fnt->w[0x80]-1, fnt->h, mcol[DMbg]);
+	out();
 }
 
 static void
@@ -318,8 +336,8 @@ blink(void)
 {
 	put(mp->x, mp->y, 24, 16, mcol[DMbg]);
 	pic(mp->x, mp->y, pict[Pcur1] + mp->n);
-	out();
 	mp->n ^= 1;
+	out();
 }
 
 static void
@@ -368,6 +386,7 @@ inctl(void)
 
 	m = ml+LMctl;
 	i = m->s;
+	i[3].c = DIreg;
 	i[4].c = mcol[DMoff];
 	i[6].s = "View Scores";
 	i[6].q = ql+Lfmscore;
@@ -464,6 +483,15 @@ mend(void)
 	msg("Are you sure you want\nto end the game you\nare playing? (Y or N):", 0);
 	mp->p->q = ql+Lfdie;
 	qesc = ql+Lctl;
+}
+
+static void
+ovrsav(void)
+{
+	msg("There's already a game\n"
+		"saved at this position.\n      Overwrite?", 0);
+	mp->p->q = ql+Lsvname;
+	qesc = ql+Lsvctl;
 }
 
 static void
@@ -624,12 +652,58 @@ in(void)
 }
 
 static void
-savitem(int i, int c)
+disk(void)
 {
-	outbox(109, 55 + i * 13, 136, 11, c, c);
-	fnt = fnts;
-	txt(111, 56 + i * 13, savs[i][0] == 0 ? "      - empty -" : savs[i], c);
+	int n;
+
+	box(96, 80, 130, 42, DIreg, 0, DIrhi);
+	pic(104, 85, pict[Pread1]);
 	fnt = fnts+1;
+	txt(142, 93, qsp == ql+Lwrsav ? "Saving..." : "Loading...", 0);
+	out();
+	n = mp->p - mp->s;
+	if(qsp == ql+Lwrsav){
+		qsp->q = ql+Lftoctl;
+		if(wrsav(n) < 0)
+			goto err;
+	}else{
+		qsp->q = ql+Lldsav2;
+		ginit(nil, -1, 0);
+		greset();
+		if(ldsav(n) < 0)
+			goto err;
+		ingctl();
+		loaded++;
+	}
+	sfx(Sshoot);
+	return;
+err:
+	memset(savs[n], 0, sizeof savs[0]);
+	qsp->q = ql+Lftoctl;
+	sfx(Snoway);
+}
+
+static void
+savtxt(Item *i, char *s)
+{
+	int n;
+
+	n = 56 + (i - mp->s) * 13;
+	put(110, n, 135, fnt->h, mcol[DMbg]);
+	txt(111, n, s, i->c);
+}
+
+static void
+savitem(Item *i, int n)
+{
+	outbox(109, 55 + n * 13, 136, 11, i->c, i->c);
+	if(savs[n][0] != 0){
+		savtxt(i, savs[n]);
+		i->q = qsp->q == ql+Lsvctl ? ql+Lovrsav : ql+Lldsav;
+	}else{
+		savtxt(i, "      - empty -");
+		i->q = qsp->q == ql+Lsvctl ? ql+Lsvname : nil;
+	}
 }
 
 static void
@@ -642,17 +716,29 @@ sav(void)
 	pic(112, 184, pict[Pmouselback]);
 	mbox(75, 50, 175, 140);
 	stripe(10);
-	pic(56, 0, pict[qsp->q == ql+Lsvctl ? Psave : Pload]);
+	pic(56, 0, pict[qsp->q == ql+Lldctl ? Pload : Psave]);
 	m = ml+LMsav;
 	mp = m;
 	i = m->s;
 	e = m->e;
+	fnt = fnts;
 	do
-		savitem(i - m->s, i->c);
+		savitem(i, i - m->s);
 	while(++i < e);
 	qesc = ql+Lftoctl;
 	m->n = 0;
 	m->y = 53 + 13 * (m->p - m->s);
+}
+
+static void
+savname(void)
+{
+	sav();
+	memcpy(savs[10], savs[mp->p - mp->s], sizeof savs[10]);
+	savtxt(mp->p, savs[10]);
+	iri = strlen(savs[10]);
+	irb = txtw(savs[10]);
+	mp->n = 0;
 }
 
 static void
@@ -825,6 +911,69 @@ cwalk(void)
 }
 
 static void
+prompt(void)
+{
+	int n, m;
+	char *s;
+	Rune r;
+
+	if(nbrecv(csc, &r) <= 0)
+		return;
+	s = savs[10];
+	n = strlen(s);
+	switch(r){
+	redraw:
+		savtxt(mp->p, savs[10]);
+		mp->n = 0;
+		iblink();
+		qtc = 0;
+		break;
+	default:
+		if(runelen(r) > 1 || !isprint(r))
+			break;
+		m = fnt->w[r];
+		if(txtw(s) + m > 134 || n == sizeof(savs[10]) - 1)
+			break;
+		while(n-- > iri)
+			s[n+1] = s[n];
+		s[iri++] = r;
+		irb += m;
+		goto redraw;
+	case Kleft:
+		if(iri == 0)
+			break;
+		irb -= fnt->w[s[--iri]];
+		goto redraw;
+	case Kright:
+		if(iri == n)
+			break;
+		irb += fnt->w[s[iri++]];
+		goto redraw;
+	case Kdel:
+	case Kbs:
+		if(iri == 0)
+			break;
+		irb -= fnt->w[s[--iri]];	
+		for(m=iri+1; m<=n; m++)
+			s[m-1] = s[m];
+		s[m] = 0;
+		goto redraw;
+	abort:
+	case Kesc:
+		sfx(Sesc);
+		reset(ql+Lsvctl);
+		break;
+	case '\n':
+		if(n == 0)
+			goto abort;
+		strcpy(savs[mp->p - mp->s], savs[10]);
+		sfx(Sshoot);
+		reset(ql+Lwrsav);
+		break;
+	}
+}
+
+static void
 ask(void)
 {
 	Rune r;
@@ -948,7 +1097,6 @@ won(void)
 		a[3] = 0;
 		txt(241, 72, a, DIshi);
 	}
-	fnt = fnts+1;
 	mus(ver < SDM ? Mwon : Msdwon);
 	grab(0);
 }
@@ -1246,7 +1394,8 @@ cont(void)
 static void
 ingam(void)
 {
-	greset();
+	if(qsp != ql+Lldsav4)
+		greset();
 	view();
 }
 
@@ -1434,6 +1583,8 @@ static Sp
 	slq[] = {{1, slider}},
 	curq[] = {{8, nil}, {0, cursfx}},
 	togq[] = {{1, toggle}},
+	promptq[] = {{0, iblink}, {Tb / 2, prompt}},
+	diskq[] = {{1, disk}, {1, nil}},	/* buffer extra tics */
 	mscoreq[] = {{10, fadein}, {1, bwait}, {10, fadeout}},
 	quitq[] = {{0, pblink}, {10, ask}},
 	ackq[] = {{1, bwait}},
@@ -1509,9 +1660,15 @@ static Seq ql[] = {
 	[Lfsav] {nil, escq, escq+nelem(escq), ql+Lmsav, &fctl},
 	[Lmsav] {sav, toctlq, toctlq+nelem(toctlq), ql+Lsvctl, &fctl},
 	[Lsvctl] {sav, ctlq, ctlq+nelem(ctlq), ql+Lsvctl},
+	[Lsvname] {savname, promptq, promptq+nelem(promptq), ql+Lsvname},
+	[Lwrsav] {nil, diskq, diskq+nelem(diskq), nil},
 	[Lflod] {nil, escq, escq+nelem(escq), ql+Lmlod, &fctl},
 	[Lmlod] {sav, toctlq, toctlq+nelem(toctlq), ql+Lldctl, &fctl},
 	[Lldctl] {sav, ctlq, ctlq+nelem(ctlq), ql+Lldctl},
+	[Lldsav] {nil, diskq, diskq+nelem(diskq), nil},
+	[Lldsav2] {nil, escq, escq+nelem(escq), ql+Lldsav3, &fctl},
+	[Lldsav3] {nil, loadq, loadq+nelem(loadq), ql+Lldsav4, &fblk},
+	[Lldsav4] {psych, psychq, psychq+nelem(psychq), ql+Lgame, &fblk},
 	[Lfsens] {nil, escq, escq+nelem(escq), ql+Lmsens, &fctl},
 	[Lmsens] {sens, toctlq, toctlq+nelem(toctlq), ql+Lsectl, &fctl},
 	[Lsectl] {sens, slq, slq+nelem(slq), ql+Lsectl},
@@ -1520,6 +1677,7 @@ static Seq ql[] = {
 	[Lvwctl] {mvw, slq, slq+nelem(slq), ql+Lvwctl},
 	[Lfmscore] {nil, escq, escq+nelem(escq), ql+Lmscore, &fctl},
 	[Lmscore] {score, mscoreq, mscoreq+nelem(mscoreq), ql+Lmtoctl, &fctl},
+	[Lovrsav] {ovrsav, quitq, quitq+nelem(quitq), ql+Lovrsav},
 	[Lend] {mend, quitq, quitq+nelem(quitq), ql+Lend},
 	[Lcurgame] {curgame, quitq, quitq+nelem(quitq), ql+Lcurgame},
 	[Lquit] {quit, quitq, quitq+nelem(quitq), ql+Lquit},

@@ -3,12 +3,6 @@
 #include "dat.h"
 #include "fns.h"
 
-enum{
-	Nobj = 150,
-	Ndoor = 64,
-	Nstc = 400,
-	Narea = 37
-};
 Tile tiles[Mapa];
 Obj *objs, *ofree, *oplr;
 Door doors[Ndoor], *doore, pusher;
@@ -49,8 +43,7 @@ spawnstc(Tile *tl, int n)
 	case Rbible:
 	case Rcrown:
 	case R1up:
-		if(!gm.load)
-			gm.ttot++;
+		gm.ttot++;
 		/* wet floor */
 	default:
 		stce->f = OFbonus;
@@ -62,7 +55,7 @@ spawnstc(Tile *tl, int n)
 	stce->spr = sprs + n;
 	if(stce->spr == nil)
 		sysfatal("spawnstc: missing static sprite %d\n", n);
-	if(++stce == stcs+Nstc)
+	if(++stce == stcs + nelem(stcs))
 		sysfatal("static object overflow");
 }
 
@@ -73,7 +66,7 @@ rconair(int id)
 
 	a = conarea + id * Narea;
 	p = plrarea;
-	while(p < plrarea+nelem(plrarea)){
+	while(p < plrarea + nelem(plrarea)){
 		if(*a && !*p){
 			(*p)++;
 			rconair(p-plrarea);
@@ -293,7 +286,7 @@ odel(Obj *o)
 }
 
 static void
-oinit(int all)
+oinit(void)
 {
 	Obj *o, *p;
 
@@ -313,15 +306,6 @@ oinit(int all)
 	}
 	ofree->p = p;
 	p->n = ofree;
-
-	if(all){
-		memset(plrarea, 0, sizeof plrarea);
-		memset(conarea, 0, sizeof conarea);
-		memset(doors, 0, sizeof doors);
-		memset(stcs, 0, sizeof stcs);
-		doore = doors;
-		stce = stcs;
-	}
 }
 
 static void
@@ -426,8 +410,7 @@ spawnghost(Tile *tl, State *s)
 	o->v = 1500;
 	o->θ = θE;
 	o->f |= OFambush;
-	if(!gm.load)
-		gm.ktot++;
+	gm.ktot++;
 }
 
 static void
@@ -461,7 +444,6 @@ spawnboss(Tile *tl, int type)
 		θ = θS;
 		goto wlonly;
 	case Oschb:
-		stt[GSschbdie2].dt = pcmon ? 140 : 5;
 		s = stt+GSschb;
 		hp = gm.difc<GDeasy ? 850 : gm.difc<GDmed ? 950
 			: gm.difc<GDhard ? 1550 : 2400;
@@ -473,52 +455,39 @@ spawnboss(Tile *tl, int type)
 		θ = θN;
 		goto wlonly;
 	case Ootto:
-		stt[GSottodie2].dt = pcmon ? 140 : 5;
 		s = stt+GSotto;
 		hp = gm.difc<GDhard ? 850 + gm.difc * 100 : 1200;
 		θ = θN;
 		goto wlonly;
 	case Ofett:
-		stt[GSfettdie2].dt = pcmon ? 140 : 5;
 		s = stt+GSfett;
 		hp = gm.difc<GDhard ? 850 + gm.difc * 100 : 1200;
 		θ = θS;
 		goto wlonly;
 	case Ofake:
-		/* bug? */
-		stt[GShitlerdie2].dt = pcmon ? 140 : 5;
 		s = stt+GSfake;
 		hp = 200 + 100 * gm.difc;
 		θ = θN;
 		goto wlonly;
 	case Omech:
-		stt[GShitlerdie2].dt = pcmon ? 140 : 5;
 		s = stt+GSmech;
 		hp = gm.difc<GDeasy ? 800 : gm.difc<GDmed ? 950
 			: gm.difc<GDhard ? 1050 : 1200;
 		θ = θS;
 		goto wlonly;
 	case Otrans:
-		if(pcmon)
-			stt[GStransdie2].dt = 105;
 		s = stt+GStrans;
 		hp = gm.difc<GDhard ? 850 + gm.difc * 100 : 1200;
 		goto sdonly;
 	case Owilh:
-		if(pcmon)
-			stt[GSwilhdie2].dt = 70;
 		s = stt+GSwilh;
 		hp = gm.difc<GDhard ? 950 + gm.difc * 100 : 1300;
 		goto sdonly;
 	case Ouber:
-		if(pcmon)
-			stt[GSuberdie2].dt = 70;
 		s = stt+GSuber;
 		hp = gm.difc<GDhard ? 1050 + gm.difc * 100 : 1400;
 		goto sdonly;
 	case Oknight:
-		if(pcmon)
-			stt[GSknightdie2].dt = 105;
 		s = stt+GSknight;
 		hp = gm.difc<GDhard ? 1250 + 100 * gm.difc : 1600;
 		goto sdonly;
@@ -527,8 +496,6 @@ spawnboss(Tile *tl, int type)
 		hp = gm.difc<GDhard ? 5 * (1 + gm.difc) : 25;
 		goto sdonly;
 	case Oangel:
-		if(pcmon)
-			stt[GSangeldie2].dt = 105;
 		s = stt+GSangel;
 		hp = gm.difc<GDhard ? 1450 + 100 * gm.difc : 2000;
 		goto sdonly;
@@ -538,8 +505,7 @@ spawnboss(Tile *tl, int type)
 	o->hp = hp;
 	o->θ = θ;
 	o->f |= OFshootable | OFambush;
-	if(!gm.load)
-		gm.ktot++;
+	gm.ktot++;
 }
 
 static void
@@ -605,8 +571,7 @@ spawnguy(Tile *tl, int type, int dir, int patrol)
 	o->v = type == Odog ? 1500 : 512;
 	o->θ = dir * 90;
 
-	if(!gm.load)
-		gm.ktot++;
+	gm.ktot++;
 	if(patrol){
 		o->Δr = Dtlglobal;
 		o->on++;
@@ -638,8 +603,7 @@ spawn(Tile *tl)
 		spawnstc(tl, n-23);
 		break;
 	case 98:
-		if(!gm.load)
-			gm.stot++;
+		gm.stot++;
 		break;
 	case 180: case 181: case 182: case 183: difc++;	n-=36; /* wet floor */
 	case 144: case 145: case 146: case 147: difc+=2; n-=36; /* wet floor */
@@ -730,7 +694,7 @@ drop(Tile *tl, int n)
 	for(sti=stctype; sti<stctype+nelem(stctype); sti++)
 		if(*sti == n)
 			break;
-	if(sti >= stctype+nelem(stctype))
+	if(sti >= stctype + nelem(stctype))
 		sysfatal("drop: unknown item type");
 	for(s=stcs; s<stcs+nelem(stcs); s++)
 		if(s->tl == nil){
@@ -738,7 +702,7 @@ drop(Tile *tl, int n)
 				stce++;
 			break;
 		}
-	if(s >= stcs+nelem(stcs))
+	if(s >= stcs + nelem(stcs))
 		return;
 	s->tl = tl;
 	sn = n == Rclip2 ? 28 : 2+(sti-stctype);
@@ -855,14 +819,208 @@ mapmus(void)
 	mus(ver < SDM ? wlmus[gm.map] : sdmus[gm.map]);
 }
 
+uchar *
+wrmap(uchar *p)
+{
+	Tile *tl;
+	Obj *o;
+	Static *s;
+	Door *d;
+
+	disking();
+	for(tl=tiles; tl<tiles+nelem(tiles); tl++){
+		PUT16(p, tl->p0);
+		PUT16(p, tl->p1);
+		PUT8(p, tl->tl);
+		PUT8(p, tl->to);
+	}
+	memcpy(p, conarea, sizeof conarea); p+=sizeof conarea;
+	memcpy(p, plrarea, sizeof plrarea); p+=sizeof plrarea;
+	for(o=oplr; o!=objs; o=o->n){
+		disking();
+		PUT16(p, o->on);
+		PUT16(p, o->tc);
+		PUT16(p, o->type);
+		PUT16(p, o->s - stt);
+		PUT8(p, o->f);
+		PUT32(p, o->Δr);
+		PUT32(p, o->x);
+		PUT32(p, o->y);
+		PUT16(p, o->tx);
+		PUT16(p, o->ty);
+		PUT8(p, o->areaid);
+		PUT16(p, o->vwx);
+		PUT16(p, o->vwdy);
+		PUT32(p, o->vwdx);
+		PUT16(p, o->θ);
+		PUT16(p, o->hp);
+		PUT32(p, o->v);
+		PUT16(p, o->atkdt);
+		PUT16(p, o->sdt);
+	}
+	PUT16(p, 0xffff);
+	disking();
+	PUT16(p, stce - stcs);
+	for(s=stcs; s<stce; s++){
+		PUT16(p, s->tl - tiles);
+		PUT16(p, s->spr - sprs);
+		PUT8(p, s->f);
+		PUT8(p, s->item);
+	}
+	disking();
+	PUT16(p, doore - doors);
+	for(d=doors; d<doore; d++){
+		PUT16(p, d->tl - tiles);
+		PUT8(p, d->isvert);
+		PUT8(p, d->lock);
+		PUT16(p, d->φ);
+		PUT16(p, d->tc);
+		PUT16(p, d->dopen);
+	}
+	disking();
+	PUT16(p, pusher.φ);
+	PUT16(p, pusher.tl - tiles);
+	PUT16(p, pusher.isvert);
+	PUT16(p, pusher.dopen);
+	return p;
+}
+
+static void
+sttdtinit(void)
+{
+	/* bug: die state durations are set on spawn and persist regardless of
+	 * changes in sound settings, until map load; sod: durations persist
+	 * across maps */
+	if(pcmon){
+		stt[GSschbdie2].dt = 140;
+		stt[GSottodie2].dt = 140;
+		stt[GSfettdie2].dt = 140;
+		/* bug?: set for Ofake as well */
+		stt[GShitlerdie2].dt = 140;
+		stt[GStransdie2].dt = 105;
+		stt[GSuberdie2].dt = 70;
+		stt[GSknightdie2].dt = 105;
+		stt[GSangeldie2].dt = 105;
+	}else{
+		stt[GSschbdie2].dt = 5;
+		stt[GSottodie2].dt = 5;
+		stt[GSfettdie2].dt = 5;
+		stt[GShitlerdie2].dt = 5;
+		stt[GStransdie2].dt = 1;
+		stt[GSuberdie2].dt = 1;
+		stt[GSknightdie2].dt = 10;
+		stt[GSangeldie2].dt = 1;
+	}
+}
+
+static void
+nukemap(void)
+{
+	memset(tiles, 0, sizeof tiles);
+	memset(plrarea, 0, sizeof plrarea);
+	memset(conarea, 0, sizeof conarea);
+	memset(doors, 0, sizeof doors);
+	memset(stcs, 0, sizeof stcs);
+	doore = doors;
+	stce = stcs;
+	oinit();
+	sttdtinit();
+}
+
+int
+ldmap(uchar *p, uchar **ep)
+{
+	int n;
+	Tile *tl;
+	Obj *o;
+	Static *s;
+	Door *d;
+
+	disking();
+	nukemap();
+	disking();
+	for(tl=tiles; tl<tiles+nelem(tiles); tl++){
+		tl->p0 = GET16(p);
+		tl->p1 = GET16(p);
+		tl->tl = GET8(p);
+		tl->to = GET8(p);
+	}
+	disking();
+	memcpy(conarea, p, sizeof conarea); p+=sizeof conarea;
+	memcpy(plrarea, p, sizeof plrarea); p+=sizeof plrarea;
+	for(o=nil;;){
+		n = GET16(p);
+		if(n == 0xffff)
+			break;
+		o = o == nil ? oplr : onew();
+		o->on = n;
+		o->tc = (s16int)GET16(p);
+		o->type = GET16(p);
+		o->s = stt + GET16(p);
+		o->f = GET8(p);
+		o->Δr = (s32int)GET32(p);
+		o->x = GET32(p);
+		o->y = GET32(p);
+		o->tx = GET16(p);
+		o->ty = GET16(p);
+		o->tl = tiles + o->ty * Mapdxy + o->tx;
+		o->areaid = GET8(p);
+		o->vwx = GET16(p);
+		o->vwdy = GET16(p);
+		o->vwdx = GET32(p);
+		o->θ = (s16int)GET16(p);
+		o->hp = GET16(p);
+		o->v = GET32(p);
+		o->atkdt = (s16int)GET16(p);
+		o->sdt = GET16(p);
+		if(o != oplr && ((o->f & OFnevermark) == 0
+		|| (o->f & OFnomark) == 0 || o->tl->o == nil)){
+			o->tl->o = o;
+			o->tl->to = 0;
+		}
+	}
+	disking();
+	stce = stcs + GET16(p);
+	if(stce > stcs + nelem(stcs)){
+		werrstr("ldmap: static object overflow");
+		return -1;
+	}
+	for(s=stcs; s<stce; s++){
+		s->tl = tiles + GET16(p);
+		s->spr = sprs + GET16(p);
+		s->f = GET8(p);
+		s->item = GET8(p);
+	}
+	disking();
+	doore = doors + GET16(p);
+	if(doore > doors + nelem(doors)){
+		werrstr("ldmap: door overflow");
+		return -1;
+	}
+	for(d=doors; d<doore; d++){
+		d->tl = tiles + GET16(p);
+		d->isvert = GET8(p);
+		d->lock = GET8(p);
+		d->φ = GET16(p);
+		d->tc = GET16(p);
+		d->dopen = GET16(p);
+	}
+	disking();
+	pusher.φ = GET16(p);
+	pusher.tl = tiles + GET16(p);
+	pusher.isvert = GET16(p);
+	pusher.dopen = GET16(p);
+	*ep = p;
+	return 0;
+}
+
 void
 initmap(void)
 {
 	u16int *p0, *p1, *s;
 	Tile *tl;
 
-	oinit(1);
-	memset(tiles, 0, sizeof tiles);
+	nukemap();
 	p0 = s = readmap(gm.map);
 	p1 = p0 + Mapa;
 	for(tl=tiles; tl<tiles+nelem(tiles); tl++){

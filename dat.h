@@ -1199,6 +1199,7 @@ extern Static stcs[], *stce;
 enum{
 	Mapdxy = 64,
 	Mapa = Mapdxy * Mapdxy,
+
 	MTgoup = 21,
 	MTarrows = 90,
 	MTpush = 98,
@@ -1206,6 +1207,11 @@ enum{
 	MTambush = 106,
 	MTsetec = 107,
 	MTfloor = MTsetec,
+
+	Nobj = 150,
+	Ndoor = 64,
+	Nstc = 400,
+	Narea = 37
 };
 struct Tile{
 	u16int p0;
@@ -1231,6 +1237,7 @@ enum{
 	WPpistol,
 	WPmg,
 	WPgatling,
+	WPnone,
 
 	GMup = 0,
 	GMsetec,
@@ -1280,10 +1287,10 @@ struct Game{
 	int com;
 	int demo;
 	int record;
-	int load;
 };
 extern Game gm;
 extern int allrecv, god, noclip, slomo;
+extern int loaded;
 
 struct Score{
 	char name[58];

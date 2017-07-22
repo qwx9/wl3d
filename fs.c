@@ -444,7 +444,15 @@ static uchar pcmt[2][46]={ {
 enum{
 	Nplane = 2,
 	Planesz = Mapa * Nplane,
-	Mapsz = Planesz * Nplane
+	Mapsz = Planesz * Nplane,
+	Svgmsz = 2+2+4+4+4+17*2+4+4+4+2+2+2+4+4+1+1,
+	Svmapsz = Mapa * (2+2+1+1) + Narea + Narea * Narea,
+	Svobjsz = 2+2+2+2+1+4+4+4+2+2+1+2+2+4+2+2+4+2+2,
+	Svstsz = 2+2+1+1,
+	Svdrsz = 2+1+1+2+2+2,
+	Svpshsz = 2+2+2+2,
+	Svsz = sizeof(savs[0]) + Svgmsz + Svmapsz + Svobjsz + 2 + 2 + 2 + Svpshsz,
+	Svmax = Svsz + Nobj * Svobjsz + (Nstc-1) * Svstsz + (Ndoor-1) * Svdrsz
 };
 static Dat *pcms;
 static int alofs, npcm;
@@ -462,8 +470,19 @@ bopen(char *f, int m)
 	snprint(s, sizeof s, "%s%s", f, ext);
 	bf = Bopen(s, m);
 	if(bf == nil)
-		sysfatal("bopen: %r");
+		return nil;
 	Blethal(bf, nil);
+	return bf;
+}
+
+static Biobuf *
+eopen(char *f, int m)
+{
+	Biobuf *bf;
+
+	bf = bopen(f, m);
+	if(bf == nil)
+		sysfatal("bopen: %r");
 	return bf;
 }
 
@@ -737,7 +756,7 @@ vswap(void)
 	u16int *szs, *szp;
 	Biobuf *bf;
 
-	bf = bopen("vswap.", OREAD);
+	bf = eopen("vswap.", OREAD);
 	n = get16(bf);
 	so = get16(bf);
 	po = get16(bf);
@@ -764,7 +783,7 @@ gamemaps(void)
 	u32int v, *d;
 	Biobuf *hed;
 
-	hed = bopen("maphead.", OREAD);
+	hed = eopen("maphead.", OREAD);
 	n = ver==WL6 ? 60 : ver==WL1 ? 10 : ver==SDM ? 2 : 21;
 	rlewtag = get16(hed);
 	d = mapofs = emalloc(n * sizeof *mapofs);
@@ -776,6 +795,24 @@ gamemaps(void)
 		*d++ = v;
 	}
 	Bterm(hed);
+}
+
+static void
+savnames(void)
+{
+	int n;
+	char u[sizeof savs[0]], (*t)[sizeof savs[0]], s[10] = "savegam?.";
+	Biobuf *bf;
+
+	for(n='0', t=savs; n<='9'; n++, t++){
+		s[7] = n;
+		bf = bopen(s, OREAD);
+		if(bf == nil)
+			continue;
+		if(Bread(bf, u, sizeof(u)-1) == sizeof(u)-1)
+			memcpy(t, u, sizeof(u)-1);
+		Bterm(bf);
+	}
 }
 
 static void
@@ -864,8 +901,8 @@ audiot(void)
 	int n;
 	Biobuf *hed, *dat;
 
-	hed = bopen("audiohed.", OREAD);
-	dat = bopen("audiot.", OREAD);
+	hed = eopen("audiohed.", OREAD);
+	dat = eopen("audiot.", OREAD);
 	n = ver < SDM ? Send : Ssend;
 	Bseek(hed, n*4, 0);
 	al(dat, hed, n);
@@ -982,13 +1019,13 @@ gfx(void)
 	u16int hf[512], *h;
 	Biobuf *dat, *aux;
 
-	aux = bopen("vgadict.", OREAD);
+	aux = eopen("vgadict.", OREAD);
 	for(h=hf; h<hf+nelem(hf); h++)
 		*h = get16(aux);
 	Bterm(aux);
 
-	aux = bopen("vgahead.", OREAD);
-	dat = bopen("vgagraph.", OREAD);
+	aux = eopen("vgahead.", OREAD);
+	dat = eopen("vgagraph.", OREAD);
 	n = piched(dat, aux, hf);
 	getfnts(dat, aux, hf);
 	getpics(dat, aux, hf, n);
@@ -1004,7 +1041,7 @@ loadscr(void)
 	Biobuf *bf;
 
 	ext = ver < SDM ? "wl6" : "sod";
-	bf = bopen("intro.", OREAD);
+	bf = eopen("intro.", OREAD);
 	eread(bf, pxb, Va);
 	out();
 	Bterm(bf);
@@ -1034,6 +1071,55 @@ fixpal(void)
 	}
 }
 
+int
+wrsav(int i)
+{
+	int r;
+	vlong n;
+	uchar *u, *p;
+	char s[10] = "savegam?.";
+	Biobuf *bf;
+
+	s[7] = '0' + i;
+	bf = eopen(s, OWRITE);
+	u = emalloc(Svmax);
+	memcpy(u, savs[i], sizeof savs[0]);
+	p = wrgm(u + sizeof savs[0]);
+	p = wrmap(p);
+	assert(p <= u + Svmax);
+	n = p - u;
+	r = Bwrite(bf, u, n) != n ? -1 : 0;
+	Bterm(bf);
+	free(u);
+	return r;
+}
+
+int
+ldsav(int i)
+{
+	int r;
+	vlong n;
+	uchar *u, *p;
+	char s[10] = "savegam?.";
+	Biobuf *bf;
+
+	s[7] = '0' + i;
+	bf = eopen(s, OREAD);
+	n = bsize(bf);
+	if(n < Svsz){
+		werrstr("ldsav: short map");
+		return -1;
+	}
+	u = emalloc(n);
+	eread(bf, u, n);
+	Bterm(bf);
+	p = ldgm(u + sizeof savs[0]);
+	r = ldmap(p, &p);
+	assert(p <= u + n);
+	free(u);
+	return r;
+}
+
 u16int *
 readmap(int n)
 {
@@ -1044,7 +1130,7 @@ readmap(int n)
 	m = mapofs + n;
 	if(m >= mape)
 		sysfatal("readmap: invalid map number %d", n);
-	dat = bopen("gamemaps.", OREAD);
+	dat = eopen("gamemaps.", OREAD);
 	Bseek(dat, *m, 0);
 	u = emalloc(Mapsz);
 	p0 = get32(dat);
@@ -1061,18 +1147,18 @@ readmap(int n)
 char *
 demof(char *f)
 {
-	char *p;
+	char *p, *e;
 	vlong n;
 	Biobuf *bf;
 
-	bf = Bopen(f, OREAD);
-	if(bf == nil)
-		sysfatal("demof: %r");
-	Blethal(bf, nil);
+	e = ext;
+	ext = "";
+	bf = eopen(f, OREAD);
 	n = bsize(bf);
 	p = emalloc(n);
 	eread(bf, p, n);
 	Bterm(bf);
+	ext = e;
 	return p;
 }
 
@@ -1089,6 +1175,7 @@ dat(char *dir)
 	ext = e;
 	vswap();
 	gamemaps();
+	savnames();
 	if(ver == SOD)
 		ext = "sod";
 	audiot();

@@ -182,7 +182,7 @@ topspr(void)
 			scalspr(SPcam, vw.dx/2, vw.dy+1);
 		return;
 	}
-	if(gm.w != -1)
+	if(gm.w != WPnone)
 		scalspr(wspr[gm.w] + gm.wfrm, vw.dx/2, vw.dy+1);
 	if(gm.record || gm.demo)
 		scalspr(SPdemo, vw.dx/2, vw.dy+1);

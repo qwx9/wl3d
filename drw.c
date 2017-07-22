@@ -422,6 +422,16 @@ box(int x, int y, int dx, int dy, int col, int out, int out2)
 }
 
 void
+disking(void)
+{
+	static int n;
+
+	pic(104, 85, pict[Pread1] + n);
+	out();
+	n ^= 1;
+}
+
+void
 viewbox(void)
 {
 	int x, y;

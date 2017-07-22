@@ -2,6 +2,8 @@ void*	emalloc(ulong);
 void	grab(int);
 void	toss(void);
 void	flush(void);
+int	wrsav(int);
+int	ldsav(int);
 char*	demof(char*);
 u16int*	readmap(int);
 void	dat(char*);
@@ -30,6 +32,7 @@ void	wlstripe(int);
 void	sdstripe(int);
 void	outbox(int, int, int, int, int, int);
 void	box(int, int, int, int, int, int, int);
+void	disking(void);
 void	viewbox(void);
 void	hudf(void);
 void	hudh(void);
@@ -59,6 +62,8 @@ Obj*	onew(void);
 Obj*	ospawn(Tile*, State*);
 void	uworld(void);
 void	mapmus(void);
+uchar*	wrmap(uchar*);
+int	ldmap(uchar*, uchar**);
 void	initmap(void);
 void	sodmap(void);
 void	dieturn(void);
@@ -74,6 +79,8 @@ void	gstep(void);
 void	nextmap(void);
 void	game(void);
 void	spshunt(void);
+uchar*	wrgm(uchar*);
+uchar*	ldgm(uchar*);
 void	greset(void);
 void	ginit(uchar*, int, int);
 uchar*	opl2out(uchar*, int);
@@ -87,3 +94,10 @@ void	sfx(int);
 void	stopmus(void);
 void	mus(int);
 void	initsnd(void);
+
+#define	GET8(p)	((p)[0]);(p)++
+#define	GET16(p)	((p)[0]|((p)[1]<<8));(p)+=2
+#define	GET32(p)	((p)[0]|((p)[1]<<8)|((p)[2]<<16)|((p)[3]<<24));(p)+=4
+#define	PUT8(p,v)	(p)[0]=(v);(p)++
+#define	PUT16(p,v)	(p)[0]=(v);(p)[1]=(v)>>8;(p)+=2
+#define	PUT32(p,v)	(p)[0]=(v);(p)[1]=(v)>>8;(p)[2]=(v)>>16;(p)[3]=(v)>>24;(p)+=4
