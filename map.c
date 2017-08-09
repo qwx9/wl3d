@@ -862,7 +862,7 @@ wrmap(uchar *p)
 	disking();
 	PUT16(p, stce - stcs);
 	for(s=stcs; s<stce; s++){
-		PUT16(p, s->tl - tiles);
+		PUT16(p, s->tl != nil ? s->tl - tiles : 0xffff);
 		PUT16(p, s->spr - sprs);
 		PUT8(p, s->f);
 		PUT8(p, s->item);
@@ -986,7 +986,8 @@ ldmap(uchar *p, uchar **ep)
 		return -1;
 	}
 	for(s=stcs; s<stce; s++){
-		s->tl = tiles + GET16(p);
+		n = GET16(p);
+		s->tl = n == 0xffff ? nil : tiles + n;
 		s->spr = sprs + GET16(p);
 		s->f = GET8(p);
 		s->item = GET8(p);
