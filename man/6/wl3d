@@ -486,7 +486,7 @@ contains other fullscreen graphics for specific uses, notably in epilogue sequen
 .IR bt [1]
 .IR dx [1]
 .IR dy [1]
-.RI }[ size-4 ]
+.RI }[ size/3-4 ]
 .RE
 .PP
 The only metadata contained in demo lumps is
