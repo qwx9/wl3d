@@ -206,21 +206,21 @@ idifc[] = {
 	{"I am Death incarnate!", DIreg, ql+Ldifc4}
 },
 isnd[] = {
-	{"None", SEL(DIreg), ql+Lsndtog},
+	{"None", SEL(DIreg)},
 	{"PC Speaker"},
-	{"AdLib/Sound Blaster", DIreg, nil, 1},
+	{"AdLib/Sound Blaster", DIreg},
 	{nil},
 	{nil},
-	{"None", DIreg, ql+Lsndtog},
+	{"None", DIreg},
 	{"Disney Sound Source"},
-	{"Sound Blaster", DIreg, nil, 1},
+	{"Sound Blaster", DIreg},
 	{nil},
 	{nil},
-	{"None", DIreg, ql+Lsndtog},
-	{"AdLib/Sound Blaster", DIreg, nil, 1}
+	{"None", DIreg},
+	{"AdLib/Sound Blaster", DIreg}
 },
 iin[] = {
-	{"Mouse Enabled", SEL(DIreg), ql+Lintog, 1},
+	{"Mouse Enabled", SEL(DIreg), ql+Lintog},
 	{"Autorun Enabled", DIreg, ql+Lintog},
 	{"Mouse Sensitivity", DIreg, ql+Lfsens}
 },
@@ -361,11 +361,11 @@ toggle(void)
 			return;
 		switch(mp->p - i){
 		case 0: iswp(i, i+2); stopsfx(); sfxon = 0; break;
-		case 2: iswp(i+2, i); sfxon++; sfx(Sshoot); break;
+		case 2: iswp(i+2, i); sfxon = 1; sfx(Sshoot); break;
 		case 5: iswp(i+5, i+7); pcmon = 0; break;
-		case 7: iswp(i+7, i+5); pcmon++; break;
+		case 7: iswp(i+7, i+5); pcmon = 1; break;
 		case 10: iswp(i+10, i+11); stopmus(); muson = 0; sfx(Sshoot); break;
-		case 11: iswp(i+11, i+10); muson++; mus(Mmenu); break;
+		case 11: iswp(i+11, i+10); muson = 1; mus(Mmenu); break;
 		}
 		break;
 	case LMin:
@@ -1542,6 +1542,7 @@ intro(void)
 static void
 exit(void)
 {
+	wrconf();
 	threadexitsall(nil);
 }
 
@@ -1719,14 +1720,19 @@ initseqs(void)
 }
 
 static void
-cfg(void)
+conf(void)
 {
+	static int *vs[] = {&sfxon, &pcmon, &muson},
+		is[] = {2, 0, 7, 5, 11, 10};
+	int *ip, **vp;
+	int n, m;
+
 	muson = sfxon = pcmon = 1;
-	grabon++;
+	grabon = 1;
 	autorun = 0;
 	msense = 5;
 	vwsize = 15;
-	/* fs.c: load config file and read values */
+	rdconf();
 	if(msense < 0)
 		msense = 0;
 	else if(msense > 9)
@@ -1736,6 +1742,14 @@ cfg(void)
 	else if(vwsize > 19)
 		vwsize = 19;
 	setvw();
+	iin[0].a = grabon;
+	iin[1].a = autorun;
+	for(vp=vs, ip=is; vp<vs+nelem(vs); vp++){
+		n = *ip++;
+		m = *ip++;
+		isnd[m].a = !(isnd[n].a = **vp);
+		isnd[isnd[m].a ? n : m].q = ql+Lsndtog;
+	}
 }
 
 static void
@@ -1886,7 +1900,7 @@ void
 init(char *f, int m, int d)
 {
 	srand(time(nil));
-	cfg();
+	conf();
 	initseqs();
 	inctl();
 	demd = dems;

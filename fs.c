@@ -388,6 +388,8 @@ u32int *pal, pals[Cend][256]={ {
 	}
 };
 
+typedef struct Conf Conf;
+
 static u32int sodpal[] = {
 	0x003800, 0x002800,
 	0x203400, 0x202400,
@@ -458,6 +460,22 @@ static Dat *pcms;
 static int alofs, npcm;
 static u16int rlewtag;
 static u32int *mapofs, *mape;
+
+struct Conf{
+	char *s;
+	int *vp;
+	int isflag;
+};
+Conf confs[] = {
+	{"mouse", &grabon, 1},
+	{"msens", &msense},
+	{"vwsize", &vwsize},
+	{"autorun", &autorun, 1},
+	{"alsfx", &sfxon, 1},
+	{"pcmsfx", &pcmon, 1},
+	{"music", &muson, 1}
+};
+static int badconf;
 
 #define	GBIT16(p)	((p)[0]|((p)[1]<<8))
 
@@ -1160,6 +1178,62 @@ demof(char *f)
 	Bterm(bf);
 	ext = e;
 	return p;
+}
+
+void
+wrconf(void)
+{
+	int fd;
+	Biobuf *bf;
+	Conf *c;
+
+	if(badconf)
+		return;
+	fd = create("wlconf", OWRITE, 0666);
+	bf = Bfdopen(fd, OWRITE);
+	if(fd < 0 || bf == nil)
+		sysfatal("wrconf: %r");
+	for(c=confs; c<confs+nelem(confs); c++)
+		Bprint(bf, "%s %d\n", c->s, *c->vp);
+	Bterm(bf);
+}
+
+void
+rdconf(void)
+{
+	int n, ln;
+	char *s, *p, *fld[2];
+	Biobuf *bf;
+	Conf *c;
+
+	bf = Bopen("wlconf", OREAD);
+	if(bf == nil)
+		return;
+	for(ln=1, s=nil;; ln++){
+		free(s);
+		s = Brdstr(bf, '\n', 1);
+		if(s == nil)
+			break;
+		n = getfields(s, fld, nelem(fld), 1, " ");
+		if(n != nelem(fld))
+			goto err;
+		for(c=confs; c<confs+nelem(confs); c++)
+			if(strcmp(fld[0], c->s) == 0){
+				n = strtol(fld[1], &p, 0);
+				if(p == fld[1])
+					goto err;
+				*c->vp = c->isflag ? n != 0 : n;
+				break;
+			}
+		if(c == confs + nelem(confs)){
+err:
+			fprint(2, "rdconf: invalid entry, line %d\n", ln);
+			badconf++;
+			break;
+		}
+	}
+	free(s);
+	Bterm(bf);
 }
 
 void

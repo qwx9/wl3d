@@ -5,6 +5,8 @@ void	flush(void);
 int	wrsav(int);
 int	ldsav(int);
 char*	demof(char*);
+void	wrconf(void);
+void	rdconf(void);
 u16int*	readmap(int);
 void	dat(char*);
 void	out(void);

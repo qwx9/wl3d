@@ -162,7 +162,36 @@ In case
 (see
 .IR audio (3))
 is inaccessible, audio is ignored.
-.PD
+.SS Configuration file
+Configuration strings are loaded from a file
+.L wlconf
+in the current working directory.
+It is overwritten when
+.I wl3d
+exits,
+excepting when it was not parsed successfully on program load.
+Its format is a series of key-value pairs, one per line,
+separated by a space character.
+.L vwsize
+and
+.L msens
+control the size of the draw area and mouse sensitivity,
+and their values are bounded respectively to 0-9 and 4-19.
+.LR mouse ,
+.LR autorun ,
+.LR alsfx ,
+.LR pcmsfx
+and
+.LR music
+are toggles for enabling mouse use,
+moving at full speed at all times,
+.SM Adlib
+sound effects, digital sound effects, and music.
+A value of
+.L 0
+disables the setting, and
+.L 1
+enables it.
 .SS Differences
 Most of
 .I wl3d
@@ -186,9 +215,9 @@ Copy protection code and the Spear of Destiny Jukebox have been excised.
 Menus are implemented differently, and some have been altered in functionality.
 Debug mode has been removed, and cheats work differently.
 .PP
-Game keys are no longer set in the options menu, but rather in the configuration file.
+Game keys are no longer set in the options menu.
 A single configuration file is used for all game versions.
-Savegames and config files are incompatible in format.
+Savegames and configuration files are incompatible in format.
 .PP
 The texture and sprite scaling implementation does not attempt to save memory and avoids quantization at close range.
 .SH FILES
