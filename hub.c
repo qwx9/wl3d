@@ -1181,7 +1181,7 @@ intere(void)
 {
 	givep(irb);
 	gm.oldpt = gm.pt;
-	qsp->q = ql+Linterw;
+	reset(ql+Linterw);
 }
 
 static void
