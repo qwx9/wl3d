@@ -1,6 +1,7 @@
 #include <u.h>
 #include <libc.h>
 #include <bio.h>
+#include <fcall.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -446,20 +447,13 @@ static uchar pcmt[2][46]={ {
 enum{
 	Nplane = 2,
 	Planesz = Mapa * Nplane,
-	Mapsz = Planesz * Nplane,
-	Svgmsz = 2+2+4+4+4+17*2+4+4+4+2+2+2+4+4+1+1,
-	Svmapsz = Mapa * (2+2+1+1) + Narea + Narea * Narea,
-	Svobjsz = 2+2+2+2+1+4+4+4+2+2+1+2+2+4+2+2+4+2+2,
-	Svstsz = 2+2+1+1,
-	Svdrsz = 2+1+1+2+2+2,
-	Svpshsz = 2+2+2+2,
-	Svsz = sizeof(savs[0]) + Svgmsz + Svmapsz + Svobjsz + 2 + 2 + 2 + Svpshsz,
-	Svmax = Svsz + Nobj * Svobjsz + (Nstc-1) * Svstsz + (Ndoor-1) * Svdrsz
+	Mapsz = Planesz * Nplane
 };
 static Dat *pcms;
 static int alofs, npcm;
 static u16int rlewtag;
 static u32int *mapofs, *mape;
+static Biobuf *outbf;
 
 struct Conf{
 	char *s;
@@ -476,8 +470,6 @@ Conf confs[] = {
 	{"music", &muson, 1}
 };
 static int badconf;
-
-#define	GBIT16(p)	((p)[0]|((p)[1]<<8))
 
 static Biobuf *
 bopen(char *f, int m)
@@ -502,6 +494,13 @@ eopen(char *f, int m)
 	if(bf == nil)
 		sysfatal("bopen: %r");
 	return bf;
+}
+
+static void
+ewrite(Biobuf *bf, void *u, long n)
+{
+	if(Bwrite(bf, u, n) != n)
+		sysfatal("ewrite: short write: %r");
 }
 
 static long
@@ -1089,53 +1088,121 @@ fixpal(void)
 	}
 }
 
-int
-wrsav(int i)
+void
+vpack(char *fmt, va_list a)
 {
-	int r;
-	vlong n;
-	uchar *u, *p;
-	char s[10] = "savegam?.";
-	Biobuf *bf;
+	long n;
+	void *p;
+	u32int v;
+	uchar u[4];
 
-	s[7] = '0' + i;
-	bf = eopen(s, OWRITE);
-	u = emalloc(Svmax);
-	memcpy(u, savs[i], sizeof savs[0]);
-	p = wrgm(u + sizeof savs[0]);
-	p = wrmap(p);
-	assert(p <= u + Svmax);
-	n = p - u;
-	r = Bwrite(bf, u, n) != n ? -1 : 0;
-	Bterm(bf);
-	free(u);
-	return r;
+	for(;;){
+		switch(*fmt++){
+		default: sysfatal("unknown format %c", fmt[-1]);
+		case 0: return;
+		out8:
+			ewrite(outbf, u, sizeof(u8int));
+			break;
+		out16:
+			PBIT16(u, v);
+			ewrite(outbf, u, sizeof(u16int));
+			break;
+		case 'b':
+			u[0] = va_arg(a, int);
+			goto out8;
+		case 'B':
+			u[0] = va_arg(a, u8int);
+			goto out8;
+		case 'w':
+			v = va_arg(a, int);
+			goto out16;
+		case 'W':
+			v = va_arg(a, u16int);
+			goto out16;
+		case 'd':
+			v = va_arg(a, int);
+			PBIT32(u, v);
+			ewrite(outbf, u, sizeof(u32int));
+			break;
+		case 'n':
+			p = va_arg(a, void*);
+			n = va_arg(a, long);
+			ewrite(outbf, p, n);
+			break;
+		}
+	}
 }
 
-int
-ldsav(int i)
+void
+vunpack(char *fmt, va_list a)
 {
-	int r;
-	vlong n;
-	uchar *u, *p;
+	long n;
+	void *p;
+
+	for(;;){
+		switch(*fmt++){
+		default: sysfatal("unknown format %c", fmt[-1]);
+		case 0: return;
+		case 'b': *va_arg(a, int*) = get8(outbf); break;
+		case 'B': *va_arg(a, u8int*) = get8(outbf); break;
+		case 'w': *va_arg(a, int*) = get16(outbf); break;
+		case 'W': *va_arg(a, u16int*) = get16(outbf); break;
+		case 'd': *va_arg(a, int*) = get32(outbf); break;
+		case 's': *va_arg(a, int*) = (s16int)get16(outbf); break;
+		case 'S': *va_arg(a, int*) = (s32int)get32(outbf); break;
+		case 'n':
+			p = va_arg(a, void*);
+			n = va_arg(a, long);
+			eread(outbf, p, n);
+			break;
+		}
+	}
+}
+
+void
+pack(char *fmt, ...)
+{
+	va_list a;
+
+	va_start(a, fmt);
+	vpack(fmt, a);
+	va_end(a);
+}
+
+void
+unpack(char *fmt, ...)
+{
+	va_list a;
+
+	va_start(a, fmt);
+	vunpack(fmt, a);
+	va_end(a);
+}
+
+void
+wrsav(int i)
+{
 	char s[10] = "savegam?.";
-	Biobuf *bf;
 
 	s[7] = '0' + i;
-	bf = eopen(s, OREAD);
-	n = bsize(bf);
-	if(n < Svsz){
-		werrstr("ldsav: short map");
-		return -1;
-	}
-	u = emalloc(n);
-	eread(bf, u, n);
-	Bterm(bf);
-	p = ldgm(u + sizeof savs[0]);
-	r = ldmap(p, &p);
-	assert(p <= u + n);
-	free(u);
-	return r;
+	outbf = eopen(s, OWRITE);
+	ewrite(outbf, savs[i], sizeof savs[0]);
+	wrgm();
+	wrmap();
+	Bterm(outbf);
+}
+
+void
+ldsav(int i)
+{
+	char s[10] = "savegam?.";
+
+	s[7] = '0' + i;
+	outbf = eopen(s, OREAD);
+	Bseek(outbf, sizeof savs[0], 0);
+	ldgm();
+	ldmap();
+	Bterm(outbf);
 }
 
 u16int *

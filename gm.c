@@ -2664,80 +2664,27 @@ spshunt(void)
 	oplr->areaid = oplr->tl->p0 - MTfloor;
 }
 
-uchar *
-wrgm(uchar *p)
+void
+wrgm(void)
 {
 	disking();
-	PUT16(p, gm.difc);
-	PUT16(p, gm.map);
-	PUT32(p, gm.oldpt);
-	PUT32(p, gm.pt);
-	PUT32(p, gm.to1up);
-	PUT16(p, gm.lives);
-	PUT16(p, gm.hp);
-	PUT16(p, gm.ammo);
-	PUT16(p, gm.keys);
-	PUT16(p, gm.bestw);
-	PUT16(p, gm.w);
-	PUT16(p, gm.lastw);
-	PUT16(p, gm.facefrm);
-	PUT16(p, atkfrm);
-	PUT16(p, atktc);
-	PUT16(p, gm.wfrm);
-	PUT16(p, gm.sp);
-	PUT16(p, gm.tp);
-	PUT16(p, gm.kp);
-	PUT16(p, gm.stot);
-	PUT16(p, gm.ttot);
-	PUT16(p, gm.ktot);
-	PUT32(p, gm.tc);
-	PUT32(p, killx);
-	PUT32(p, killy);
-	PUT16(p, gm.epk);
-	PUT16(p, gm.eps);
-	PUT16(p, gm.ept);
-	PUT32(p, gm.eptm);
-	PUT8(p, dirty);
-	PUT8(p, firing);
-	return p;
+	pack("wwdddwwwwwwwwwwwwwwwwwdddwwwdbb", gm.difc, gm.map, gm.oldpt,
+		gm.pt, gm.to1up, gm.lives, gm.hp, gm.ammo, gm.keys, gm.bestw,
+		gm.w, gm.lastw, gm.facefrm, atkfrm, atktc, gm.wfrm, gm.sp,
+		gm.tp, gm.kp, gm.stot, gm.ttot, gm.ktot, gm.tc, killx, killy,
+		gm.epk, gm.eps, gm.ept, gm.eptm, dirty, firing);
 }
 
-uchar *
-ldgm(uchar *p)
+void
+ldgm(void)
 {
 	disking();
-	gm.difc = GET16(p);
-	gm.map = GET16(p);
-	gm.oldpt = GET32(p);
-	gm.pt = GET32(p);
-	gm.to1up = GET32(p);
-	gm.lives = GET16(p);
-	gm.hp = GET16(p);
-	gm.ammo = GET16(p);
-	gm.keys = GET16(p);
-	gm.bestw = GET16(p);
-	gm.w = GET16(p);
-	gm.lastw = GET16(p);
-	gm.facefrm = GET16(p);
-	atkfrm = GET16(p);
-	atktc = (s16int)GET16(p);
-	gm.wfrm = GET16(p);
-	gm.sp = GET16(p);
-	gm.tp = GET16(p);
-	gm.kp = GET16(p);
-	gm.stot = GET16(p);
-	gm.ttot = GET16(p);
-	gm.ktot = GET16(p);
-	gm.tc = GET32(p);
-	killx = GET32(p);
-	killy = GET32(p);
-	gm.epk = GET16(p);
-	gm.eps = GET16(p);
-	gm.ept = GET16(p);
-	gm.eptm = GET32(p);
-	dirty = GET8(p);
-	firing = GET8(p);
-	return p;
+	unpack("wwdddwwwwwwwwwswwwwwwwdddwwwdbb", &gm.difc, &gm.map, &gm.oldpt,
+		&gm.pt, &gm.to1up, &gm.lives, &gm.hp, &gm.ammo, &gm.keys,
+		&gm.bestw, &gm.w, &gm.lastw, &gm.facefrm, &atkfrm, &atktc,
+		&gm.wfrm, &gm.sp, &gm.tp, &gm.kp, &gm.stot, &gm.ttot, &gm.ktot,
+		&gm.tc, &killx, &killy, &gm.epk, &gm.eps, &gm.ept, &gm.eptm,
+		&dirty, &firing);
 }
 
 void

@@ -664,23 +664,16 @@ disk(void)
 	n = mp->p - mp->s;
 	if(qsp == ql+Lwrsav){
 		qsp->q = ql+Lftoctl;
-		if(wrsav(n) < 0)
-			goto err;
+		wrsav(n);
 	}else{
 		qsp->q = ql+Lldsav2;
 		ginit(nil, -1, 0);
 		greset();
-		if(ldsav(n) < 0)
-			goto err;
+		ldsav(n);
 		ingctl();
 		loaded++;
 	}
 	sfx(Sshoot);
-	return;
-err:
-	memset(savs[n], 0, sizeof savs[0]);
-	qsp->q = ql+Lftoctl;
-	sfx(Snoway);
 }
 
 static void

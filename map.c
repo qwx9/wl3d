@@ -819,70 +819,33 @@ mapmus(void)
 	mus(ver < SDM ? wlmus[gm.map] : sdmus[gm.map]);
 }
 
-uchar *
-wrmap(uchar *p)
+void
+wrmap(void)
 {
 	Tile *tl;
 	Obj *o;
 	Static *s;
 	Door *d;
 
+	for(tl=tiles; tl<tiles+nelem(tiles); tl++)
+		pack("WWBB", tl->p0, tl->p1, tl->tl, tl->to);
+	pack("nn", conarea, sizeof conarea, plrarea, sizeof plrarea);
 	disking();
-	for(tl=tiles; tl<tiles+nelem(tiles); tl++){
-		PUT16(p, tl->p0);
-		PUT16(p, tl->p1);
-		PUT8(p, tl->tl);
-		PUT8(p, tl->to);
-	}
-	memcpy(p, conarea, sizeof conarea); p+=sizeof conarea;
-	memcpy(p, plrarea, sizeof plrarea); p+=sizeof plrarea;
-	for(o=oplr; o!=objs; o=o->n){
-		disking();
-		PUT16(p, o->on);
-		PUT16(p, o->tc);
-		PUT16(p, o->type);
-		PUT16(p, o->s - stt);
-		PUT8(p, o->f);
-		PUT32(p, o->Δr);
-		PUT32(p, o->x);
-		PUT32(p, o->y);
-		PUT16(p, o->tx);
-		PUT16(p, o->ty);
-		PUT8(p, o->areaid);
-		PUT16(p, o->vwx);
-		PUT16(p, o->vwdy);
-		PUT32(p, o->vwdx);
-		PUT16(p, o->θ);
-		PUT16(p, o->hp);
-		PUT32(p, o->v);
-		PUT16(p, o->atkdt);
-		PUT16(p, o->sdt);
-	}
-	PUT16(p, 0xffff);
+	for(o=oplr; o!=objs; o=o->n)
+		pack("wwwwbdddwwbwwdwwdww", o->on, o->tc, o->type, (int)(o->s - stt),
+			o->f, o->Δr, o->x, o->y, o->tx, o->ty, o->areaid,
+			o->vwx, o->vwdy, o->vwdx, o->θ, o->hp, o->v, o->atkdt,
+			o->sdt);
 	disking();
-	PUT16(p, stce - stcs);
-	for(s=stcs; s<stce; s++){
-		PUT16(p, s->tl != nil ? s->tl - tiles : 0xffff);
-		PUT16(p, s->spr - sprs);
-		PUT8(p, s->f);
-		PUT8(p, s->item);
-	}
-	disking();
-	PUT16(p, doore - doors);
-	for(d=doors; d<doore; d++){
-		PUT16(p, d->tl - tiles);
-		PUT8(p, d->isvert);
-		PUT8(p, d->lock);
-		PUT16(p, d->φ);
-		PUT16(p, d->tc);
-		PUT16(p, d->dopen);
-	}
-	disking();
-	PUT16(p, pusher.φ);
-	PUT16(p, pusher.tl - tiles);
-	PUT16(p, pusher.isvert);
-	PUT16(p, pusher.dopen);
-	return p;
+	pack("ww", 0xffff, (int)(stce - stcs));
+	for(s=stcs; s<stce; s++)
+		pack("wwbb", s->tl != nil ? (int)(s->tl - tiles) : 0xffff,
+			(int)(s->spr - sprs), s->f, s->item);
+	pack("w", (int)(doore - doors));
+	for(d=doors; d<doore; d++)
+		pack("wbbwwW", (int)(d->tl - tiles), d->isvert, d->lock, d->φ,d->tc,
+			d->dopen);
+	pack("wwwW", pusher.φ, (int)(pusher.tl - tiles), pusher.isvert, pusher.dopen);
 }
 
 static void
@@ -927,52 +890,32 @@ nukemap(void)
 	sttdtinit();
 }
 
-int
-ldmap(uchar *p, uchar **ep)
+void
+ldmap(void)
 {
-	int n;
+	int n, m;
 	Tile *tl;
 	Obj *o;
 	Static *s;
 	Door *d;
 
-	disking();
 	nukemap();
+	for(tl=tiles; tl<tiles+nelem(tiles); tl++)
+		unpack("WWBB", &tl->p0, &tl->p1, &tl->tl, &tl->to);
+	unpack("nn", conarea, sizeof conarea, plrarea, sizeof plrarea);
 	disking();
-	for(tl=tiles; tl<tiles+nelem(tiles); tl++){
-		tl->p0 = GET16(p);
-		tl->p1 = GET16(p);
-		tl->tl = GET8(p);
-		tl->to = GET8(p);
-	}
-	disking();
-	memcpy(conarea, p, sizeof conarea); p+=sizeof conarea;
-	memcpy(plrarea, p, sizeof plrarea); p+=sizeof plrarea;
 	for(o=nil;;){
-		n = GET16(p);
+		unpack("w", &n);
 		if(n == 0xffff)
 			break;
 		o = o == nil ? oplr : onew();
 		o->on = n;
-		o->tc = (s16int)GET16(p);
-		o->type = GET16(p);
-		o->s = stt + GET16(p);
-		o->f = GET8(p);
-		o->Δr = (s32int)GET32(p);
-		o->x = GET32(p);
-		o->y = GET32(p);
-		o->tx = GET16(p);
-		o->ty = GET16(p);
+		unpack("swwbSddwwbwwdswdsw", &o->tc, &o->type, &n, &o->f,
+			&o->Δr, &o->x, &o->y, &o->tx, &o->ty, &o->areaid,
+			&o->vwx, &o->vwdy, &o->vwdx, &o->θ, &o->hp, &o->v,
+			&o->atkdt, &o->sdt);
+		o->s = stt + n;
 		o->tl = tiles + o->ty * Mapdxy + o->tx;
-		o->areaid = GET8(p);
-		o->vwx = GET16(p);
-		o->vwdy = GET16(p);
-		o->vwdx = GET32(p);
-		o->θ = (s16int)GET16(p);
-		o->hp = GET16(p);
-		o->v = GET32(p);
-		o->atkdt = (s16int)GET16(p);
-		o->sdt = GET16(p);
 		if(o != oplr && ((o->f & OFnevermark) == 0
 		|| (o->f & OFnomark) == 0 || o->tl->o == nil)){
 			o->tl->o = o;
@@ -980,39 +923,26 @@ ldmap(uchar *p, uchar **ep)
 		}
 	}
 	disking();
-	stce = stcs + GET16(p);
-	if(stce > stcs + nelem(stcs)){
-		werrstr("ldmap: static object overflow");
-		return -1;
-	}
+	unpack("w", &n);
+	stce = stcs + n;
+	if(stce > stcs + nelem(stcs))
+		sysfatal("ldmap: static object overflow");
 	for(s=stcs; s<stce; s++){
-		n = GET16(p);
+		unpack("wwbb", &n, &m, &s->f, &s->item);
 		s->tl = n == 0xffff ? nil : tiles + n;
-		s->spr = sprs + GET16(p);
-		s->f = GET8(p);
-		s->item = GET8(p);
+		s->spr = sprs + m;
 	}
-	disking();
-	doore = doors + GET16(p);
-	if(doore > doors + nelem(doors)){
-		werrstr("ldmap: door overflow");
-		return -1;
-	}
+	unpack("w", &n);
+	doore = doors + n;
+	if(doore > doors + nelem(doors))
+		sysfatal("ldmap: door overflow");
 	for(d=doors; d<doore; d++){
-		d->tl = tiles + GET16(p);
-		d->isvert = GET8(p);
-		d->lock = GET8(p);
-		d->φ = GET16(p);
-		d->tc = GET16(p);
-		d->dopen = GET16(p);
+		unpack("wbbwwW", &n, &d->isvert, &d->lock, &d->φ, &d->tc,
+			&d->dopen);
+		d->tl = tiles + n;
 	}
-	disking();
-	pusher.φ = GET16(p);
-	pusher.tl = tiles + GET16(p);
-	pusher.isvert = GET16(p);
-	pusher.dopen = GET16(p);
-	*ep = p;
-	return 0;
+	unpack("wwwW", &pusher.φ, &n, &pusher.isvert, &pusher.dopen);
+	pusher.tl = tiles + n;
 }
 
 void
