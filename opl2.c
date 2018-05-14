@@ -1,9 +1,6 @@
 #include <u.h>
 #include <libc.h>
 
-typedef char s8int;
-typedef short s16int;
-typedef int s32int;
 typedef struct Envelope Envelope;
 typedef struct Phase Phase;
 typedef struct Op Op;

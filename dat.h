@@ -1,5 +1,3 @@
-typedef short s16int;
-typedef int s32int;
 typedef struct Col Col;
 typedef struct Dat Dat;
 typedef struct Sprc Sprc;
