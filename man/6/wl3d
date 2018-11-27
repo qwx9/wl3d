@@ -533,7 +533,7 @@ notably for screen flashes and fade effects.
 The intro screen is a static screen displayed on startup while verifying available memory and hardware,
 then changed depending on the results.
 It is an uncompressed 320x200 graphic lump.
-.BR wl3d (1)
+.IR wl3d (1)
 separates the intro screen from the binary as a distinct file formatted as a 320x200 byte array, and loaded on startup.
 .SS Palettes
 .RS

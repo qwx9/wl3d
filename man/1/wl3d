@@ -105,12 +105,11 @@ being the easiest.
 The
 .B -p
 parameter runs the program at the fastest speed possible for testing purposes.
-.PD
 .SS Game versions
 The engine supports several game versions, each requiring different data files.
 These also control parts of the program's behavior, such as level ordering and interface drawing.
 Each corresponds to a specific data file extension.
-.PD
+.PP
 The default game version is Wolfenstein 3-D 1.4 retail, and the data files use the
 .L wl6
 extension.
@@ -127,7 +126,7 @@ The respective data file extensions are
 .LR wl1 ,
 .LR sdm ,
 .LR sod .
-.PD
+.PP
 Other game versions are unsupported.
 Note that
 .L sd2
@@ -136,7 +135,6 @@ and
 versions are variants of
 .LR sod ,
 only substituting some of the data files.
-.PD
 .SS Demo lumps
 .I Wl3d
 can playback a single external demo lump before resuming normal operation, when its path is supplied via the
@@ -233,7 +231,6 @@ intro screen
 .B /sys/games/lib/wl3d/intro.sod
 .B sdm/sod
 intro screen
-.PD
 .SH "SEE ALSO"
 .IR doom (1) ,
 .IR opl2 (1) ,
