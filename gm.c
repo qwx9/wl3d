@@ -2624,7 +2624,7 @@ nextmap(void)
 		if(gm.com == GMret)
 			n = setece[e];
 		else if(gm.com == GMsetec)
-			n = e + 9;
+			n = e * 10 + 9;
 	}else{
 		if(gm.com == GMret)
 			n = m == 18 ? 4 : m == 19 ? 12 : m + 1;
