@@ -9,7 +9,7 @@ int vwsize;
 typedef struct Vis Vis;
 typedef struct Scaler Scaler;
 enum{
-	Nvis = 50,
+	Nvis = 50<<2,	/* raised from original 50 */
 	Nscal = 256+1,
 	Wdxy = 64,
 	Fineθ = 3600,
