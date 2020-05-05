@@ -1309,7 +1309,7 @@ dat(char *dir)
 	char *e;
 
 	rfork(RFNAMEG);
-	if(bind(".", dir, MBEFORE|MCREATE) < 0 || chdir(dir) < 0)
+	if(bind(".", dir, MBEFORE|MCREATE) == -1 || chdir(dir) < 0)
 		fprint(2, "dat: %r\n");
 	e = ext;
 	loadscr();
