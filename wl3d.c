@@ -290,7 +290,6 @@ threadmain(int argc, char **argv)
 			resetfb();
 		}
 		step();
-		sndstep();
 		t = nsec();
 		tc = (t - t0) / Td;
 		if(tc <= 0)

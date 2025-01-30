@@ -1435,8 +1435,7 @@ kopen(void)
 			tl->tl++;	/* flip switch */
 			gm.end = oplr->tl->p0 == MTsetec ? EDsetec : EDup;
 			stopmus();
-			sfx(Slvlend);
-			sfxlck++;
+			locksfx(Slvlend);
 			return;
 		/* bug: 1<<6 may be set around pushwalls and cause memory
 		 * corruption if this check goes through by writing past the

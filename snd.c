@@ -10,6 +10,15 @@ Sfx *sfxs;
 int sfxon, muson, pcmon;
 int sfxlck;
 
+typedef struct Snd Snd;
+struct Snd{
+	int n;
+	int att;
+	int x;
+	int y;
+	int lock;
+};
+
 enum{
 	Rate = 44100,
 	PcmHz = 7000,
@@ -31,10 +40,10 @@ static uchar *sfxp, *sfxe, *pcm, *pcme, *imf;
 static Sfx *sfxd, *pcmd;
 static Dat *imfd;
 static vlong stc, sdt, mdt;
-static int sfd = -1;
 static Pcmconv *pcmc;
 static uchar sbuf[Nbuf], *pcmbuf;
 static int bufsz, leftover;
+static Channel *musc, *sndc;
 
 static u8int ratt[][30] = {
 	{8,8,8,8,8,8,8,7,7,7,7,7,7,6,0,0,0,0,0,1,3,5,8,8,8,8,8,8,8,8},
@@ -119,26 +128,6 @@ alcmd(void)
 	sdt = stc + ImfHz / SfxHz;
 }
 
-/* this spins constantly even when there's no music being played continuously,
- * in essence only because some sound effects need an echo to play correctly.
- * it sucks. */
-static int
-opl2step(void)
-{
-	uchar *p, *e;
-
-	if(!muson && !sfxon)
-		return -1;
-	for(p=sbuf, e=p+sizeof sbuf; p<e; stc++){
-		if(stc == sdt && sfxd != nil)
-			alcmd();
-		if(stc == mdt && imfd != nil)
-			imfcmd();
-		p = opl2out(p, Nsamp);
-	}
-	return 0;
-}
-
 static void
 setvol(void)
 {
@@ -167,6 +156,54 @@ setvol(void)
 	rvol = 16 - ratt[x][nelem(latt)+y];
 }
 
+static void
+killsfx(void)
+{
+	stopal();
+	pcm = pcme = nil;
+	pcmd = nil;
+}
+
+int
+lastsfx(void)
+{
+	if(pcm < pcme)
+		return pcmd - sfxs;
+	else if(sfxd != nil)
+		return sfxd - sfxs;
+	return -1;
+}
+
+static void
+killmus(void)
+{
+	int i;
+
+	killsfx();
+	if(!muson && !sfxon)
+		return;
+	for(i=Roct+1; i<Roct+9; i++)
+		opl2wr(i, 0);
+	imf = nil;
+	imfd = nil;
+}
+
+static void
+playmus(int n)
+{
+	Dat *d;
+
+	d = imfs+n;
+	if(!muson || d == imfd)
+		return;
+	killmus();
+	if(n < 0)
+		return;
+	mdt = stc;
+	imfd = d;
+	imf = d->p;
+}
+
 static uchar *
 mix(uchar *s, uchar *p, int n)
 {
@@ -193,6 +230,23 @@ mix(uchar *s, uchar *p, int n)
 		s[3] = v >> 8;
 	}
 	return s;
+}
+
+static int
+opl2step(void)
+{
+	uchar *p, *e;
+
+	if(!muson && !sfxon)
+		return -1;
+	for(p=sbuf, e=p+sizeof sbuf; p<e; stc++){
+		if(stc == sdt && sfxd != nil)
+			alcmd();
+		if(stc == mdt && imfd != nil)
+			imfcmd();
+		p = opl2out(p, Nsamp);
+	}
+	return 0;
 }
 
 static void
@@ -226,59 +280,28 @@ pcmstep(void)
 	pcm = e;
 }
 
-void
-sndstep(void)
-{
-	if(sfd < 0)
-		return;
-	if(opl2step() < 0){
-		if(!pcmon)
-			return;
-		memset(sbuf, 0, sizeof sbuf);
-	}
-	pcmstep();
-	if(!nosleep && write(sfd, sbuf, sizeof sbuf) != sizeof sbuf)
-		sysfatal("sndstep: %r\n");
-}
-
-void
-stopsfx(void)
-{
-	if(sfd < 0)
-		return;
-	stopal();
-	pcm = pcme = nil;
-	pcmd = nil;
-}
-
-int
-lastsfx(void)
-{
-	if(pcm < pcme)
-		return pcmd - sfxs;
-	else if(sfxd != nil)
-		return sfxd - sfxs;
-	return -1;
-}
-
-void
-sfxatt(int n, int att, int x, int y)
+static void
+playsfx(Snd *snd)
 {
 	Sfx *s;
 	uchar *r, *i;
 
-	if(sfd < 0 || sfxlck)
+	if(sfxlck)
 		return;
-	s = sfxs+n;
+	if(snd->n < 0){
+		killsfx();
+		return;
+	}
+	s = sfxs + snd->n;
 	if(pcmon && s->pcm != nil){
 		if(pcm < pcme && s->pri < pcmd->pri)
 			return;
 		pcmd = s;
 		pcm = s->pcm->p;
 		pcme = s->pcm->e;
-		if(atton = att){
-			attx = x;
-			atty = y;
+		if(atton = snd->att){
+			attx = snd->x;
+			atty = snd->y;
 		}
 	}else if(sfxon){
 		if(sfxd != nil && s->pri < sfxd->pri)
@@ -293,6 +316,41 @@ sfxatt(int n, int att, int x, int y)
 		while(r < inst + sizeof inst)
 			opl2wr(*r++, *i++);
 	}
+	if(snd->lock)
+		sfxlck = 1;
+}
+
+void
+mus(int n)
+{
+	send(musc, &n);
+}
+
+void
+stopmus(void)
+{
+	int n;
+
+	n = -1;
+	send(musc, &n);
+}
+
+void
+sfxatt(int n, int att, int x, int y)
+{
+	Snd s;
+
+	s = (Snd){n, att, x, y, 0},
+	send(sndc, &s);
+}
+
+void
+locksfx(int n)
+{
+	Snd s;
+
+	s = (Snd){n, 0, 0, 0, 1},
+	send(sndc, &s);
 }
 
 void
@@ -302,43 +360,19 @@ sfx(int n)
 }
 
 void
-stopmus(void)
+stopsfx(void)
 {
-	int i;
-
-	if(sfd < 0)
-		return;
-	stopsfx();
-	if(!muson && !sfxon)
-		return;
-	for(i=Roct+1; i<Roct+9; i++)
-		opl2wr(i, 0);
-	imf = nil;
-	imfd = nil;
+	sfxatt(-1, 0, 0, 0);
 }
 
-void
-mus(int n)
+static void
+sndproc(void *)
 {
-	Dat *d;
-
-	d = imfs+n;
-	if(sfd < 0 || !muson || d == imfd)
-		return;
-	stopmus();
-	mdt = stc;
-	imfd = d;
-	imf = d->p;
-}
-
-void
-initsnd(void)
-{
-	int n, fd;
+	int fd, n, m;
 	Pcmdesc i, o;
+	Snd snd;
 
-	fd = open("/dev/audio", OWRITE);
-	if(fd < 0){
+	if((fd = open("/dev/audio", OWRITE)) < 0){
 		fprint(2, "initsnd: %r\n");
 		return;
 	}
@@ -354,5 +388,38 @@ initsnd(void)
 	opl2wr(Rwse, 0x20);
 	opl2wr(Ropm, 0);
 	opl2wr(Rfed, 0);
-	sfd = fd;
+	enum{
+		Amus,
+		Asfx,
+	};
+	Alt a[] = {
+		[Amus] {musc, &m, CHANRCV},
+		[Asfx] {sndc, &snd, CHANRCV},
+		{nil, nil, CHANNOBLK},
+	};
+	for(;;){
+		switch(alt(a)){
+		default: break;
+		case Amus: playmus(m); break;
+		case Asfx: playsfx(&snd); break;
+		}
+		if(opl2step() < 0){
+			if(!pcmon)
+				continue;
+			memset(sbuf, 0, sizeof sbuf);
+		}
+		pcmstep();
+		if(write(fd, sbuf, sizeof sbuf) != sizeof sbuf)
+			sysfatal("sndproc: %r");
+	}
+}
+
+void
+initsnd(void)
+{
+	if((sndc = chancreate(sizeof(Snd), 1)) == nil
+	|| (musc = chancreate(sizeof(int), 1)) == nil)
+		sysfatal("chancreate: %r");
+	if(proccreate(sndproc, nil, mainstacksize) < 0)
+		sysfatal("proccreate: %r");
 }
