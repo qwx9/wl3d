@@ -280,7 +280,7 @@ threadmain(int argc, char **argv)
 	initsnd();
 	init(df, m, d);
 	cson++;
-	t0 = nsec();
+	t0 = nanosec();
 	Δtc = 1;
 	step = qstep;
 	for(;;){
@@ -290,7 +290,7 @@ threadmain(int argc, char **argv)
 			resetfb();
 		}
 		step();
-		t = nsec();
+		t = nanosec();
 		tc = (t - t0) / Td;
 		if(tc <= 0)
 			tc = 1;

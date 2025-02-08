@@ -9,6 +9,7 @@ OFILES=\
 	gm.$O\
 	hub.$O\
 	map.$O\
+	nanosec.$O\
 	opl2.$O\
 	rend.$O\
 	snd.$O\

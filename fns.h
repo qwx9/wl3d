@@ -1,4 +1,5 @@
 void*	emalloc(ulong);
+u64int	nanosec(void);
 void	grab(int);
 void	toss(void);
 void	flush(void);
