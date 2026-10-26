@@ -373,8 +373,8 @@ sndproc(void *)
 	Snd snd;
 
 	if((fd = open("/dev/audio", OWRITE)) < 0){
-		fprint(2, "initsnd: %r\n");
-		return;
+		fprint(2, "sndproc: %r\n");
+		goto exit;
 	}
 	if(mkpcmdesc("u8c1r7000", &i) < 0
 	|| mkpcmdesc("s16c1r44100", &o) < 0)
@@ -409,9 +409,14 @@ sndproc(void *)
 			memset(sbuf, 0, sizeof sbuf);
 		}
 		pcmstep();
-		if(write(fd, sbuf, sizeof sbuf) != sizeof sbuf)
-			sysfatal("sndproc: %r");
+		if(write(fd, sbuf, sizeof sbuf) != sizeof sbuf){
+			fprint(2, "sndproc: %r\n");
+			break;
+		}
 	}
+exit:
+	chanclose(sndc);
+	chanclose(musc);
 }
 
 void
