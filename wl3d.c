@@ -31,6 +31,7 @@ static Rectangle fbr, grabr;
 static Image *fb;
 static Channel *reszc;
 static int cson, mson, fixms;
+static Warp scalew;
 
 static void
 mproc(void *)
@@ -132,6 +133,18 @@ kproc(void *)
 }
 
 static void
+scalewarpinit(Point p, int scale)
+{
+	double TS[3][3] = {
+		scale, 0, p.x,
+		0, scale, p.y,
+		0, 0, 1,
+	};
+
+	scalew = mkwarp(TS);
+}
+
+static void
 resetfb(void)
 {
 	Point p, d;
@@ -147,15 +160,7 @@ resetfb(void)
 	d = Pt(Vh/4, Vh/4);
 	grabr = Rpt(subpt(p, d), addpt(p, d));
 	p0 = p;
-
-	freeimage(fb);
-	free(px);
-	npx = Vt * scale;
-	px = emalloc(npx);
-	fb = allocimage(display, Rect(0,0,Vw*scale,scale==1 ? Vh : 1), RGB24, scale!=1, 0);
-	if(fb == nil)
-		sysfatal("resetfb: %r");
-
+	scalewarpinit(subpt(fbr.min, screen->r.min), scale);
 	draw(screen, screen->r, display->black, nil, ZP);
 	out();
 }
@@ -220,22 +225,8 @@ toss(void)
 void
 flush(void)
 {
-	Rectangle r;
-	uchar *p;
-
-	if(scale == 1){
-		loadimage(fb, fb->r, px, npx);
-		draw(screen, fbr, fb, nil, ZP);
-	}else{
-		p = px;
-		r = fbr;
-		while(r.min.y < fbr.max.y){
-			r.max.y = r.min.y + scale;
-			p += loadimage(fb, fb->r, p, npx/Vh);
-			draw(screen, r, fb, nil, ZP);
-			r.min.y = r.max.y;
-		}
-	}
+	loadimage(fb, fb->r, px, Vt);
+	affinewarp(screen, fbr, fb, nil, ZP, &scalew, 0);
 	flushimage(display, 1);
 }
 
@@ -268,6 +259,10 @@ threadmain(int argc, char **argv)
 	if(initdraw(nil, nil, "wl3d") < 0)
 		sysfatal("initdraw: %r");
 	pal = pals[C0];
+	px = emalloc(Vt);
+	fb = allocimage(display, Rect(0,0,Vw,Vh), RGB24, 0, 0);
+	if(fb == nil)
+		sysfatal("allocimage: %r");
 	resetfb();
 	dat(datdir);
 	csc = chancreate(sizeof(Rune), 20);

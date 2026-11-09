@@ -8,7 +8,7 @@ Pic *pics;
 uchar **exts, **dems, **epis, **wals;
 Spr *sprs;
 
-int scale, npx;
+int scale;
 uchar *px, pxb[Va], *fzd, fzb[Vw*Vhud];
 View vw;
 void (*mclear)(void);
@@ -56,16 +56,14 @@ hudnp(int x, int y, int dx, int n)
 void
 out(void)
 {
-	int n;
 	u32int c;
 	uchar *s, *d, *w;
 
 	d = px;
 	s = pxb;
-	n = scale * 3;
 	while(s < pxb + sizeof pxb){
 		c = pal[*s++];
-		w = d + n;
+		w = d + 3;
 		while(d < w){
 			*d++ = c;
 			*d++ = c>>8;

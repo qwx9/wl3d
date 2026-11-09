@@ -64,7 +64,7 @@ enum{
 	Tb = 70
 };
 extern uchar *px, pxb[], fzb[];
-extern int npx, scale;
+extern int scale;
 extern void (*mclear)(void);
 extern void (*stripe)(int);
 
